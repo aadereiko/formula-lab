@@ -70,3 +70,33 @@ export interface HistoryEntry {
   resultLabel: string;
   resultValue: string;
 }
+
+export interface User {
+  id: number;
+  email: string;
+  created_at: string;
+}
+
+export interface AuthProviders {
+  password: boolean;
+  google: boolean;
+}
+
+export interface SavedFormula {
+  id: number;
+  name: string;
+  expression: string;
+  note: string;
+  values: Record<string, string>;
+  solve_for: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SavedFormulaInput {
+  name: string;
+  expression: string;
+  note?: string;
+  values?: Record<string, string>;
+  solve_for?: string | null;
+}

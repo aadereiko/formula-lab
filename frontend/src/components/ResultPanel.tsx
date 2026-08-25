@@ -26,8 +26,8 @@ export function ResultPanel({ result, error, busy }: Props) {
 
   if (error) {
     return (
-      <section className="panel result-panel is-error">
-        <span className="panel-label">Result</span>
+      <section className="block result is-error">
+        <span className="label">Result</span>
         <p className="result-error">{error}</p>
       </section>
     );
@@ -35,8 +35,8 @@ export function ResultPanel({ result, error, busy }: Props) {
 
   if (!result) {
     return (
-      <section className="panel result-panel is-empty">
-        <span className="panel-label">Result</span>
+      <section className="block result">
+        <span className="label">Result</span>
         <p className="result-placeholder">Fill in the variables to see a result.</p>
       </section>
     );
@@ -58,9 +58,9 @@ export function ResultPanel({ result, error, busy }: Props) {
   };
 
   return (
-    <section className={`panel result-panel${busy ? " is-busy" : ""}`}>
-      <div className="panel-header">
-        <span className="panel-label">Result</span>
+    <section className={`block result${busy ? " is-busy" : ""}`}>
+      <div className="block-head">
+        <span className="label">Result</span>
         <button type="button" className="chip" onClick={copy}>
           {copied ? "copied" : "copy"}
         </button>
@@ -104,7 +104,7 @@ export function ResultPanel({ result, error, busy }: Props) {
         {steps.map((step) => (
           <li key={step.label}>
             <span className="step-label">{step.label}</span>
-            <MathView latex={step.latex} />
+            <MathView latex={step.latex} className="step-math" />
           </li>
         ))}
       </ol>

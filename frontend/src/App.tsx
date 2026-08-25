@@ -2,11 +2,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import * as api from "./api";
 import { ApiError } from "./api";
 import { useDebouncedValue, usePersistentState } from "./hooks";
+import { useAuth, useOAuthError } from "./useAuth";
+import { AuthPanel } from "./components/AuthPanel";
 import { FormulaInput } from "./components/FormulaInput";
+import { Header } from "./components/Header";
 import { HelpPanel } from "./components/HelpPanel";
 import { HistoryPanel } from "./components/HistoryPanel";
-import { LibraryPanel } from "./components/LibraryPanel";
 import { ResultPanel } from "./components/ResultPanel";
+import { SaveDialog } from "./components/SaveDialog";
+import { Sidebar } from "./components/Sidebar";
 import { VariablePanel } from "./components/VariablePanel";
 import type {
   AnalyzeResponse,
@@ -16,11 +20,11 @@ import type {
   HistoryEntry,
   Library,
   LibraryFormula,
+  SavedFormula,
 } from "./types";
 
-const HISTORY_LIMIT = 12;
+const HISTORY_LIMIT = 10;
 
-/** Aborted requests are superseded keystrokes, not errors worth showing. */
 const isAbort = (error: unknown) =>
   error instanceof DOMException && error.name === "AbortError";
 
@@ -28,6 +32,9 @@ const describeError = (error: unknown) =>
   error instanceof ApiError ? error.message : "Something went wrong.";
 
 export default function App() {
+  const auth = useAuth();
+  const oauthError = useOAuthError();
+
   const [expression, setExpression] = useState("F = m*a");
   const [values, setValues] = useState<Record<string, string>>({ F: "10", a: "2" });
   const [solveFor, setSolveFor] = useState<string | null>(null);
@@ -44,9 +51,19 @@ export default function App() {
   const [capabilities, setCapabilities] = useState<Capabilities | null>(null);
   const [offline, setOffline] = useState<string | null>(null);
 
-  const [activeId, setActiveId] = useState<string | null>("newton2");
+  const [saved, setSaved] = useState<SavedFormula[]>([]);
+  const [savedLoading, setSavedLoading] = useState(false);
+  const [savedError, setSavedError] = useState<string | null>(null);
+  const [activeSaved, setActiveSaved] = useState<SavedFormula | null>(null);
+
+  const [activeLibraryId, setActiveLibraryId] = useState<string | null>("newton2");
   const [descriptions, setDescriptions] = useState<Record<string, string>>({});
   const [history, setHistory] = usePersistentState<HistoryEntry[]>("formula-lab.history", []);
+
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [authOpen, setAuthOpen] = useState(false);
+  const [saveOpen, setSaveOpen] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const debouncedExpression = useDebouncedValue(expression, 300);
   const debouncedValues = useDebouncedValue(values, 300);
@@ -62,6 +79,31 @@ export default function App() {
       })
       .catch((error) => setOffline(describeError(error)));
   }, []);
+
+  // A Google redirect lands back here with the failure reason in the URL.
+  useEffect(() => {
+    if (oauthError) setAuthOpen(true);
+  }, [oauthError]);
+
+  // -- saved formulas ------------------------------------------------------
+  const reloadSaved = useCallback(() => {
+    if (!auth.user) {
+      setSaved([]);
+      setActiveSaved(null);
+      return;
+    }
+    setSavedLoading(true);
+    api
+      .fetchSaved()
+      .then((rows) => {
+        setSaved(rows);
+        setSavedError(null);
+      })
+      .catch((error) => setSavedError(describeError(error)))
+      .finally(() => setSavedLoading(false));
+  }, [auth.user]);
+
+  useEffect(reloadSaved, [reloadSaved]);
 
   // -- parse as the user types --------------------------------------------
   useEffect(() => {
@@ -89,17 +131,11 @@ export default function App() {
 
   const symbols = analysis?.symbols ?? [];
 
-  // A target that is no longer in the formula would be rejected by the API,
-  // so drop it as soon as the formula stops mentioning it.
   useEffect(() => {
     if (solveFor && analysis && !analysis.symbols.includes(solveFor)) setSolveFor(null);
   }, [analysis, solveFor]);
 
-  /**
-   * Only the current formula's variables may be sent: the API rejects unknown
-   * names outright. Values for symbols that have dropped out are kept in state
-   * (so switching formulas back restores them) but filtered out here.
-   */
+  /** Only the current formula's variables: the API rejects unknown names. */
   const relevantValues = useMemo(() => {
     const filtered: Record<string, string> = {};
     for (const symbol of symbols) {
@@ -113,11 +149,6 @@ export default function App() {
   const isEquation = analysis?.is_equation ?? false;
   const target = solveFor ?? (isEquation && blanks.length === 1 ? blanks[0]! : null);
 
-  /**
-   * Whether the form is complete enough to be worth sending. Auto-evaluating an
-   * incomplete form would replace the result with "Missing value for: v" on
-   * every keystroke, so we wait until the request can actually succeed.
-   */
   const ready = useMemo(() => {
     if (!analysis || analyzeError) return false;
     if (!isEquation) return blanks.length === 0;
@@ -150,7 +181,7 @@ export default function App() {
       api
         .evaluate(analysis.expression, relevantValues, solveFor, precision, signal)
         .then((next) => {
-          if (id !== requestId.current) return; // a newer request has landed
+          if (id !== requestId.current) return;
           setResult(next);
           setResultError(null);
           pushHistory({
@@ -185,10 +216,17 @@ export default function App() {
     return () => controller.abort();
   }, [ready, runEvaluate]);
 
-  // -- interactions --------------------------------------------------------
-  const pickFormula = (formula: LibraryFormula) => {
+  // -- transient confirmations --------------------------------------------
+  const flash = useCallback((message: string) => {
+    setNotice(message);
+    window.setTimeout(() => setNotice((current) => (current === message ? null : current)), 2200);
+  }, []);
+
+  // -- opening formulas ----------------------------------------------------
+  const pickLibrary = (formula: LibraryFormula) => {
     setExpression(formula.expression);
-    setActiveId(formula.id);
+    setActiveLibraryId(formula.id);
+    setActiveSaved(null);
     setSolveFor(null);
     setValues({});
     setResult(null);
@@ -196,28 +234,133 @@ export default function App() {
     setDescriptions(
       Object.fromEntries(formula.variables.map((v) => [v.symbol, v.description])),
     );
+    setMenuOpen(false);
+  };
+
+  const openSaved = (formula: SavedFormula) => {
+    setExpression(formula.expression);
+    setValues(formula.values);
+    setSolveFor(formula.solve_for);
+    setActiveSaved(formula);
+    setActiveLibraryId(null);
+    setDescriptions({});
+    setResult(null);
+    setResultError(null);
+    setMenuOpen(false);
   };
 
   const restore = (entry: HistoryEntry) => {
     setExpression(entry.expression);
     setValues(entry.values);
     setSolveFor(entry.solveFor);
-    setActiveId(null);
+    setActiveLibraryId(null);
+    setActiveSaved(null);
   };
 
   const onExpressionChange = (next: string) => {
     setExpression(next);
-    setActiveId(null);
+    setActiveLibraryId(null);
     setResult(null);
     setResultError(null);
   };
 
+  // -- saving --------------------------------------------------------------
+  const requestSave = () => {
+    if (!analysis) return;
+    if (!auth.user) {
+      setAuthOpen(true);
+      return;
+    }
+    setSaveOpen(true);
+  };
+
+  const performSave = async (name: string, note: string, asNew: boolean) => {
+    if (!analysis) return;
+    const payload = {
+      name,
+      note,
+      expression: analysis.expression,
+      values: relevantValues,
+      solve_for: solveFor,
+    };
+
+    const stored =
+      activeSaved && !asNew
+        ? await api.updateSaved(activeSaved.id, payload)
+        : await api.createSaved(payload);
+
+    setActiveSaved(stored);
+    setActiveLibraryId(null);
+    setSaveOpen(false);
+    reloadSaved();
+    flash(activeSaved && !asNew ? "Updated" : "Saved");
+  };
+
+  const deleteSaved = async (formula: SavedFormula) => {
+    // Optimistic: put the row back if the request fails.
+    const previous = saved;
+    setSaved((rows) => rows.filter((row) => row.id !== formula.id));
+    if (activeSaved?.id === formula.id) setActiveSaved(null);
+    try {
+      await api.deleteSaved(formula.id);
+      flash("Deleted");
+    } catch (error) {
+      setSaved(previous);
+      setSavedError(describeError(error));
+    }
+  };
+
+  const signOut = async () => {
+    await auth.signOut();
+    setSaved([]);
+    setActiveSaved(null);
+    setAuthOpen(false);
+  };
+
   return (
     <div className="app">
-      <LibraryPanel library={library} activeId={activeId} onPick={pickFormula} />
+      <Header
+        user={auth.user}
+        checking={auth.checking}
+        menuOpen={menuOpen}
+        onToggleMenu={() => setMenuOpen((open) => !open)}
+        onAccount={() => setAuthOpen((open) => !open)}
+      />
+
+      <Sidebar
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        library={library}
+        activeLibraryId={activeLibraryId}
+        onPickLibrary={pickLibrary}
+        saved={saved}
+        activeSavedId={activeSaved?.id ?? null}
+        savedLoading={savedLoading}
+        savedError={savedError}
+        signedIn={Boolean(auth.user)}
+        onOpenSaved={openSaved}
+        onDeleteSaved={deleteSaved}
+        onSignInPrompt={() => {
+          setMenuOpen(false);
+          setAuthOpen(true);
+        }}
+      />
 
       <main className="workspace">
-        {offline && <div className="banner">{offline}</div>}
+        {offline && <p className="banner">{offline}</p>}
+        {notice && <p className="notice" role="status">{notice}</p>}
+
+        {authOpen && (
+          <AuthPanel
+            user={auth.user}
+            providers={auth.providers}
+            initialError={oauthError}
+            onSignIn={auth.signIn}
+            onSignUp={auth.signUp}
+            onSignOut={signOut}
+            onClose={() => setAuthOpen(false)}
+          />
+        )}
 
         <FormulaInput
           value={expression}
@@ -225,6 +368,9 @@ export default function App() {
           latex={analysis?.latex ?? null}
           error={analyzeError}
           pending={expression.trim() !== debouncedExpression.trim()}
+          canSave={Boolean(analysis)}
+          savedName={activeSaved?.name ?? null}
+          onSave={requestSave}
         />
 
         <VariablePanel
@@ -258,9 +404,7 @@ export default function App() {
               </select>
             </label>
             {isEquation && !target && (
-              <span className="toolbar-hint">
-                Leave one variable blank, or press <em>solve</em> next to one.
-              </span>
+              <span className="toolbar-hint">Leave one variable blank to solve for it.</span>
             )}
           </div>
         )}
@@ -269,6 +413,15 @@ export default function App() {
         <HistoryPanel entries={history} onRestore={restore} onClear={() => setHistory([])} />
         <HelpPanel capabilities={capabilities} />
       </main>
+
+      {saveOpen && analysis && (
+        <SaveDialog
+          expression={analysis.expression}
+          existing={activeSaved}
+          onSave={performSave}
+          onCancel={() => setSaveOpen(false)}
+        />
+      )}
     </div>
   );
 }

@@ -24,3 +24,8 @@ dist/
 *.log
 .env
 .env.local
+.secret
+*.db
+*.db-wal
+*.db-shm
+.env

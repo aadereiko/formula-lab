@@ -6,14 +6,33 @@ interface Props {
   latex: string | null;
   error: string | null;
   pending: boolean;
+  canSave: boolean;
+  savedName: string | null;
+  onSave: () => void;
 }
 
-export function FormulaInput({ value, onChange, latex, error, pending }: Props) {
+export function FormulaInput({
+  value,
+  onChange,
+  latex,
+  error,
+  pending,
+  canSave,
+  savedName,
+  onSave,
+}: Props) {
   return (
-    <section className="panel formula-panel">
-      <label className="panel-label" htmlFor="formula">
-        Formula
-      </label>
+    <section className="block">
+      <div className="block-head">
+        <label className="label" htmlFor="formula">
+          Formula
+        </label>
+        {savedName && <span className="saved-badge">{savedName}</span>}
+        <button type="button" className="btn btn-small" disabled={!canSave} onClick={onSave}>
+          {savedName ? "Update" : "Save"}
+        </button>
+      </div>
+
       <input
         id="formula"
         className="formula-input"
@@ -21,19 +40,20 @@ export function FormulaInput({ value, onChange, latex, error, pending }: Props) 
         spellCheck={false}
         autoComplete="off"
         autoCapitalize="off"
-        placeholder="e.g.  E = 1/2 m v^2"
+        autoCorrect="off"
+        placeholder="E = 1/2 m v^2"
         onChange={(event) => onChange(event.target.value)}
       />
 
-      <div className="formula-preview" aria-live="polite">
+      <div className="preview" aria-live="polite">
         {error ? (
           <span className="preview-error">{error}</span>
         ) : latex ? (
           <MathView latex={latex} display className={pending ? "is-stale" : undefined} />
         ) : (
           <span className="preview-hint">
-            Write an equation like <code>F = m a</code> to solve for any variable,
-            or an expression like <code>1/2 m v^2</code> to evaluate it.
+            An equation like <code>F = m a</code> solves for any variable. An expression
+            like <code>1/2 m v^2</code> is evaluated.
           </span>
         )}
       </div>

@@ -10,9 +10,9 @@ export function HistoryPanel({ entries, onRestore, onClear }: Props) {
   if (entries.length === 0) return null;
 
   return (
-    <section className="panel history-panel">
-      <div className="panel-header">
-        <span className="panel-label">Recent</span>
+    <section className="block">
+      <div className="block-head">
+        <span className="label">Recent</span>
         <button type="button" className="chip" onClick={onClear}>
           clear
         </button>

@@ -1,0 +1,13 @@
+**/node_modules
+**/dist
+**/.venv
+**/__pycache__
+**/.pytest_cache
+**/*.db
+**/*.db-wal
+**/*.db-shm
+backend/.secret
+.git
+.gitignore
+*.md
+!README.md

@@ -4,12 +4,14 @@ from __future__ import annotations
 
 import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 
-from . import formulas, runner
+from . import auth, db, formulas, oauth_google, routes_auth, routes_formulas, runner
 from .engine import ALLOWED_FUNCTIONS, MAX_EXPONENT, MAX_NODES, MAX_SYMBOLS
 from .models import (
     AnalyzeRequest,
@@ -27,6 +29,7 @@ FRONTEND_PORT = 7732
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    db.init_db()
     # First request pays the SymPy import cost in a worker otherwise (~1s).
     runner.warmup()
     yield
@@ -53,6 +56,11 @@ app.add_middleware(
 )
 
 
+@app.exception_handler(auth.AuthError)
+async def auth_error_handler(_request, exc: auth.AuthError) -> JSONResponse:
+    return JSONResponse(status_code=400, content={"error": str(exc)})
+
+
 @app.exception_handler(FormulaError)
 async def formula_error_handler(_request, exc: FormulaError) -> JSONResponse:
     """Turn a user-fixable formula problem into a clean 400.
@@ -63,9 +71,24 @@ async def formula_error_handler(_request, exc: FormulaError) -> JSONResponse:
     return JSONResponse(status_code=400, content={"error": str(exc)})
 
 
+app.include_router(routes_auth.router)
+app.include_router(oauth_google.router)
+app.include_router(routes_formulas.router)
+
+
 @app.get("/api/health")
 async def health() -> dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/api/auth/providers")
+async def auth_providers() -> dict[str, bool]:
+    """Which sign-in methods this deployment offers.
+
+    Lets the UI hide the Google button rather than offering a route that would
+    fail with a 503.
+    """
+    return {"password": True, "google": oauth_google.is_configured()}
 
 
 @app.get("/api/capabilities")
@@ -89,7 +112,7 @@ async def capabilities() -> dict[str, object]:
     }
 
 
-@app.get("/api/formulas")
+@app.get("/api/library")
 async def formula_library() -> dict[str, object]:
     return {
         "categories": formulas.categories(),
@@ -144,3 +167,66 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+
+# --------------------------------------------------------------------------
+# Serving the built front end
+# --------------------------------------------------------------------------
+#
+# In development the two halves run separately and Vite proxies /api. In
+# production it is simpler *and safer* to serve the built bundle from this same
+# app: one origin means the session cookie is first-party, no CORS configuration is
+# involved, and there is a single process to deploy.
+
+STATIC_DIR = Path(
+    os.environ.get(
+        "FORMULA_LAB_STATIC_DIR",
+        str(Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"),
+    )
+)
+
+
+def resolve_static_file(root: Path, requested: str) -> Path | None:
+    """Map a URL path to a file inside ``root``, or None.
+
+    The containment check is the point: ``FileResponse`` will happily serve
+    ``../../etc/passwd`` if handed that path, so the resolved location must be
+    confirmed to still sit under the static directory.
+    """
+    if not requested:
+        return None
+    try:
+        candidate = (root / requested).resolve()
+        base = root.resolve()
+    except (OSError, RuntimeError):
+        return None
+    if not candidate.is_relative_to(base) or not candidate.is_file():
+        return None
+    return candidate
+
+
+def mount_frontend() -> None:
+    index = STATIC_DIR / "index.html"
+    if not index.is_file():
+        return  # development, or the bundle has not been built yet
+
+    assets = STATIC_DIR / "assets"
+    if assets.is_dir():
+        app.mount("/assets", StaticFiles(directory=assets), name="assets")
+
+    @app.get("/{full_path:path}", include_in_schema=False)
+    async def spa(full_path: str):
+        """Serve index.html for app routes, and real files when they exist.
+
+        Registered last so every API route wins. An unknown /api path must
+        still 404 rather than quietly receive the HTML shell -- otherwise a
+        typo'd endpoint looks like a JSON parsing bug to the caller.
+        """
+        if full_path.startswith("api/"):
+            raise HTTPException(status_code=404, detail="Not found")
+
+        found = resolve_static_file(STATIC_DIR, full_path)
+        return FileResponse(found if found else index)
+
+
+mount_frontend()

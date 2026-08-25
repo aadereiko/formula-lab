@@ -1,9 +1,13 @@
 import type {
   AnalyzeResponse,
+  AuthProviders,
   Capabilities,
   Constant,
   EvaluateResponse,
   Library,
+  SavedFormula,
+  SavedFormulaInput,
+  User,
 } from "./types";
 
 /**
@@ -13,11 +17,18 @@ import type {
  */
 export class ApiError extends Error {
   readonly userFacing: boolean;
+  readonly status: number;
 
-  constructor(message: string, userFacing: boolean) {
+  constructor(message: string, userFacing: boolean, status = 0) {
     super(message);
     this.name = "ApiError";
     this.userFacing = userFacing;
+    this.status = status;
+  }
+
+  /** A 401 means "sign in", which callers handle rather than display. */
+  get isUnauthenticated(): boolean {
+    return this.status === 401;
   }
 }
 
@@ -32,28 +43,41 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw new ApiError("Cannot reach the API. Is the backend running on port 7731?", false);
   }
 
-  if (response.ok) return (await response.json()) as T;
+  if (response.ok) {
+    // 204 No Content has no body to parse.
+    if (response.status === 204) return undefined as T;
+    return (await response.json()) as T;
+  }
 
   let detail = `Request failed (${response.status})`;
   try {
     const body = await response.json();
-    // 400 -> our own {error}. 422 -> pydantic's {detail: [...]}.
+    // Our own handlers return {error}; FastAPI's HTTPException returns
+    // {detail}; Pydantic validation returns {detail: [{msg, loc}, ...]}.
     if (typeof body.error === "string") detail = body.error;
-    else if (Array.isArray(body.detail) && body.detail[0]?.msg) detail = body.detail[0].msg;
+    else if (typeof body.detail === "string") detail = body.detail;
+    else if (Array.isArray(body.detail) && body.detail[0]?.msg) {
+      const first = body.detail[0];
+      const field = Array.isArray(first.loc) ? String(first.loc[first.loc.length - 1]) : "";
+      detail = field ? `${field}: ${first.msg}` : first.msg;
+    }
   } catch {
     /* keep the status-code fallback */
   }
-  throw new ApiError(detail, response.status === 400 || response.status === 422);
+  throw new ApiError(detail, response.status < 500, response.status);
 }
 
-function post<T>(path: string, body: unknown, signal?: AbortSignal): Promise<T> {
+function send<T>(method: string, path: string, body?: unknown, signal?: AbortSignal): Promise<T> {
   return request<T>(path, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    method,
+    headers: body === undefined ? undefined : { "Content-Type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body),
     signal,
   });
 }
+
+const post = <T>(path: string, body?: unknown, signal?: AbortSignal) =>
+  send<T>("POST", path, body, signal);
 
 export const analyze = (expression: string, signal?: AbortSignal) =>
   post<AnalyzeResponse>("/api/analyze", { expression }, signal);
@@ -71,7 +95,32 @@ export const evaluate = (
     signal,
   );
 
-export const fetchLibrary = () => request<Library>("/api/formulas");
+export const fetchLibrary = () => request<Library>("/api/library");
 export const fetchConstants = () =>
   request<{ constants: Constant[] }>("/api/constants").then((r) => r.constants);
 export const fetchCapabilities = () => request<Capabilities>("/api/capabilities");
+
+// -- accounts --------------------------------------------------------------
+// The session lives in an httpOnly cookie, so there is no token to attach here.
+// Same-origin requests carry it automatically.
+
+export const fetchProviders = () => request<AuthProviders>("/api/auth/providers");
+export const fetchMe = () => request<User>("/api/auth/me");
+export const register = (email: string, password: string) =>
+  post<User>("/api/auth/register", { email, password });
+export const login = (email: string, password: string) =>
+  post<User>("/api/auth/login", { email, password });
+export const logout = () => post<void>("/api/auth/logout");
+
+/** Google sign-in is a full page navigation, not a fetch: the browser must
+ *  follow redirects to Google and back for the cookies to be set. */
+export const googleSignInUrl = "/api/auth/google/start";
+
+// -- saved formulas --------------------------------------------------------
+
+export const fetchSaved = () => request<SavedFormula[]>("/api/formulas");
+export const createSaved = (input: SavedFormulaInput) =>
+  post<SavedFormula>("/api/formulas", input);
+export const updateSaved = (id: number, input: SavedFormulaInput) =>
+  send<SavedFormula>("PUT", `/api/formulas/${id}`, input);
+export const deleteSaved = (id: number) => send<void>("DELETE", `/api/formulas/${id}`);

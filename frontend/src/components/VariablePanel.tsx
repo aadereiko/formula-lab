@@ -42,11 +42,11 @@ export function VariablePanel({
   const target = solveFor ?? inferred;
 
   return (
-    <section className="panel">
-      <div className="panel-header">
-        <span className="panel-label">Variables</span>
+    <section className="block">
+      <div className="block-head">
+        <span className="label">Variables</span>
         {isEquation && (
-          <span className="panel-note">
+          <span className="auth-hint">
             {target ? (
               <>
                 solving for <strong>{target}</strong>

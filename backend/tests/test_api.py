@@ -6,15 +6,17 @@ request.
 """
 
 import pytest
-from fastapi.testclient import TestClient
 
-from app.main import app
+# `client` comes from conftest.py, which points the app at a throwaway database
+# so these tests can never touch the development one.
 
 
-@pytest.fixture(scope="module")
-def client():
-    with TestClient(app) as test_client:
-        yield test_client
+def test_built_in_library_needs_no_account(client):
+    assert client.get("/api/library").status_code == 200
+
+
+def test_saved_formulas_need_an_account(client):
+    assert client.get("/api/formulas").status_code == 401
 
 
 def test_health(client):
@@ -101,7 +103,9 @@ def test_pool_still_works_after_a_timeout(client):
 
 
 def test_formula_library_is_served(client):
-    body = client.get("/api/formulas").json()
+    # The built-in catalogue lives at /api/library; /api/formulas is now the
+    # signed-in user's own saved formulas.
+    body = client.get("/api/library").json()
     assert len(body["formulas"]) > 30
     assert "Kinematics" in body["categories"]
     assert all({"id", "name", "expression", "variables"} <= set(f) for f in body["formulas"])
@@ -120,3 +124,39 @@ def test_capabilities_lists_functions_and_limits(client):
     # Regression: these must NOT be exposed as constants.
     assert "E" not in body["functions"] and "I" not in body["functions"]
     assert body["limits"]["max_length"] == 500
+
+
+def test_unknown_api_path_404s_rather_than_returning_html(client):
+    """The SPA fallback must never shadow the API namespace."""
+    response = client.get("/api/does-not-exist")
+    assert response.status_code == 404
+    assert "html" not in response.headers.get("content-type", "")
+
+
+# -- static file serving --------------------------------------------------
+
+def test_static_paths_cannot_escape_the_bundle_directory(tmp_path):
+    """`FileResponse` serves whatever path it is given, so containment is on us."""
+    from app.main import resolve_static_file
+
+    root = tmp_path / "dist"
+    (root / "assets").mkdir(parents=True)
+    (root / "index.html").write_text("<div id='root'></div>")
+    (root / "assets" / "app.js").write_text("console.log(1)")
+    secret = tmp_path / "secret.txt"
+    secret.write_text("do not serve me")
+
+    # Legitimate requests resolve.
+    assert resolve_static_file(root, "index.html") == (root / "index.html").resolve()
+    assert resolve_static_file(root, "assets/app.js") == (root / "assets" / "app.js").resolve()
+
+    # Everything that points outside the bundle is refused.
+    for attempt in [
+        "../secret.txt",
+        "../../secret.txt",
+        "assets/../../secret.txt",
+        "/etc/passwd",
+        "",
+        "does-not-exist.js",
+    ]:
+        assert resolve_static_file(root, attempt) is None, attempt

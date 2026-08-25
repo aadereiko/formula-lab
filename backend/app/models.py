@@ -7,9 +7,10 @@ formula's own contents are then vetted by :mod:`app.security`.
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, EmailStr, Field
 
 
 class AnalyzeRequest(BaseModel):
@@ -56,3 +57,46 @@ class EvaluateResponse(BaseModel):
 
 class ErrorResponse(BaseModel):
     error: str
+
+
+# --------------------------------------------------------------------------
+# Accounts
+# --------------------------------------------------------------------------
+
+class RegisterRequest(BaseModel):
+    email: EmailStr
+    password: str = Field(..., min_length=8, max_length=256)
+
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str = Field(..., max_length=256)
+
+
+class UserResponse(BaseModel):
+    id: int
+    email: str
+    created_at: datetime
+
+
+# --------------------------------------------------------------------------
+# Saved formulas
+# --------------------------------------------------------------------------
+
+class SavedFormulaRequest(BaseModel):
+    name: str = Field(..., min_length=1, max_length=120)
+    expression: str = Field(..., min_length=1, max_length=500)
+    note: str = Field(default="", max_length=2000)
+    values: dict[str, str] = Field(default_factory=dict)
+    solve_for: str | None = Field(default=None, max_length=64)
+
+
+class SavedFormulaResponse(BaseModel):
+    id: int
+    name: str
+    expression: str
+    note: str
+    values: dict[str, str]
+    solve_for: str | None
+    created_at: datetime
+    updated_at: datetime

@@ -6,7 +6,7 @@ export function HelpPanel({ capabilities }: { capabilities: Capabilities | null 
   if (!capabilities) return null;
 
   return (
-    <section className="panel help-panel">
+    <section className="block">
       <button type="button" className="help-toggle" onClick={() => setOpen(!open)}>
         {open ? "Hide" : "Show"} syntax &amp; functions
       </button>

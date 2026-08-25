@@ -1,0 +1,22 @@
+# Local production-like run:  docker compose up --build
+# Then open http://localhost:7731
+services:
+  app:
+    build: .
+    ports:
+      - "7731:7731"
+    environment:
+      FORMULA_LAB_ENV: production
+      # Generate with: python3 -c "import secrets; print(secrets.token_urlsafe(48))"
+      FORMULA_LAB_SECRET: ${FORMULA_LAB_SECRET:?set FORMULA_LAB_SECRET in .env}
+      FORMULA_LAB_APP_URL: ${FORMULA_LAB_APP_URL:-http://localhost:7731/}
+      # Optional -- omit to run with email/password sign-in only.
+      FORMULA_LAB_GOOGLE_CLIENT_ID: ${FORMULA_LAB_GOOGLE_CLIENT_ID:-}
+      FORMULA_LAB_GOOGLE_CLIENT_SECRET: ${FORMULA_LAB_GOOGLE_CLIENT_SECRET:-}
+      FORMULA_LAB_GOOGLE_REDIRECT_URI: ${FORMULA_LAB_GOOGLE_REDIRECT_URI:-http://localhost:7731/api/auth/google/callback}
+    volumes:
+      # Keeps the SQLite file across container rebuilds.
+      - formula-lab-data:/data
+
+volumes:
+  formula-lab-data:
