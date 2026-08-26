@@ -747,8 +747,6 @@ h1, h2, h3 { font-weight: 550; }
   .variable-row { grid-template-columns: 1fr; gap: 7px; padding: 11px 0; }
   .variable-controls { gap: 8px; }
   .chip, .solve-toggle { min-height: 38px; padding: 8px 11px; }
-  /* No hover on touch, so the row tools have to stand revealed. */
-  .row-tool { opacity: 1; pointer-events: auto; }
   .saved-badge { max-width: 100%; }
 
   /* Stacked, so the maths takes the full width of the row rather than the
@@ -1830,6 +1828,14 @@ textarea.text-input { resize: vertical; line-height: 1.5; }
 .row-tool:active { transform: translate(0, 0); box-shadow: none; }
 .row-tool.is-on { color: var(--accent); }
 .row-tool.is-danger:hover { color: var(--danger); }
+/* Without hover there is nothing to reveal the tools, so on a touch device they
+   stand visible. This must sit *after* the base rule above: a media query adds
+   no specificity, so it is source order that decides, and `(hover: none)` beats
+   a width proxy -- a narrow desktop window still hovers, a large tablet does
+   not. */
+@media (hover: none) {
+  .row-tool { opacity: 1; pointer-events: auto; }
+}
 
 /* ── search ──────────────────────────────────────────────────────────── */
 
