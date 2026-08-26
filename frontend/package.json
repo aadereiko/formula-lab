@@ -5,10 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && python3 scripts/check-styles.py && vite build",
+    "build": "tsc --noEmit && node scripts/check-styles.mjs && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "check-styles": "python3 scripts/check-styles.py"
+    "check-styles": "node scripts/check-styles.mjs"
   },
   "dependencies": {
     "katex": "^0.16.11",

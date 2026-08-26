@@ -364,9 +364,11 @@ pip install "psycopg[binary]"
 export FORMULA_LAB_DATABASE_URL="postgresql+psycopg://user:pass@host:5432/formula_lab"
 ```
 
-Tables are created at startup, so nothing else is needed. The schema is created
-with `create_all`, which handles new tables and columns but not renames or
-drops — add Alembic before making a destructive change.
+Tables are created at startup, so nothing else is needed. New *tables* come
+from `create_all` and new *columns* from `ensure_columns`, which is a separate
+step precisely because `create_all` never alters a table that already exists.
+Neither handles renames or drops — add Alembic before making a destructive
+change.
 
 ### Before going live
 
@@ -476,11 +478,17 @@ keep beyond ordinary coverage:
 - `test_case_and_spacing_do_not_make_a_second_category` — the whole point of
   remembering a rubric is that it comes back the same, not nearly the same.
 
-`scripts/check-styles.py` runs in `npm run build` and answers a question the
+`scripts/check-styles.mjs` runs in `npm run build` and answers a question the
 type checker structurally cannot: **does every class the components render have
 a rule?** `className="dialog"` is a string, so a stylesheet that lost half its
 selectors still typechecks and still bundles — the app just renders unstyled.
 The check cross-references the two and names the file rendering each orphan.
+
+It is written in Node, not Python, for a reason worth keeping: it runs inside
+`npm run build`, and that script also runs in the Docker web stage, which is
+`node:alpine` and has no Python. The Python version passed locally and broke
+`docker build` outright. A guard that only works on the author's machine is not
+a guard.
 
 ## Look
 
@@ -649,7 +657,7 @@ backend/
 frontend/
   public/icon.svg         the app mark; PNGs beside it are generated
   scripts/make-icons.py   dependency-free SVG -> PNG rasteriser
-  scripts/check-styles.py every rendered class has a rule -- see Tests
+  scripts/check-styles.mjs every rendered class has a rule -- see Tests
   src/api.ts              typed client; separates user-fixable errors from ours
   src/useAuth.ts          session state, derived from the server
   src/useFormulaStore.ts  saved formulas: one interface over server or browser
