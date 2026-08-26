@@ -16,10 +16,10 @@
   /* How far a surface steps out from under its shadow. */
   --raise: 2px;
   /* How far the shadow sits behind it once raised. */
-  --raise-shadow: 5px;
+  --raise-shadow: 4px;
   /* Small controls get proportionally less of both, or they jump. */
   --raise-sm: 1px;
-  --raise-shadow-sm: 3px;
+  --raise-shadow-sm: 2px;
   /* Snappy with a little overshoot; a linear ease reads as sliding, not
      popping, which is the wrong feeling for this. */
   --raise-ease: cubic-bezier(0.34, 1.4, 0.64, 1);
@@ -33,10 +33,9 @@
  */
 .btn,
 .library-item,
-.saved-item,
+.saved-list li,
 .history-item,
-.formula-main,
-.brand,
+.formula-row,
 .card {
   transition:
     transform 0.13s var(--raise-ease),
@@ -68,13 +67,20 @@
 
 .btn:hover:not(:disabled),
 .library-item:hover,
-.saved-item:hover,
+.saved-list li:hover,
 .history-item:hover,
-.formula-main:hover,
-.brand:hover,
+.formula-row:hover,
 .card:hover {
   transform: translate(calc(var(--raise) * -1), calc(var(--raise) * -1));
   box-shadow: var(--raise-shadow) var(--raise-shadow) 0 var(--shadow-ink);
+}
+
+/* A raised row needs its own edge to read as one object. The separator
+   hairline is hidden rather than removed, so nothing shifts. */
+.formula-row:hover {
+  background: var(--bg-soft);
+  border-color: transparent;
+  border-radius: var(--radius);
 }
 
 .chip:hover:not(:disabled),
@@ -102,10 +108,9 @@
    reverse, so a click feels like the surface being pushed flat. */
 .btn:active:not(:disabled),
 .library-item:active,
-.saved-item:active,
+.saved-list li:active,
 .history-item:active,
-.formula-main:active,
-.brand:active,
+.formula-row:active,
 .chip:active:not(:disabled),
 .solve-toggle:active,
 .nav-link:active,
@@ -123,19 +128,25 @@
    it would promise something it cannot do. */
 .btn:disabled { transform: none !important; box-shadow: none !important; }
 
-/* The active row already carries a tint; a shadow on top of that reads as two
-   competing states. */
+/* The active row already carries a tint, so it rises a little less: a full
+   shadow on top of the tint reads as two competing states. */
 .library-item.is-active:hover,
-.saved-list li.is-active .saved-item:hover {
+.saved-list li.is-active:hover {
   box-shadow: var(--raise-shadow-sm) var(--raise-shadow-sm) 0 var(--shadow-ink);
 }
+
+/* The mark is a cube with no rectangular face of its own, so a rectangular
+   shadow behind it reads as a mistake. It gets a small pop instead. */
+.brand .logo { transition: transform 0.13s var(--raise-ease); }
+.brand:hover .logo { transform: scale(1.08); }
+.brand:active .logo { transform: scale(1); }
 
 /* Rows inside a scrolling list need to sit above their neighbours while raised,
    or the shadow lands under the next row instead of on it. */
 .library-item:hover,
-.saved-item:hover,
+.saved-list li:hover,
 .history-item:hover,
-.formula-main:hover,
+.formula-row:hover,
 .btn:hover:not(:disabled),
 .chip:hover:not(:disabled) {
   position: relative;

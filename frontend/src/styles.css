@@ -24,7 +24,7 @@
   --accent-ink: #0b0b0d;
   --danger: #f2565b;
   /* The hard shadow behind anything raised. See hover.css. */
-  --shadow-ink: #16307a;
+  --shadow-ink: #0c1a49;
 
   --radius: 9px;
   --pill: 100px;
@@ -52,7 +52,7 @@
     --accent-soft: #e9f0ff;
     --accent-ink: #ffffff;
     --danger: #d92d2d;
-    --shadow-ink: #1c2b5e;
+    --shadow-ink: #131c3d;
     color-scheme: light;
   }
 }
@@ -254,7 +254,13 @@ h1, h2, h3 { font-weight: 550; }
   gap: 1px;
   color: var(--ink-soft);
 }
-.library-item:hover, .saved-item:hover { background: var(--bg-sunken); color: var(--ink); }
+/* The library row is the whole button, so it paints itself. A saved row is a
+   button plus a delete control, so the *row* paints and the button stays
+   transparent -- otherwise the raised surface has a lighter block on one side
+   and the delete sits on a darker strip. */
+.library-item:hover { background: var(--bg-sunken); color: var(--ink); }
+.saved-list li:hover { background: var(--bg-sunken); }
+.saved-list li:hover .saved-item { background: transparent; color: var(--ink); }
 .library-item.is-active, .saved-list li.is-active .saved-item {
   background: var(--accent-soft);
   color: var(--ink);
