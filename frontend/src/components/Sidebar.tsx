@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { usePersistentState } from "../hooks";
 import type { Library, LibraryFormula } from "../types";
 import type { StoredFormula } from "../useFormulaStore";
-import { IconPin, IconSearch } from "./icons";
+import { IconGitHub, IconPin, IconSearch } from "./icons";
 
 interface Props {
   open: boolean;
@@ -391,7 +391,8 @@ export function Sidebar(props: Props) {
             target="_blank"
             rel="noreferrer noopener"
           >
-            Developed by aadereiko
+            <IconGitHub />
+            <span>Developed by aadereiko</span>
           </a>
           {version && <span className="side-version">v{version}</span>}
         </footer>

@@ -281,12 +281,22 @@ h1, h2, h3 { font-weight: 550; }
   font-size: 11.5px;
 }
 .side-credit {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   color: var(--ink-faint);
   text-decoration: none;
-  border-bottom: 1px solid transparent;
-  transition: color 0.12s, border-color 0.12s;
+  transition: color 0.12s;
 }
-.side-credit:hover { color: var(--accent); border-bottom-color: var(--accent); }
+/* The underline goes on the words, not the row: a border on the flex container
+   would run under the mark as well and read as a box around the logo. */
+.side-credit span {
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.12s;
+}
+.side-credit svg { flex: none; }
+.side-credit:hover { color: var(--accent); }
+.side-credit:hover span { border-bottom-color: var(--accent); }
 /* Tabular figures so the number does not jitter as versions change. */
 .side-version {
   color: var(--ink-faint);
