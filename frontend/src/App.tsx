@@ -12,9 +12,9 @@ import { Header } from "./components/Header";
 import { HelpPanel } from "./components/HelpPanel";
 import { HistoryPanel } from "./components/HistoryPanel";
 import { ResultPanel } from "./components/ResultPanel";
+import { SaveDialog } from "./components/SaveDialog";
 import { Sidebar } from "./components/Sidebar";
 import { VariablePanel } from "./components/VariablePanel";
-import { EditorPage } from "./pages/EditorPage";
 import { FormulasPage } from "./pages/FormulasPage";
 import type {
   AnalyzeResponse,
@@ -61,8 +61,6 @@ export default function App() {
 
   const [activeSaved, setActiveSaved] = useState<StoredFormula | null>(null);
   const [activeLibraryId, setActiveLibraryId] = useState<string | null>(null);
-  /** The formula the editor is working on: null for a new one. */
-  const [editing, setEditing] = useState<StoredFormula | null>(null);
   const [descriptions, setDescriptions] = useState<Record<string, string>>({});
   const [history, setHistory] = usePersistentState<HistoryEntry[]>("formula-lab.history", []);
 
@@ -70,6 +68,8 @@ export default function App() {
   const [authOpen, setAuthOpen] = useState(false);
   const [authReason, setAuthReason] = useState<string | null>(null);
   const [accountOpen, setAccountOpen] = useState(false);
+  /** Non-null while the save dialog is open, carrying what it is saving over. */
+  const [saving, setSaving] = useState<{ existing: StoredFormula | null } | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [migrateDismissed, setMigrateDismissed] = useState(false);
 
@@ -209,6 +209,7 @@ export default function App() {
   }, []);
 
   // -- opening formulas ----------------------------------------------------
+  // Everything lands on the one workspace: write, solve and save in place.
   const pickLibrary = (formula: LibraryFormula) => {
     setExpression(formula.expression);
     setActiveLibraryId(formula.id);
@@ -221,7 +222,7 @@ export default function App() {
       Object.fromEntries(formula.variables.map((v) => [v.symbol, v.description])),
     );
     setMenuOpen(false);
-    navigate("calculator");
+    navigate("home");
   };
 
   const openSaved = (formula: StoredFormula) => {
@@ -231,28 +232,22 @@ export default function App() {
     setActiveSaved(formula);
     setActiveLibraryId(null);
     // The formula's own variable descriptions take the place of the built-in
-    // library's, so the calculator explains a user's formula the same way.
+    // library's, so the workspace explains a user's formula the same way.
     setDescriptions(formula.variableNotes ?? {});
     setResult(null);
     setResultError(null);
     setMenuOpen(false);
-    navigate("calculator");
-  };
-
-  const editFormula = (formula: StoredFormula | null) => {
-    setEditing(formula);
-    if (formula) {
-      setExpression(formula.expression);
-      setValues(formula.values);
-      setSolveFor(formula.solveFor);
-      setActiveSaved(formula);
-    }
-    setMenuOpen(false);
     navigate("home");
   };
 
+  /** Open a saved formula and go straight to its details. */
+  const editFormula = (formula: StoredFormula) => {
+    openSaved(formula);
+    setSaving({ existing: formula });
+  };
+
   const startNewFormula = () => {
-    setEditing(null);
+    setSaving(null);
     setExpression("");
     setValues({});
     setSolveFor(null);
@@ -271,6 +266,7 @@ export default function App() {
     setSolveFor(entry.solveFor);
     setActiveLibraryId(null);
     setActiveSaved(null);
+    navigate("home");
   };
 
   const onExpressionChange = (next: string) => {
@@ -281,19 +277,20 @@ export default function App() {
   };
 
   // -- saving --------------------------------------------------------------
-  // No account required: a guest's formulas go to localStorage, and the store
-  // presents both the same way.
-  const performSave = async (draft: FormulaDraft, asNew: boolean) => {
-    const updating = editing !== null && !asNew;
-    const stored = updating ? await store.update(editing!, draft) : await store.save(draft);
+  const performSave = async (
+    details: Omit<FormulaDraft, "values" | "solveFor">,
+    asNew: boolean,
+  ) => {
+    const existing = saving?.existing ?? null;
+    const draft: FormulaDraft = { ...details, values: relevantValues, solveFor };
+    const updating = existing !== null && !asNew;
+    const stored = updating ? await store.update(existing, draft) : await store.save(draft);
 
-    setEditing(stored);
     setActiveSaved(stored);
     setActiveLibraryId(null);
     setDescriptions(stored.variableNotes);
+    setSaving(null);
     flash(updating ? "Saved changes" : signedIn ? "Saved" : "Saved in this browser");
-    // Land on the calculator so the formula can be used straight away.
-    navigate("calculator");
   };
 
   const deleteSaved = async (formula: StoredFormula) => {
@@ -339,16 +336,15 @@ export default function App() {
         checking={auth.checking}
         menuOpen={menuOpen}
         route={route}
-        showMenu={route === "calculator"}
-        editingExisting={editing !== null}
-        onNewFormula={startNewFormula}
+        showMenu={route === "home"}
         savedCount={store.formulas.length}
         onNavigate={navigate}
+        onNewFormula={startNewFormula}
         onToggleMenu={() => setMenuOpen((open) => !open)}
         onAccount={() => (auth.user ? setAccountOpen(true) : promptSignIn())}
       />
 
-      {route === "calculator" && (
+      {route === "home" && (
         <Sidebar
           open={menuOpen}
           onClose={() => setMenuOpen(false)}
@@ -367,9 +363,9 @@ export default function App() {
         />
       )}
 
-      {/* Only the calculator has a sidebar, so every other route reclaims the
-          space it would occupy. */}
-      <main className={`workspace${route === "calculator" ? "" : " is-full"}`}>
+      {/* Only the workspace has a sidebar, so the list page reclaims the space
+          it would otherwise occupy. */}
+      <main className={`workspace${route === "home" ? "" : " is-full"}`}>
         {offline && <p className="banner">{offline}</p>}
         {notice && (
           <p className="notice" role="status">
@@ -399,23 +395,7 @@ export default function App() {
           </div>
         )}
 
-        {route === "home" ? (
-          <EditorPage
-            existing={editing}
-            expression={expression}
-            onExpressionChange={onExpressionChange}
-            analysis={analysis}
-            analyzeError={analyzeError}
-            pending={expression.trim() !== debouncedExpression.trim()}
-            signedIn={signedIn}
-            hints={library?.variable_hints ?? {}}
-            fallbackHint={library?.fallback_hint ?? "mass (kg)"}
-            values={relevantValues}
-            solveFor={solveFor}
-            onSave={performSave}
-            onCancel={editing ? () => navigate("formulas") : null}
-          />
-        ) : route === "formulas" ? (
+        {route === "formulas" ? (
           <FormulasPage
             formulas={store.formulas}
             loading={store.loading}
@@ -440,7 +420,8 @@ export default function App() {
                 canSave={Boolean(analysis)}
                 savedName={activeSaved?.name ?? null}
                 description={activeSaved?.note || null}
-                onSave={() => editFormula(activeSaved)}
+                onSave={() => setSaving({ existing: activeSaved })}
+                onClear={expression.trim() ? startNewFormula : null}
               />
 
               <VariablePanel
@@ -488,6 +469,20 @@ export default function App() {
           </div>
         )}
       </main>
+
+      {saving && analysis && (
+        <SaveDialog
+          expression={analysis.expression}
+          latex={analysis.latex}
+          symbols={symbols}
+          hints={library?.variable_hints ?? {}}
+          fallbackHint={library?.fallback_hint ?? "mass (kg)"}
+          existing={saving.existing}
+          storageNote={signedIn ? null : "Saved in this browser until you sign in."}
+          onSave={performSave}
+          onCancel={() => setSaving(null)}
+        />
+      )}
 
       {authOpen && !auth.user && (
         <AuthDialog

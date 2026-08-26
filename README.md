@@ -21,8 +21,8 @@ make install     # backend/.venv + npm dependencies
 make dev         # API on 7731, web on 7732
 ```
 
-Open <http://localhost:7732>. It starts on a blank **New formula** page; no
-account is needed for anything.
+Open <http://localhost:7732>. It starts on a blank workspace; no account is
+needed for anything.
 
 ### Ports
 
@@ -36,15 +36,17 @@ Chosen to sit outside the ranges other local projects use (Vite's 5173–5175,
 
 ## Using it
 
-Three pages:
+Two pages:
 
 | Page | Path | What it is for |
 | ---- | ---- | -------------- |
-| **Home** | `/` | Write a formula, describe it, save it. The landing page |
-| **Calculator** | `/calculator` | Fill in values and solve |
+| **Workspace** | `/` | Write a formula, solve it, save it — all in one place |
 | **My formulas** | `/formulas` | Everything you have saved |
 
-Pick a formula from the sidebar, type your own, or open one you saved.
+Writing, solving and saving are deliberately not separate pages: you type a
+formula, fill in whichever values you have, read the answer, and press Save if
+it is worth keeping. Nothing forces that order. Pick a formula from the sidebar,
+type your own, or reopen one from *Recent*.
 
 | You type    | You get                                          |
 | ----------- | ------------------------------------------------ |
@@ -75,13 +77,13 @@ number and the imaginary unit. Write `exp(1)` if you want *e*.
 
 ### Saving your own
 
-The **Home** page is where a formula gets written, in two steps. First the
-formula alone: type it, watch it render, and press **Save**. Only then do the
-name, the description and — generated from whatever the formula mentions — **a
-description for each variable** appear. That order matches how the work
-actually goes: there is nothing to describe until there is a formula, and the
-variable fields cannot exist until the expression has been parsed. `Change`
-goes back to the formula.
+Press **Save** and a dialog asks for a name, a description, and — generated
+from whatever the formula mentions — **a description for each variable**.
+
+A dialog rather than fields on the page: the workspace already lists every
+variable once for its *value*, and a second list of the same symbols for their
+*meanings* directly beneath it would be genuinely confusing. The formula and
+its values stay visible behind.
 
 Each of those fields suggests an example in the right shape: `v` prompts with
 "e.g. velocity (m/s)", `rho` with "e.g. density (kg/m³)". The examples come from

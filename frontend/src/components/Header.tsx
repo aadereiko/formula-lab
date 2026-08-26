@@ -8,8 +8,6 @@ interface Props {
   menuOpen: boolean;
   showMenu: boolean;
   route: Route;
-  /** True when the editor is working on an existing formula, not a new one. */
-  editingExisting: boolean;
   savedCount: number;
   onNavigate: (next: Route) => void;
   onNewFormula: () => void;
@@ -23,7 +21,6 @@ export function Header({
   menuOpen,
   showMenu,
   route,
-  editingExisting,
   savedCount,
   onNavigate,
   onNewFormula,
@@ -44,7 +41,6 @@ export function Header({
         </button>
       )}
 
-      {/* The wordmark goes to the landing page, which is now Home. */}
       <button type="button" className="brand" onClick={() => onNavigate("home")}>
         <Logo size={20} />
         <span className="brand-name">Formula Lab</span>
@@ -53,21 +49,11 @@ export function Header({
       <nav className="nav">
         <button
           type="button"
-          // Editing an existing formula shares this route but is not "New",
-          // so the highlight would otherwise be misleading.
-          className={`nav-link${route === "home" && !editingExisting ? " is-active" : ""}`}
-          aria-current={route === "home" && !editingExisting}
-          onClick={onNewFormula}
+          className={`nav-link${route === "home" ? " is-active" : ""}`}
+          aria-current={route === "home"}
+          onClick={() => onNavigate("home")}
         >
-          Home
-        </button>
-        <button
-          type="button"
-          className={`nav-link${route === "calculator" ? " is-active" : ""}`}
-          aria-current={route === "calculator"}
-          onClick={() => onNavigate("calculator")}
-        >
-          Calculator
+          Workspace
         </button>
         <button
           type="button"
@@ -80,9 +66,14 @@ export function Header({
         </button>
       </nav>
 
-      <button type="button" className="account-btn" onClick={onAccount}>
-        {checking ? "…" : user ? shortEmail(user.email) : "Sign in"}
-      </button>
+      <div className="header-end">
+        <button type="button" className="btn btn-small" onClick={onNewFormula}>
+          New
+        </button>
+        <button type="button" className="account-btn" onClick={onAccount}>
+          {checking ? "…" : user ? shortEmail(user.email) : "Sign in"}
+        </button>
+      </div>
     </header>
   );
 }

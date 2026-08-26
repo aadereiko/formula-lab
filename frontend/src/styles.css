@@ -1245,3 +1245,138 @@ textarea.text-input { resize: vertical; line-height: 1.5; }
   flex: 1 1 0;
   align-self: center;
 }
+
+/* ── header end ──────────────────────────────────────────────────────── */
+
+.header-end { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+.account-btn { margin-left: 0; }
+
+/* ── saved formulas as a list ────────────────────────────────────────── */
+
+/* A list, not cards: these rows carry a name, an expression and two actions.
+   A card's worth of chrome around that much content reads as padding. */
+.formula-list { list-style: none; margin: 0; padding: 0; }
+
+.formula-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-top: 1px solid var(--line);
+  transition: background 0.1s;
+}
+.formula-row:last-child { border-bottom: 1px solid var(--line); }
+.formula-row:hover { background: var(--bg-soft); }
+
+.formula-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 13px 10px 13px 4px;
+  color: inherit;
+}
+
+.formula-line { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+.formula-name { font-size: 14.5px; font-weight: 600; flex: none; }
+.formula-expr {
+  font-size: 12px;
+  color: var(--ink-faint);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.formula-note {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 70ch;
+}
+
+/* Revealed on hover so a long list stays quiet, but always present for
+   keyboard users and on touch, where there is no hover to rely on. */
+.formula-actions { display: flex; gap: 6px; padding-right: 4px; flex: none; opacity: 0; }
+.formula-row:hover .formula-actions,
+.formula-actions:focus-within { opacity: 1; }
+
+/* ── blank slate ─────────────────────────────────────────────────────── */
+
+/* Centred in the page rather than stranded in the top-left corner, and with a
+   single action instead of one here and another in the header. */
+.blank-slate {
+  min-height: min(58vh, 460px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 14px;
+  padding: 20px;
+}
+.blank-mark { opacity: 0.22; }
+.blank-title { margin: 0; font-size: 19px; font-weight: 600; letter-spacing: -0.02em; }
+.blank-text {
+  margin: 0;
+  max-width: 44ch;
+  font-size: 13.5px;
+  color: var(--ink-faint);
+  line-height: 1.55;
+}
+.blank-slate .btn { margin-top: 4px; }
+
+/* ── save dialog ─────────────────────────────────────────────────────── */
+
+/* Wider than the auth dialog, and scrolls its body rather than the whole
+   sheet, so the title and the buttons stay put with many variables. */
+.dialog-save {
+  max-width: 560px;
+  display: flex;
+  flex-direction: column;
+  max-height: min(86vh, 760px);
+  padding: 20px 0 0;
+}
+.dialog-save .dialog-head { padding: 0 22px; }
+.dialog-body {
+  overflow-y: auto;
+  padding: 4px 22px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.dialog-formula { margin-top: 0; }
+.dialog-formula code { font-size: 13px; color: var(--ink-soft); }
+
+.field { display: flex; flex-direction: column; gap: 6px; }
+.field .label { display: flex; align-items: baseline; gap: 8px; }
+.field-count { font-weight: 400; }
+
+.meaning-list { display: flex; flex-direction: column; gap: 8px; }
+.meaning-row { display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 10px; align-items: center; }
+.meaning-row .variable-symbol { justify-self: start; }
+.meaning-row .text-input { font-size: 14px; min-height: 36px; }
+
+.dialog-save .dialog-actions {
+  border-top: 1px solid var(--line);
+  padding: 14px 22px;
+  background: var(--bg-soft);
+  border-radius: 0 0 12px 12px;
+  align-items: center;
+}
+.dialog-error { margin-right: auto; font-size: 12.5px; }
+
+@media (max-width: 899px) {
+  .header-end .btn-small { display: none; }   /* the sidebar already offers it */
+  .formula-row { align-items: flex-start; flex-direction: column; gap: 0; }
+  .formula-main { padding: 12px 4px 6px; width: 100%; }
+  .formula-line { flex-wrap: wrap; gap: 6px; }
+  .formula-actions { opacity: 1; padding: 0 4px 12px; }
+  .blank-slate { min-height: 44vh; }
+  .meaning-row { grid-template-columns: 1fr; gap: 4px; }
+  .dialog-save { max-height: 92vh; }
+  .dialog-save .dialog-head, .dialog-body, .dialog-save .dialog-actions { padding-inline: 16px; }
+}

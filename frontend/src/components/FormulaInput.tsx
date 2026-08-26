@@ -10,6 +10,8 @@ interface Props {
   savedName: string | null;
   description: string | null;
   onSave: () => void;
+  /** Null when there is nothing to clear. */
+  onClear: (() => void) | null;
 }
 
 export function FormulaInput({
@@ -22,6 +24,7 @@ export function FormulaInput({
   savedName,
   description,
   onSave,
+  onClear,
 }: Props) {
   return (
     <section className="block">
@@ -30,8 +33,18 @@ export function FormulaInput({
           Formula
         </label>
         {savedName && <span className="saved-badge">{savedName}</span>}
-        <button type="button" className="btn btn-small" disabled={!canSave} onClick={onSave}>
-          {savedName ? "Edit" : "Save"}
+        {onClear && (
+          <button type="button" className="chip" onClick={onClear}>
+            clear
+          </button>
+        )}
+        <button
+          type="button"
+          className="btn btn-primary btn-small"
+          disabled={!canSave}
+          onClick={onSave}
+        >
+          {savedName ? "Edit details" : "Save"}
         </button>
       </div>
 

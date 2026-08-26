@@ -1,30 +1,34 @@
 import { useCallback, useEffect, useState } from "react";
 
-/** `home` is the landing page: a blank formula waiting to be written. */
-export type Route = "home" | "calculator" | "formulas";
+/**
+ * Two pages: the workspace, and the list of saved formulas.
+ *
+ * Writing a formula, solving it and saving it all happen in one place, so
+ * there is no separate calculator route any more.
+ */
+export type Route = "home" | "formulas";
 
 const PATHS: Record<Route, string> = {
   home: "/",
-  calculator: "/calculator",
   formulas: "/formulas",
 };
 
 function routeFor(pathname: string): Route {
-  const path = pathname.replace(/\/+$/, "");
-  if (path === "/formulas") return "formulas";
-  if (path === "/calculator") return "calculator";
-  return "home";
+  return pathname.replace(/\/+$/, "") === "/formulas" ? "formulas" : "home";
 }
 
-/**
- * Minimal history-API routing.
- *
- * No router dependency: there are three destinations, and the server already
- * serves index.html for unknown paths (as does Vite in development), so real
- * URLs work without hash fragments.
- */
+/** The calculator used to live on its own path; keep old links working. */
+const RETIRED_PATHS = new Set(["/calculator"]);
+
 export function useRoute() {
   const [route, setRoute] = useState<Route>(() => routeFor(window.location.pathname));
+
+  useEffect(() => {
+    // Rewrite rather than redirect, so the back button does not bounce.
+    if (RETIRED_PATHS.has(window.location.pathname.replace(/\/+$/, ""))) {
+      window.history.replaceState({}, "", "/");
+    }
+  }, []);
 
   useEffect(() => {
     // Fires on browser back/forward, which pushState does not trigger itself.

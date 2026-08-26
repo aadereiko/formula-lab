@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { MathView } from "../components/MathView";
+import { Logo } from "../components/Logo";
 import type { StoredFormula } from "../useFormulaStore";
 
 interface Props {
@@ -41,6 +41,30 @@ export function FormulasPage({
     );
   }, [formulas, query]);
 
+  // An empty page carries its own single call to action, so the header's
+  // actions would only compete with it.
+  const isEmpty = !loading && formulas.length === 0;
+
+  if (isEmpty) {
+    return (
+      <div className="page">
+        <div className="blank-slate">
+          <span className="blank-mark" aria-hidden="true">
+            <Logo size={40} />
+          </span>
+          <h1 className="blank-title">No formulas yet</h1>
+          <p className="blank-text">
+            Write a formula in the workspace and press Save. It will show up here.
+            {!signedIn && " No account needed — it stays in this browser until you sign in."}
+          </p>
+          <button type="button" className="btn btn-primary" onClick={onNew}>
+            Write a formula
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="page">
       <div className="page-head">
@@ -49,11 +73,11 @@ export function FormulasPage({
           <p className="page-sub">
             {signedIn
               ? "Saved to your account."
-              : `Saved in this browser (up to ${limit}). Nobody else can see them, and clearing site data removes them.`}
+              : `Saved in this browser, up to ${limit}. Sign in to keep them across devices.`}
           </p>
         </div>
         <div className="page-actions">
-          {!signedIn && formulas.length > 0 && (
+          {!signedIn && (
             <button type="button" className="btn" onClick={onSignIn}>
               Sign in to sync
             </button>
@@ -66,7 +90,7 @@ export function FormulasPage({
 
       {error && <p className="banner">{error}</p>}
 
-      {formulas.length > 4 && (
+      {formulas.length > 6 && (
         <input
           className="search page-search"
           value={query}
@@ -76,97 +100,60 @@ export function FormulasPage({
         />
       )}
 
-      {loading && <p className="page-empty">Loading…</p>}
+      {loading && <p className="page-sub">Loading…</p>}
 
-      {!loading && formulas.length === 0 && (
-        <div className="page-empty">
-          <p>Nothing saved yet.</p>
-          <p className="auth-hint">
-            Write a formula on the Home page and press Save.
-            {!signedIn &&
-              " You do not need an account \u2014 formulas are kept in this browser until you sign in."}
-          </p>
-          <button type="button" className="btn btn-primary" onClick={onNew}>
-            Write a formula
-          </button>
-        </div>
+      {!loading && visible.length === 0 && (
+        <p className="page-sub">No matches for “{query}”.</p>
       )}
 
-      {!loading && formulas.length > 0 && visible.length === 0 && (
-        <p className="page-empty">No matches for “{query}”.</p>
-      )}
-
-      <ul className="cards">
-        {visible.map((formula) => {
-          const entries = Object.entries(formula.values);
-          return (
-            <li key={formula.key} className="card">
-              <div className="card-head">
-                <h2 className="card-name">{formula.name}</h2>
+      <ul className="formula-list">
+        {visible.map((formula) => (
+          <li key={formula.key} className="formula-row">
+            {/* The whole row opens the formula; the buttons beside it stop the
+                click from reaching this one. */}
+            <button type="button" className="formula-main" onClick={() => onOpen(formula)}>
+              <span className="formula-line">
+                <span className="formula-name">{formula.name}</span>
                 {formula.serverId === null && (
                   <span className="card-tag" title="Stored in this browser only">
                     local
                   </span>
                 )}
-              </div>
+                <code className="formula-expr">{formula.expression}</code>
+              </span>
+              {formula.note && <span className="formula-note">{formula.note}</span>}
+            </button>
 
-              <div className="card-math preview-strip">
-                <MathView latex={latexish(formula.expression)} />
-              </div>
-              <code className="card-source">{formula.expression}</code>
-
-              {formula.note && <p className="card-note">{formula.note}</p>}
-
-              {Object.keys(formula.variableNotes ?? {}).length > 0 && (
-                <dl className="card-legend">
-                  {Object.entries(formula.variableNotes).map(([symbol, meaning]) => (
-                    <div key={symbol}>
-                      <dt>{symbol}</dt>
-                      <dd>{meaning}</dd>
-                    </div>
-                  ))}
-                </dl>
-              )}
-
-              {entries.length > 0 && (
-                <dl className="card-values">
-                  {entries.map(([name, value]) => (
-                    <div key={name}>
-                      <dt>{name}</dt>
-                      <dd>{value}</dd>
-                    </div>
-                  ))}
-                </dl>
-              )}
-
-              <div className="card-actions">
-                <button type="button" className="btn btn-small" onClick={() => onOpen(formula)}>
-                  Open
-                </button>
-                <button type="button" className="btn btn-small" onClick={() => onEdit(formula)}>
-                  Edit
-                </button>
-                {confirming === formula.key ? (
-                  <>
-                    <button
-                      type="button"
-                      className="btn btn-small btn-danger"
-                      onClick={() => {
-                        setConfirming(null);
-                        onDelete(formula);
-                      }}
-                    >
-                      Delete
-                    </button>
-                    <button
-                      type="button"
-                      className="btn btn-small"
-                      onClick={() => setConfirming(null)}
-                    >
-                      Keep
-                    </button>
-                  </>
-                ) : (
+            <span className="formula-actions">
+              {confirming === formula.key ? (
+                <>
+                  <button
+                    type="button"
+                    className="btn btn-small btn-danger"
+                    onClick={() => {
+                      setConfirming(null);
+                      onDelete(formula);
+                    }}
+                  >
+                    Delete
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-small"
+                    onClick={() => setConfirming(null)}
+                  >
+                    Keep
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    className="btn btn-small"
+                    onClick={() => onEdit(formula)}
+                  >
+                    Edit
+                  </button>
                   <button
                     type="button"
                     className="btn btn-small"
@@ -174,28 +161,12 @@ export function FormulasPage({
                   >
                     Delete
                   </button>
-                )}
-              </div>
-            </li>
-          );
-        })}
+                </>
+              )}
+            </span>
+          </li>
+        ))}
       </ul>
     </div>
   );
-}
-
-/**
- * A rough source-to-LaTeX pass for the card previews.
- *
- * The authoritative rendering comes from SymPy via /api/analyze, but that is one
- * request per card. These previews are decorative, so a few substitutions are
- * enough — and MathView falls back to showing the source if KaTeX cannot parse
- * the result.
- */
-function latexish(expression: string): string {
-  return expression
-    .replace(/\*\*/g, "^")
-    .replace(/\*/g, " \\cdot ")
-    .replace(/\b(alpha|beta|gamma|delta|theta|lambda|mu|pi|rho|sigma|tau|phi|omega|eta)\b/g, "\\$1")
-    .replace(/\b(sin|cos|tan|log|exp|sqrt)\b/g, "\\$1");
 }
