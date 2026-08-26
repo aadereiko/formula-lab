@@ -539,6 +539,13 @@ palette block reads it; every other rule in the app goes through the tokens and
 never asks about the scheme, which is what kept adding an explicit override to a
 one-place change.
 
+Shadows are the one place the two themes take different values rather than the
+same token: on near-black a shadow has to be darker than the page, so it is a
+deep navy, while on white that same colour just reads as black and the blue is
+lost. Light uses a mid blue instead — light enough to sit under a white surface,
+saturated enough to still look blue, and far enough from the accent to stay
+visible behind an accent-filled button, which the accent itself was not.
+
 ## Hover
 
 Everything the pointer can act on lifts: buttons, navigation, library rows,

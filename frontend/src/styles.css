@@ -23,7 +23,13 @@
      contrast than white does, and is what makes the primary action pop. */
   --accent-ink: #0b0b0d;
   --danger: #f2565b;
-  /* The hard shadow behind anything raised. See hover.css. */
+  /* The hard shadow behind anything raised. See hover.css.
+     Dark and light diverge on purpose rather than sharing one value. On
+     near-black a shadow has to be darker than the page to read at all, so it is
+     a deep navy. On white the same colour just reads as black -- the blue is
+     invisible -- so light takes a mid blue instead: light enough to sit under a
+     white surface, saturated enough to still be blue, and distinct from the
+     accent so it stays visible behind an accent-filled button. */
   --shadow-ink: #0c1a49;
 
   --radius: 9px;
@@ -67,7 +73,7 @@
     --accent-soft: #e9f0ff;
     --accent-ink: #ffffff;
     --danger: #d92d2d;
-    --shadow-ink: #131c3d;
+    --shadow-ink: #6f96e8;
 
     --tag-sat: 58%;
     --tag-ink-l: 34%;
@@ -94,7 +100,7 @@
     --accent-soft: #e9f0ff;
     --accent-ink: #ffffff;
     --danger: #d92d2d;
-    --shadow-ink: #131c3d;
+    --shadow-ink: #6f96e8;
 
     --tag-sat: 58%;
     --tag-ink-l: 34%;
