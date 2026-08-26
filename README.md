@@ -570,17 +570,19 @@ divided into four coloured cells, and `rotateY` gives it a genuine turntable
 spin: a full turn under the cursor, and one on its own every fifteen seconds
 after sitting still for most of the cycle.
 
-One small cube comes loose partway through — out of the solid, a moment in the
-air, and back. At rest it sits at the centre of the cube, where the six faces
-enclose it completely, so it is simply invisible until it travels out. No fading
-required.
+A ball orbits it partway through — out from behind the cube, round the front, and
+back. At rest it sits behind the cube and dead centre, where the six faces
+enclose it, so it is invisible until it travels out and no opacity trick is
+needed to hide it. It shares the faces' 3D context, so on the far side of the
+circle the cube itself occludes it rather than anything faking depth.
 
-Its Z travel is *negative*, and that sign is the whole trick. The piece moves in
-the cube's local space and is then rotated by the body's `rotateY(-36deg)`, which
-maps screen-x to `x·cos − z·sin`. Moving equally in +x and +z therefore very
-nearly cancels — measured, it cleared the silhouette by exactly zero pixels,
-which is why the piece appeared never to leave. Flipping Z makes the two terms
-add.
+The path is keyframed as `translate3d` samples of a circle rather than as a
+`rotateY` on a parent, which is the obvious way and the wrong one: a flat disc
+carried round by a rotation turns with it, goes edge-on at the sides of the
+circle, and vanishes. Sampling leaves the ball facing the viewer throughout.
+Each frame also carries a scale, 1.3 at the front down to 0.7 at the back —
+perspective alone gives 1.065x against 0.943x, which is real and invisible on a
+16px mark.
 
 The flat SVG mark stays for the favicon and for static decoration, where nothing
 needs to rotate. The signed-out control carries the same cube as a wireframe

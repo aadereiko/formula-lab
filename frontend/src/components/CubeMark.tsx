@@ -15,8 +15,8 @@ const CELLS = [0, 1, 2, 3];
  *
  * Three nested elements, because each owns one transform and a single element
  * cannot hold three: the body carries the resting orientation and the idle
- * turn, the spinner carries the hover turn, and one small cube rides along and
- * detaches on its own schedule.
+ * turn, the spinner carries the hover turn, and a ball orbits on its own
+ * schedule.
  */
 export function CubeMark({ size = 24 }: Props) {
   return (
@@ -36,12 +36,10 @@ export function CubeMark({ size = 24 }: Props) {
           ))}
         </span>
 
-        {/* The piece that comes loose. Three faces is all a corner shows. */}
-        <span className="cube3d-chip">
-          <span className="chip-face is-front" />
-          <span className="chip-face is-top" />
-          <span className="chip-face is-right" />
-        </span>
+        {/* Orbits the cube: out from behind, round the front, and back. A
+            sibling of the faces rather than a child, so it shares their 3D
+            context and the cube can hide it on the far side of the circle. */}
+        <span className="cube3d-ball" />
       </span>
     </span>
   );
