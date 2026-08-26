@@ -3,24 +3,28 @@ interface Props {
 }
 
 /**
- * The app mark, inline rather than an <img> so it inherits nothing from the
- * network and can be sized freely in the header.
+ * The app mark: an isometric cube, three faces each lit differently.
  *
- * Same two shapes as public/icon.svg -- an equals sign with offset bars, which
- * survives being shrunk to a favicon.
+ * Inline rather than an <img> so it inherits nothing from the network and can
+ * be sized freely. Same geometry as public/icon.svg — the shading is what
+ * carries the depth, which is why it survives being shrunk to a favicon.
  */
 export function Logo({ size = 22 }: Props) {
   return (
-    <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true" className="logo">
-      <defs>
-        <linearGradient id="logo-tile" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#5b8cff" />
-          <stop offset="1" stopColor="#2454e6" />
-        </linearGradient>
-      </defs>
-      <rect width="64" height="64" rx="15" fill="url(#logo-tile)" />
-      <rect x="15" y="23" width="27" height="7" rx="3.5" fill="#fff" />
-      <rect x="22" y="34" width="27" height="7" rx="3.5" fill="#fff" opacity="0.88" />
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 64 64"
+      aria-hidden="true"
+      className="logo"
+      // Rounded joins soften the corners and close the hairline seams that
+      // anti-aliasing would otherwise leave between adjacent faces.
+      strokeLinejoin="round"
+      strokeWidth="2"
+    >
+      <path d="M32 6 54 18.7 32 31.4 10 18.7Z" fill="#8FB3FF" stroke="#8FB3FF" />
+      <path d="M10 18.7 32 31.4 32 58 10 45.3Z" fill="#4D8DFF" stroke="#4D8DFF" />
+      <path d="M54 18.7 54 45.3 32 58 32 31.4Z" fill="#2454E6" stroke="#2454E6" />
     </svg>
   );
 }

@@ -1,13 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Formula Lab">
-  <defs>
-    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#5b8cff"/>
-      <stop offset="1" stop-color="#2454e6"/>
-    </linearGradient>
-  </defs>
-  <rect width="64" height="64" rx="15" fill="url(#tile)"/>
-  <!-- An equals sign with offset bars: an equation still being balanced.
-       Two shapes only, and bars thick enough to survive a 16px favicon. -->
-  <rect x="15" y="23" width="27" height="7" rx="3.5" fill="#fff"/>
-  <rect x="22" y="34" width="27" height="7" rx="3.5" fill="#fff" opacity="0.88"/>
+  <!-- An isometric cube: three faces, each lit differently. The shading is
+       what carries the depth, so it still reads as solid at 16px where any
+       outline detail would disappear. -->
+  <g stroke-linejoin="round" stroke-width="2">
+    <!-- top -->
+    <path d="M32 6 54 18.7 32 31.4 10 18.7Z" fill="#8FB3FF" stroke="#8FB3FF"/>
+    <!-- left -->
+    <path d="M10 18.7 32 31.4 32 58 10 45.3Z" fill="#4D8DFF" stroke="#4D8DFF"/>
+    <!-- right -->
+    <path d="M54 18.7 54 45.3 32 58 32 31.4Z" fill="#2454E6" stroke="#2454E6"/>
+  </g>
 </svg>

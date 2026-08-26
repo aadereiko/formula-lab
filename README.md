@@ -379,15 +379,18 @@ unavailable.
 
 ## The icon
 
-`frontend/public/icon.svg` is the source: a rounded tile and two offset bars —
-an equals sign still being balanced. Two shapes only, which is what keeps it
-readable shrunk to a 16px favicon.
+`frontend/public/icon.svg` is the source: an isometric cube, three faces each
+lit differently. The **shading** carries the depth rather than any outline, which
+is what keeps it reading as a solid at 16px, where line detail would disappear
+entirely. The faces tile a hexagon exactly, so no seam can open between two of
+them.
 
 iOS will not use an SVG touch icon and a web manifest wants real bitmaps, so
 `scripts/make-icons.py` rasterises the same geometry to PNG. It has no
 dependencies — none of rsvg, cairo or PIL turned out to be installed — and
-draws the shapes directly, writing the file with `zlib` and `struct`. Rerun it
-after changing the mark:
+draws the faces directly with a point-in-polygon test, writing the file with
+`zlib` and `struct`. Those PNGs are opaque: transparency on an iOS home screen
+renders as black. Rerun it after changing the mark:
 
 ```bash
 cd frontend && python3 scripts/make-icons.py

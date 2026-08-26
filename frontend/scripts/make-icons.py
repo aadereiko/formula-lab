@@ -3,8 +3,12 @@
 
 iOS will not use an SVG touch icon and a web manifest wants real bitmaps, so
 the SVG needs rasterising. No converter (rsvg, cairo, PIL) is assumed to be
-installed, so this draws the same two shapes directly and writes the PNG with
+installed, so this draws the same shapes directly and writes the PNG with
 nothing but `zlib` and `struct`.
+
+The mark is an isometric cube: three quadrilateral faces, each a different
+shade. The shading carries the depth, which is why it still reads as solid at
+favicon size where any outline detail would vanish.
 
 Kept as a script rather than committed-only output so the icons can be
 regenerated when the mark changes.
@@ -20,64 +24,46 @@ from pathlib import Path
 
 PUBLIC = Path(__file__).resolve().parent.parent / "public"
 
-# The same geometry as public/icon.svg, in its 64-unit coordinate space.
-TOP_BAR = (15, 23, 42, 30)      # x0, y0, x1, y1
-BOTTOM_BAR = (22, 34, 49, 41)
-BAR_RADIUS = 3.5
-GRADIENT_TOP = (0x5B, 0x8C, 0xFF)
-GRADIENT_BOTTOM = (0x24, 0x54, 0xE6)
-BOTTOM_BAR_ALPHA = 0.88
+# The same geometry as public/icon.svg, in its 64-unit coordinate space. The
+# three faces tile a hexagon exactly, so every sample lands in one of them and
+# no seam can open up between two adjacent faces.
+FACES: list[tuple[list[tuple[float, float]], tuple[int, int, int]]] = [
+    ([(32, 6), (54, 18.7), (32, 31.4), (10, 18.7)], (0x8F, 0xB3, 0xFF)),      # top
+    ([(10, 18.7), (32, 31.4), (32, 58), (10, 45.3)], (0x4D, 0x8D, 0xFF)),     # left
+    ([(54, 18.7), (54, 45.3), (32, 58), (32, 31.4)], (0x24, 0x54, 0xE6)),     # right
+]
+
+# The PNGs are opaque: transparency on an iOS home screen renders as black, and
+# a near-black ground matches the app while letting the blues carry.
+BACKGROUND = (0x10, 0x10, 0x14)
 
 SAMPLES = 3  # per axis, so 9 samples a pixel -- enough to hide the stair-steps
 
 
-def _capsule_coverage(x: float, y: float, bar: tuple[float, float, float, float]) -> float:
-    """1.0 inside a round-ended bar, 0.0 outside. Sampled, not analytic."""
-    x0, y0, x1, y1 = bar
-    # The bar is a segment between the two end-cap centres, thickened by the
-    # radius -- which is exactly a capsule, so the test is distance-to-segment.
-    cy = (y0 + y1) / 2
-    ax, ay = x0 + BAR_RADIUS, cy
-    bx, by = x1 - BAR_RADIUS, cy
-
-    dx, dy = bx - ax, by - ay
-    length_squared = dx * dx + dy * dy
-    if length_squared == 0:
-        t = 0.0
-    else:
-        t = max(0.0, min(1.0, ((x - ax) * dx + (y - ay) * dy) / length_squared))
-    nearest_x, nearest_y = ax + t * dx, ay + t * dy
-    distance = ((x - nearest_x) ** 2 + (y - nearest_y) ** 2) ** 0.5
-    return 1.0 if distance <= BAR_RADIUS else 0.0
+def _inside(x: float, y: float, polygon: list[tuple[float, float]]) -> bool:
+    """Ray casting: count edge crossings to the left of the point."""
+    crossings = 0
+    count = len(polygon)
+    for index in range(count):
+        x0, y0 = polygon[index]
+        x1, y1 = polygon[(index + 1) % count]
+        if (y0 > y) != (y1 > y):
+            # x of the edge at this y; a crossing counts if it is to the right.
+            crossing_x = x0 + (y - y0) * (x1 - x0) / (y1 - y0)
+            if x < crossing_x:
+                crossings += 1
+    return crossings % 2 == 1
 
 
 def _pixel(u: float, v: float) -> tuple[int, int, int]:
-    """Colour at a point in the 0..64 icon space."""
-    blend = v / 64
-    base = tuple(
-        round(top + (bottom - top) * blend)
-        for top, bottom in zip(GRADIENT_TOP, GRADIENT_BOTTOM)
-    )
-
-    ink = _capsule_coverage(u, v, TOP_BAR)
-    if ink:
-        return (255, 255, 255)
-
-    ink = _capsule_coverage(u, v, BOTTOM_BAR)
-    if ink:
-        return tuple(
-            round(channel + (255 - channel) * BOTTOM_BAR_ALPHA) for channel in base
-        )
-
-    return base  # type: ignore[return-value]
+    for polygon, colour in FACES:
+        if _inside(u, v, polygon):
+            return colour
+    return BACKGROUND
 
 
 def render(size: int) -> bytes:
-    """Full-bleed RGB rows.
-
-    No rounded corners: iOS masks the touch icon itself, and a maskable
-    manifest icon is expected to fill its canvas.
-    """
+    """Opaque RGB rows, supersampled."""
     rows = []
     step = 64 / size
     offset = step / (SAMPLES * 2)

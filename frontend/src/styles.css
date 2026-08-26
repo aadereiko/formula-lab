@@ -737,7 +737,7 @@ h1, h2, h3 { font-weight: 550; }
   color: var(--ink);
 }
 .brand-name { font-size: 15px; font-weight: 550; letter-spacing: -0.015em; }
-.logo { display: block; flex: none; border-radius: 5px; }
+.logo { display: block; flex: none; overflow: visible; }
 
 .nav { display: flex; gap: 2px; margin-left: 10px; }
 
