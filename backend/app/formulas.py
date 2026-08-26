@@ -191,7 +191,28 @@ CONSTANTS: list[dict[str, Any]] = [
     {"symbol": "mu_0", "name": "Vacuum permeability", "value": 1.25663706212e-6, "unit": "N/A²"},
     {"symbol": "M_earth", "name": "Earth mass", "value": 5.9722e24, "unit": "kg"},
     {"symbol": "R_earth", "name": "Earth radius (mean)", "value": 6371000.0, "unit": "m"},
+    {"symbol": "h_bar", "name": "Reduced Planck constant", "value": 1.054571817e-34, "unit": "J·s"},
+    {"symbol": "m_n", "name": "Neutron mass", "value": 1.67492749804e-27, "unit": "kg"},
+    {"symbol": "amu", "name": "Atomic mass unit", "value": 1.66053906660e-27, "unit": "kg"},
+    {"symbol": "a_0", "name": "Bohr radius", "value": 5.29177210903e-11, "unit": "m"},
+    {"symbol": "atm", "name": "Standard atmosphere", "value": 101325.0, "unit": "Pa"},
+    {"symbol": "T_0", "name": "Ice point", "value": 273.15, "unit": "K"},
+    {"symbol": "V_m", "name": "Molar volume at STP", "value": 0.02241396954, "unit": "m³/mol"},
+    {"symbol": "Z_0", "name": "Impedance of vacuum", "value": 376.730313668, "unit": "Ω"},
+    {"symbol": "b_wien", "name": "Wien displacement constant", "value": 2.897771955e-3, "unit": "m·K"},
+    {"symbol": "g_moon", "name": "Lunar surface gravity", "value": 1.625, "unit": "m/s²"},
+    {"symbol": "M_sun", "name": "Solar mass", "value": 1.98892e30, "unit": "kg"},
+    {"symbol": "R_sun", "name": "Solar radius", "value": 6.957e8, "unit": "m"},
+    {"symbol": "AU", "name": "Astronomical unit", "value": 1.495978707e11, "unit": "m"},
+    {"symbol": "ly", "name": "Light year", "value": 9.4607304725808e15, "unit": "m"},
+    {"symbol": "pc", "name": "Parsec", "value": 3.0856775814913673e16, "unit": "m"},
 ]
+
+# Symbols deliberately left out, because a chip offering the wrong quantity is
+# worse than no chip: `F` (Faraday, but force far more often), `alpha` (fine
+# structure, but also thermal expansion), `b` (Wien, but also an arbitrary
+# length). Where the standard symbol is ambiguous the unambiguous spelling is
+# used instead -- `amu` rather than `u`, `b_wien` rather than `b`.
 
 
 #: Shown when a symbol has no example of its own, purely to demonstrate the

@@ -11,8 +11,8 @@ you rearranging anything by hand.
 - Save your own formulas — **with or without an account**
 - **Python + FastAPI + SymPy** back end that parses, rearranges and evaluates
 - **Accounts** — email/password or Google — so your own formulas are saved
-- 44 built-in formulas across nine areas of physics, and 16 constants offered
-  as one-click fills when a formula names them
+- 44 built-in formulas across nine areas of physics, and 31 constants offered
+  as one-click fills when a formula names them — plus any you define yourself
 
 ## Quick start
 
@@ -42,6 +42,7 @@ Two pages:
 | ---- | ---- | -------------- |
 | **Workspace** | `/` | Write a formula, solve it, save it — all in one place |
 | **My formulas** | `/formulas` | Everything you have saved |
+| **Constants** | `/constants` | The built-in catalogue, plus your own |
 
 Writing, solving and saving are deliberately not separate pages: you type a
 formula, fill in whichever values you have, read the answer, and press Save if
@@ -111,6 +112,29 @@ is deliberately a prompt rather than automatic, since uploading silently from
 every device someone signs in on would duplicate the same formulas repeatedly.
 A name already taken on the account gets a `(copy)` suffix instead of
 overwriting, and local copies are only cleared once every upload succeeds.
+
+## Constants
+
+Whenever a formula names a known symbol, its value is offered beside that
+variable as a one-click fill: write `T = 2*pi*sqrt(L/g)` and `g` arrives with
+9.80665 m/s² attached.
+
+Thirty-one are built in, and **you can define your own** on the Constants page —
+the values particular to your work rather than to physics: a material's density,
+a rig dimension, a coefficient you keep reusing. They are stored the same way
+saved formulas are: on your account when signed in, in this browser otherwise.
+
+Your own **shadow** a built-in of the same name, deliberately. Someone who has
+defined `g` as their local gravity means that one, and the built-in row is
+labelled *replaced by yours* so the override is visible rather than mysterious.
+
+A few standard symbols are deliberately absent from the built-ins, because a
+chip offering the wrong quantity is worse than no chip at all: `F` is force far
+more often than it is Faraday's constant, and `alpha` is a thermal expansion
+coefficient as often as the fine-structure constant. Where the conventional
+symbol is ambiguous the unambiguous spelling is used instead — `amu` rather than
+`u`, `b_wien` rather than `b`. You can always define the ambiguous one yourself,
+which is the point of it being configurable.
 
 ## Accounts
 
@@ -285,7 +309,7 @@ formula cannot be one that fails the moment it is reopened.
 | `/api/analyze` | POST | – | Variables, LaTeX, equation or not |
 | `/api/evaluate` | POST | – | Evaluate, or solve for one variable |
 | `/api/library` | GET | – | Built-in formula catalogue |
-| `/api/constants` | GET | – | Physical constants |
+| `/api/constants` | GET | – | Built-in physical constants |
 | `/api/capabilities` | GET | – | Allowed functions and limits |
 | `/api/health` | GET | – | Liveness |
 | `/api/auth/providers` | GET | – | Which sign-in methods are enabled |
@@ -297,6 +321,8 @@ formula cannot be one that fails the moment it is reopened.
 | `/api/auth/google/callback` | GET | – | Google returns here |
 | `/api/formulas` | GET, POST | ✓ | List / create your formulas |
 | `/api/formulas/{id}` | PUT, DELETE | ✓ | Update / delete one of yours |
+| `/api/my-constants` | GET, POST | ✓ | List / create your own constants |
+| `/api/my-constants/{id}` | PUT, DELETE | ✓ | Update / delete one of yours |
 
 ```bash
 curl -X POST localhost:7731/api/evaluate \
@@ -316,7 +342,7 @@ else's formula returns **404**, not 403 — a 403 would confirm the id exists.
 make test
 ```
 
-142 backend tests plus a frontend typecheck. Several earn their keep beyond
+166 backend tests plus a frontend typecheck. Several earn their keep beyond
 ordinary coverage:
 
 - `test_every_library_formula_parses` runs all 44 shipped formulas through the
@@ -332,6 +358,8 @@ ordinary coverage:
   linking rule, asserted rather than assumed.
 - `test_static_paths_cannot_escape_the_bundle_directory` — `FileResponse` will
   serve `../../etc/passwd` if handed that path.
+- `test_one_account_cannot_touch_anothers_constants` and
+  `test_ambiguous_symbols_are_left_out` do the same jobs for constants.
 
 ## Look
 
@@ -378,6 +406,7 @@ backend/
   app/routes_auth.py      register / login / logout / me
   app/oauth_google.py     Google authorization-code flow
   app/routes_formulas.py  CRUD for a user's own formulas
+  app/routes_constants.py CRUD for a user's own constants
   app/main.py             routes, error handling, static serving
   tests/                  security, engine, HTTP, auth, ownership, OAuth
 frontend/
@@ -385,6 +414,8 @@ frontend/
   scripts/make-icons.py   dependency-free SVG -> PNG rasteriser
   src/api.ts              typed client; separates user-fixable errors from ours
   src/useAuth.ts          session state, derived from the server
+  src/useFormulaStore.ts  saved formulas: one interface over server or browser
+  src/useConstantStore.ts the same, for constants, merged over the built-ins
   src/App.tsx             state, debouncing, auto-evaluate
   src/components/         formula input, variables, results, sidebar, auth, dialogs
 Dockerfile                two-stage build; one image serves both halves

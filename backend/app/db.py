@@ -13,6 +13,7 @@ from pathlib import Path
 
 from sqlalchemy import (
     DateTime,
+    Float,
     ForeignKey,
     Integer,
     String,
@@ -85,6 +86,9 @@ class User(Base):
     formulas: Mapped[list["SavedFormula"]] = relationship(
         back_populates="owner", cascade="all, delete-orphan", passive_deletes=True
     )
+    constants: Mapped[list["UserConstant"]] = relationship(
+        back_populates="owner", cascade="all, delete-orphan", passive_deletes=True
+    )
 
 
 class SavedFormula(Base):
@@ -124,6 +128,37 @@ class SavedFormula(Base):
     )
 
     owner: Mapped[User] = relationship(back_populates="formulas")
+
+
+class UserConstant(Base):
+    """A value a user wants offered whenever a formula names that symbol.
+
+    The built-in catalogue covers the usual physical constants; this is for the
+    ones particular to somebody's work -- a material's density, a rig's lever
+    arm, a coefficient they keep reusing.
+    """
+
+    __tablename__ = "user_constants"
+    __table_args__ = (
+        # One meaning per symbol per user; a second `rho` would make the chip
+        # ambiguous.
+        UniqueConstraint("user_id", "symbol", name="uq_user_constant_symbol"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    symbol: Mapped[str] = mapped_column(String(64), nullable=False)
+    name: Mapped[str] = mapped_column(String(120), default="", nullable=False)
+    value: Mapped[float] = mapped_column(Float, nullable=False)
+    unit: Mapped[str] = mapped_column(String(40), default="", nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=utcnow, onupdate=utcnow
+    )
+
+    owner: Mapped[User] = relationship(back_populates="constants")
 
 
 def ensure_columns() -> None:

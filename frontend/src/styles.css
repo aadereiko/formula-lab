@@ -1380,3 +1380,167 @@ textarea.text-input { resize: vertical; line-height: 1.5; }
   .dialog-save { max-height: 92vh; }
   .dialog-save .dialog-head, .dialog-body, .dialog-save .dialog-actions { padding-inline: 16px; }
 }
+
+/* ── stacked workspace ───────────────────────────────────────────────── */
+
+/* One column, read top to bottom: the formula, then its variables, then the
+   answer, then what you did recently. The two-pane split put the result off to
+   one side, disconnected from the formula that produced it. */
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+  max-width: 720px;
+  margin-inline: auto;
+}
+.stack > .block + .block { margin-top: 0; }
+.stack > .toolbar { margin-top: -8px; }
+
+/* Recent is a footnote to the work above, not a peer of it. */
+.stack .history-item { font-size: 12.5px; padding: 5px 8px; }
+.stack .history-item code { font-size: 11.5px; }
+.stack .history-result { font-size: 11px; }
+
+/* ── sidebar saved items ─────────────────────────────────────────────── */
+
+/* Matching the library rows: the active state is a tint, not a filled block,
+   and the delete control is a hairline glyph that appears on hover. */
+.saved-list li {
+  border-radius: var(--radius);
+  padding-right: 2px;
+}
+.saved-list li.is-active { background: var(--accent-soft); }
+.saved-list li.is-active .saved-item { background: transparent; }
+
+.saved-delete {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--ink-faint);
+  opacity: 0;
+  /* Not clickable while invisible, so a stray click cannot delete something. */
+  pointer-events: none;
+  transition: opacity 0.12s, color 0.12s, background 0.12s;
+}
+.saved-list li:hover .saved-delete,
+.saved-delete:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+.saved-delete:hover { color: var(--danger); background: var(--bg-sunken); }
+
+.side-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 10px 0 0 8px;
+  padding: 0;
+  background: none;
+  border: none;
+  font-size: 12.5px;
+  color: var(--ink-faint);
+  transition: color 0.12s, gap 0.12s;
+}
+.side-link:hover { color: var(--accent); gap: 8px; }
+
+/* ── constants page ──────────────────────────────────────────────────── */
+
+.constants-section + .constants-section { margin-top: 30px; }
+.constants-section .side-heading { margin-left: 0; font-size: 12.5px; }
+.constants-section .block-head { justify-content: space-between; align-items: center; }
+.constants-search { max-width: 200px; margin-bottom: 0; }
+
+.constant-form { padding: 16px 18px; }
+.constant-fields {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(120px, 1fr) minmax(90px, 0.7fr);
+  gap: 12px 14px;
+}
+.field-wide { grid-column: 1 / -1; }
+.mono-input { font-family: var(--mono); font-size: 14.5px; }
+
+.constant-form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.constant-list { list-style: none; margin: 0; padding: 0; }
+
+.constant-row {
+  display: grid;
+  grid-template-columns: 110px 150px 90px minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 9px 4px;
+  border-top: 1px solid var(--line);
+  font-size: 13.5px;
+}
+.constant-row:last-child { border-bottom: 1px solid var(--line); }
+.constant-list:not(.is-readonly) .constant-row:hover { background: var(--bg-soft); }
+
+.constant-symbol {
+  font-family: var(--mono);
+  font-size: 13px;
+  background: var(--bg-sunken);
+  border-radius: 5px;
+  padding: 3px 7px;
+  justify-self: start;
+}
+.constant-value { font-family: var(--mono); font-size: 13px; }
+.constant-unit { color: var(--ink-faint); font-size: 12.5px; }
+.constant-name {
+  color: var(--ink-soft);
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.shadowed-tag { flex: none; }
+
+/* Same treatment as the sidebar: revealed on hover, never clickable while
+   hidden, red only under the cursor. */
+.constant-actions { display: flex; align-items: center; gap: 6px; opacity: 0; }
+.constant-row:hover .constant-actions,
+.constant-actions:focus-within { opacity: 1; }
+
+.remove-btn {
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  justify-content: center;
+  font-size: 17px;
+  line-height: 1;
+  color: var(--ink-faint);
+}
+.remove-btn:hover { color: var(--danger); background: var(--bg-sunken); }
+
+@media (max-width: 899px) {
+  .stack { gap: 24px; }
+  .saved-delete { opacity: 1; pointer-events: auto; }   /* no hover on touch */
+  .constant-actions { opacity: 1; }
+  .constant-fields { grid-template-columns: 1fr; }
+  .constant-row {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      "symbol value"
+      "name   name"
+      "actions actions";
+    row-gap: 6px;
+  }
+  .constant-symbol { grid-area: symbol; }
+  .constant-value { grid-area: value; }
+  .constant-unit { display: none; }
+  .constant-name { grid-area: name; font-size: 12.5px; }
+  .constant-actions { grid-area: actions; }
+  .constants-section .block-head { flex-wrap: wrap; }
+  .constants-search { max-width: none; width: 100%; }
+}

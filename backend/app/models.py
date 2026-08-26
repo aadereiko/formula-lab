@@ -104,3 +104,24 @@ class SavedFormulaResponse(BaseModel):
     solve_for: str | None
     created_at: datetime
     updated_at: datetime
+
+
+# --------------------------------------------------------------------------
+# User-defined constants
+# --------------------------------------------------------------------------
+
+class ConstantRequest(BaseModel):
+    symbol: str = Field(..., min_length=1, max_length=64)
+    value: float
+    name: str = Field(default="", max_length=120)
+    unit: str = Field(default="", max_length=40)
+
+
+class ConstantResponse(BaseModel):
+    id: int
+    symbol: str
+    value: float
+    name: str
+    unit: str
+    created_at: datetime
+    updated_at: datetime

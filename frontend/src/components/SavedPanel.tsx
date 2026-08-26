@@ -62,15 +62,22 @@ export function SavedPanel({
               title={`Delete ${formula.name}`}
               onClick={() => onDelete(formula)}
             >
-              ×
+              <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true">
+                <path
+                  d="M4 4l8 8M12 4l-8 8"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                  strokeLinecap="round"
+                  fill="none"
+                />
+              </svg>
             </button>
           </li>
         ))}
       </ul>
-      <button type="button" className="link side-link" onClick={onSeeAll}>
-        {formulas.length > PREVIEW_COUNT
-          ? `See all ${formulas.length}`
-          : "Manage formulas"}
+      <button type="button" className="side-link" onClick={onSeeAll}>
+        {formulas.length > PREVIEW_COUNT ? `See all ${formulas.length}` : "Manage formulas"}
+        <span aria-hidden="true">→</span>
       </button>
     </>
   );

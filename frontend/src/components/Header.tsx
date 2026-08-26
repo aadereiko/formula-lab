@@ -64,6 +64,14 @@ export function Header({
           My formulas
           {savedCount > 0 && <span className="nav-count">{savedCount}</span>}
         </button>
+        <button
+          type="button"
+          className={`nav-link${route === "constants" ? " is-active" : ""}`}
+          aria-current={route === "constants"}
+          onClick={() => onNavigate("constants")}
+        >
+          Constants
+        </button>
       </nav>
 
       <div className="header-end">

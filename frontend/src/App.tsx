@@ -5,6 +5,11 @@ import { useDebouncedValue, usePersistentState } from "./hooks";
 import { useRoute } from "./useRoute";
 import { useAuth, useOAuthError } from "./useAuth";
 import { useFormulaStore, type FormulaDraft, type StoredFormula } from "./useFormulaStore";
+import {
+  useConstantStore,
+  type ConstantDraft,
+  type StoredConstant,
+} from "./useConstantStore";
 import { AccountDialog } from "./components/AccountDialog";
 import { AuthDialog } from "./components/AuthDialog";
 import { FormulaInput } from "./components/FormulaInput";
@@ -15,6 +20,7 @@ import { ResultPanel } from "./components/ResultPanel";
 import { SaveDialog } from "./components/SaveDialog";
 import { Sidebar } from "./components/Sidebar";
 import { VariablePanel } from "./components/VariablePanel";
+import { ConstantsPage } from "./pages/ConstantsPage";
 import { FormulasPage } from "./pages/FormulasPage";
 import type {
   AnalyzeResponse,
@@ -55,7 +61,7 @@ export default function App() {
   const [busy, setBusy] = useState(false);
 
   const [library, setLibrary] = useState<Library | null>(null);
-  const [constants, setConstants] = useState<Constant[]>([]);
+  const [builtInConstants, setBuiltInConstants] = useState<Constant[]>([]);
   const [capabilities, setCapabilities] = useState<Capabilities | null>(null);
   const [offline, setOffline] = useState<string | null>(null);
 
@@ -73,6 +79,8 @@ export default function App() {
   const [notice, setNotice] = useState<string | null>(null);
   const [migrateDismissed, setMigrateDismissed] = useState(false);
 
+  const constantStore = useConstantStore(signedIn, builtInConstants);
+
   const debouncedExpression = useDebouncedValue(expression, 300);
   const debouncedValues = useDebouncedValue(values, 300);
 
@@ -81,7 +89,7 @@ export default function App() {
     Promise.all([api.fetchLibrary(), api.fetchConstants(), api.fetchCapabilities()])
       .then(([lib, consts, caps]) => {
         setLibrary(lib);
-        setConstants(consts);
+        setBuiltInConstants(consts);
         setCapabilities(caps);
         setOffline(null);
       })
@@ -303,6 +311,21 @@ export default function App() {
     }
   };
 
+  const saveConstant = async (draft: ConstantDraft, editing: StoredConstant | null) => {
+    if (editing) await constantStore.update(editing, draft);
+    else await constantStore.save(draft);
+    flash(editing ? "Constant updated" : signedIn ? "Constant added" : "Added in this browser");
+  };
+
+  const deleteConstant = async (constant: StoredConstant) => {
+    try {
+      await constantStore.remove(constant);
+      flash("Constant removed");
+    } catch {
+      /* the store restores the row and records the error */
+    }
+  };
+
   const promptSignIn = (reason?: string) => {
     setAuthReason(reason ?? null);
     setMenuOpen(false);
@@ -408,10 +431,21 @@ export default function App() {
             onSignIn={() => promptSignIn("Sign in to keep your formulas across devices.")}
             onNew={startNewFormula}
           />
+        ) : route === "constants" ? (
+          <ConstantsPage
+            own={constantStore.constants}
+            builtIn={builtInConstants}
+            loading={constantStore.loading}
+            error={constantStore.error}
+            signedIn={signedIn}
+            limit={constantStore.limit}
+            onSave={saveConstant}
+            onDelete={deleteConstant}
+            onSignIn={() => promptSignIn("Sign in to keep your constants across devices.")}
+          />
         ) : (
-          <div className="panes">
-            <div className="pane">
-              <FormulaInput
+          <div className="stack">
+            <FormulaInput
                 value={expression}
                 onChange={onExpressionChange}
                 latex={analysis?.latex ?? null}
@@ -421,51 +455,48 @@ export default function App() {
                 savedName={activeSaved?.name ?? null}
                 description={activeSaved?.note || null}
                 onSave={() => setSaving({ existing: activeSaved })}
-                onClear={expression.trim() ? startNewFormula : null}
-              />
+              onClear={expression.trim() ? startNewFormula : null}
+            />
 
-              <VariablePanel
-                symbols={symbols}
-                values={values}
-                onValueChange={(symbol, value) =>
-                  setValues((previous) => ({ ...previous, [symbol]: value }))
-                }
-                isEquation={isEquation}
-                solveFor={solveFor}
-                onSolveForChange={setSolveFor}
-                descriptions={descriptions}
-                constants={constants}
-                onSubmit={() => runEvaluate()}
-              />
+            <VariablePanel
+              symbols={symbols}
+              values={values}
+              onValueChange={(symbol, value) =>
+                setValues((previous) => ({ ...previous, [symbol]: value }))
+              }
+              isEquation={isEquation}
+              solveFor={solveFor}
+              onSolveForChange={setSolveFor}
+              descriptions={descriptions}
+              constants={constantStore.effective}
+              onSubmit={() => runEvaluate()}
+            />
 
-              {symbols.length > 0 && (
-                <div className="toolbar">
-                  <label htmlFor="precision">
-                    Precision
-                    <select
-                      id="precision"
-                      value={precision}
-                      onChange={(event) => setPrecision(Number(event.target.value))}
-                    >
-                      {[3, 4, 6, 8, 10, 12].map((digits) => (
-                        <option key={digits} value={digits}>
-                          {digits} digits
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  {isEquation && !target && (
-                    <span className="toolbar-hint">Leave one variable blank to solve for it.</span>
-                  )}
-                </div>
-              )}
-            </div>
+            {symbols.length > 0 && (
+              <div className="toolbar">
+                <label htmlFor="precision">
+                  Precision
+                  <select
+                    id="precision"
+                    value={precision}
+                    onChange={(event) => setPrecision(Number(event.target.value))}
+                  >
+                    {[3, 4, 6, 8, 10, 12].map((digits) => (
+                      <option key={digits} value={digits}>
+                        {digits} digits
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {isEquation && !target && (
+                  <span className="toolbar-hint">Leave one variable blank to solve for it.</span>
+                )}
+              </div>
+            )}
 
-            <div className="pane">
-              <ResultPanel result={result} error={resultError} busy={busy} />
-              <HistoryPanel entries={history} onRestore={restore} onClear={() => setHistory([])} />
-              <HelpPanel capabilities={capabilities} />
-            </div>
+            <ResultPanel result={result} error={resultError} busy={busy} />
+            <HistoryPanel entries={history} onRestore={restore} onClear={() => setHistory([])} />
+            <HelpPanel capabilities={capabilities} />
           </div>
         )}
       </main>

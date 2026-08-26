@@ -6,15 +6,19 @@ import { useCallback, useEffect, useState } from "react";
  * Writing a formula, solving it and saving it all happen in one place, so
  * there is no separate calculator route any more.
  */
-export type Route = "home" | "formulas";
+export type Route = "home" | "formulas" | "constants";
 
 const PATHS: Record<Route, string> = {
   home: "/",
   formulas: "/formulas",
+  constants: "/constants",
 };
 
 function routeFor(pathname: string): Route {
-  return pathname.replace(/\/+$/, "") === "/formulas" ? "formulas" : "home";
+  const path = pathname.replace(/\/+$/, "");
+  if (path === "/formulas") return "formulas";
+  if (path === "/constants") return "constants";
+  return "home";
 }
 
 /** The calculator used to live on its own path; keep old links working. */

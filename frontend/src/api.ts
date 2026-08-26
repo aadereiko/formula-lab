@@ -8,6 +8,8 @@ import type {
   SavedFormula,
   SavedFormulaInput,
   User,
+  UserConstant,
+  UserConstantInput,
 } from "./types";
 
 /**
@@ -124,3 +126,12 @@ export const createSaved = (input: SavedFormulaInput) =>
 export const updateSaved = (id: number, input: SavedFormulaInput) =>
   send<SavedFormula>("PUT", `/api/formulas/${id}`, input);
 export const deleteSaved = (id: number) => send<void>("DELETE", `/api/formulas/${id}`);
+
+// -- the user's own constants ---------------------------------------------
+
+export const fetchMyConstants = () => request<UserConstant[]>("/api/my-constants");
+export const createConstant = (input: UserConstantInput) =>
+  post<UserConstant>("/api/my-constants", input);
+export const updateConstant = (id: number, input: UserConstantInput) =>
+  send<UserConstant>("PUT", `/api/my-constants/${id}`, input);
+export const deleteConstant = (id: number) => send<void>("DELETE", `/api/my-constants/${id}`);

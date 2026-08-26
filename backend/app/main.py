@@ -11,7 +11,16 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-from . import auth, db, formulas, oauth_google, routes_auth, routes_formulas, runner
+from . import (
+    auth,
+    db,
+    formulas,
+    oauth_google,
+    routes_auth,
+    routes_constants,
+    routes_formulas,
+    runner,
+)
 from .engine import ALLOWED_FUNCTIONS, MAX_EXPONENT, MAX_NODES, MAX_SYMBOLS
 from .models import (
     AnalyzeRequest,
@@ -74,6 +83,7 @@ async def formula_error_handler(_request, exc: FormulaError) -> JSONResponse:
 app.include_router(routes_auth.router)
 app.include_router(oauth_google.router)
 app.include_router(routes_formulas.router)
+app.include_router(routes_constants.router)
 
 
 @app.get("/api/health")

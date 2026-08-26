@@ -106,3 +106,20 @@ export interface SavedFormulaInput {
   variable_notes?: Record<string, string>;
   solve_for?: string | null;
 }
+
+export interface UserConstant {
+  id: number;
+  symbol: string;
+  value: number;
+  name: string;
+  unit: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserConstantInput {
+  symbol: string;
+  value: number;
+  name?: string;
+  unit?: string;
+}
