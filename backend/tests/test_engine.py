@@ -337,3 +337,42 @@ def test_scientific_notation_is_typeset_as_latex():
 def test_plain_numbers_are_left_alone_in_steps():
     step = next(s for s in evaluate("F = m*a", {"m": 2, "a": 3})["steps"] if s["label"] == "Result")
     assert step["latex"] == "F = 6"
+
+
+# --------------------------------------------------------------------------
+# The equation's subject
+# --------------------------------------------------------------------------
+
+def test_the_subject_is_the_bare_symbol_on_the_left():
+    assert analyze("F = m*a")["subject"] == "F"
+    assert analyze("b = a + c")["subject"] == "b"
+
+
+def test_a_compound_left_side_has_no_subject():
+    """Guessing one would be worse than admitting there is none."""
+    assert analyze("v^2 = v_0^2 + 2*a*s")["subject"] is None
+    assert analyze("1/R = 1/R_1 + 1/R_2")["subject"] is None
+
+
+def test_an_expression_has_no_subject():
+    assert analyze("1/2 * m * v^2")["subject"] is None
+
+
+def test_the_subject_is_not_simply_the_first_symbol():
+    """The reason this field exists.
+
+    `symbols` is ordered for display -- shortest, then alphabetical -- so it puts
+    `F` first in `F = a*b` for reasons unrelated to the equals sign, and happens
+    to put `a` first in `b = a + c`. Neither ordering answers "what is this
+    equation about", which is what a plot needs to default its axes.
+    """
+    about_f = analyze("F = a*b")
+    assert about_f["symbols"][0] == "F" and about_f["subject"] == "F"
+
+    about_b = analyze("b = a + c")
+    assert about_b["symbols"][0] == "a" and about_b["subject"] == "b"
+
+
+def test_the_subject_uses_the_display_spelling():
+    """Internally `lambda` is `lamda`; the caller must never see that."""
+    assert analyze("lambda = v/f")["subject"] == "lambda"

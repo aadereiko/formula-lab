@@ -27,6 +27,10 @@ interface Props {
    *  app decides which quantity is the answer, and the server infers the same
    *  way once a variable has been taken out of the picture by an axis. */
   target: string | null;
+  /** The variable the equation is written about, used only to pick the default
+   *  axis. Null when the formula is an expression or its left side is compound
+   *  like `v^2 = ...`, in which case there is no subject to prefer against. */
+  subject: string | null;
 }
 
 /**
@@ -70,7 +74,14 @@ function defaultRange(current: string | undefined): { min: string; max: string }
     : { min: short(2 * value), max: "0" };
 }
 
-export function PlotPanel({ expression, symbols, values, isEquation, target }: Props) {
+export function PlotPanel({
+  expression,
+  symbols,
+  values,
+  isEquation,
+  target,
+  subject,
+}: Props) {
   const [open, setOpen] = usePersistentState("formula-lab.plot-open", false);
   const [wantSurface, setWantSurface] = useState(false);
   /** Edited ranges, keyed by variable, so switching axis picks up that
@@ -88,7 +99,16 @@ export function PlotPanel({ expression, symbols, values, isEquation, target }: P
   // change under this panel on any keystroke, and a choice that no longer exists
   // should simply stop being the choice.
   const sweepable = symbols.filter((symbol) => !isEquation || symbol !== target);
-  const x = (xChoice && sweepable.includes(xChoice) ? xChoice : sweepable[0]) ?? null;
+  // The *default* axis skips the equation's subject. `symbols` is ordered for
+  // display -- shortest, then alphabetical -- so `F = a*b` puts F first, and
+  // taking [0] made the app sweep the one quantity you would want plotted, then
+  // demand values for both of the others. Ordering meant for laying out rows is
+  // not a statement about which side of the equals sign a variable sits on.
+  // Still selectable by hand: sweeping F to see how a responds is a fair
+  // question, just not the one to assume.
+  const preferred = sweepable.filter((symbol) => symbol !== subject);
+  const x =
+    (xChoice && sweepable.includes(xChoice) ? xChoice : preferred[0] ?? sweepable[0]) ?? null;
   const alsoSweepable = sweepable.filter((symbol) => symbol !== x);
   const z = (zChoice && alsoSweepable.includes(zChoice) ? zChoice : alsoSweepable[0]) ?? null;
   // A surface needs two axes *and* something left to plot. An equation whose

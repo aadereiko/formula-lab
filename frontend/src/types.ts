@@ -4,6 +4,9 @@ export interface AnalyzeResponse {
   symbols: string[];
   latex: string;
   functions_used: string[];
+  /** The variable the equation is written about, when the left side is a bare
+   *  symbol. Null for an expression or a compound left side. */
+  subject: string | null;
 }
 
 export interface Solution {

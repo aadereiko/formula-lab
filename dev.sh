@@ -33,7 +33,14 @@ echo
 
 # Launch each server as a single process rather than through a wrapper: `npm run
 # dev` would leave Vite running as a grandchild that outlives the kill below.
-(cd backend && FORMULA_LAB_PORT="$API_PORT" exec .venv/bin/python -m app.main) &
+# `FORMULA_LAB_RELOAD` matters more than it looks: without it the API keeps
+# serving whatever code it started with, so a new route reads as 405 Method
+# Not Allowed -- the SPA fallback catches the path, just not the verb -- and
+# nothing tells you the process is stale. Vite reloads itself, which makes the
+# mismatch worse: the front end calls an endpoint the back end has never heard
+# of.
+(cd backend && FORMULA_LAB_PORT="$API_PORT" FORMULA_LAB_RELOAD=1 \
+  exec .venv/bin/python -m app.main) &
 pids+=($!)
 
 (cd frontend && FORMULA_LAB_API_PORT="$API_PORT" exec node_modules/.bin/vite --host 127.0.0.1) &

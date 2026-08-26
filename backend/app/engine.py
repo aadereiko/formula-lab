@@ -311,7 +311,26 @@ def analyze(expression: str) -> dict[str, Any]:
         "symbols": symbols,
         "latex": latex,
         "functions_used": _names_used(formula),
+        "subject": _subject(expr) if rhs_text is not None else None,
     }
+
+
+def _subject(expr: sympy.Basic) -> str | None:
+    """The lone symbol an equation is written *about*, if it has one.
+
+    ``F = m*a`` is about F. Knowing that is not needed to solve -- the engine
+    will rearrange for any variable -- but it is needed to pick sensible
+    *defaults*, and `symbols` cannot supply it: that list is ordered for
+    display, shortest-then-alphabetical, which puts `F` first in ``F = a*b``
+    for reasons that have nothing to do with the equals sign.
+
+    Only a bare symbol counts. ``v^2 = ...`` and ``1/R = ...`` are about no
+    single variable, and guessing one would be worse than admitting it.
+    """
+    if not isinstance(expr, sympy.Eq):
+        return None
+    lhs = expr.lhs
+    return _to_display(str(lhs)) if isinstance(lhs, sympy.Symbol) else None
 
 
 def _clean_values(values: dict[str, Any] | None) -> dict[str, sympy.Float]:

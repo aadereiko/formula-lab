@@ -556,6 +556,7 @@ export default function App() {
             {analysis && (
               <PlotPanel
                 expression={analysis.expression}
+                subject={analysis.subject}
                 symbols={symbols}
                 values={relevantValues}
                 isEquation={isEquation}

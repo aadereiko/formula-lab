@@ -25,6 +25,10 @@ class AnalyzeResponse(BaseModel):
     symbols: list[str]
     latex: str
     functions_used: list[str] = []
+    #: The variable the equation is written about, when it is a bare symbol on
+    #: the left. Null for an expression, or for a compound left side like
+    #: ``v^2 = ...``. Used to default a plot's axes sensibly.
+    subject: str | None = None
 
 
 class EvaluateRequest(BaseModel):
