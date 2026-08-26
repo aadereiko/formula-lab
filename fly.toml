@@ -12,6 +12,11 @@ primary_region = "ams"
   # Everything else the image already sets. This one cannot be baked in: it is
   # the public URL, and it differs per app.
   FORMULA_LAB_APP_URL = "https://formula-lab.fly.dev/"
+  # Not a secret -- a public URL Google redirects back to -- so it belongs here
+  # rather than in `fly secrets`. It has to be set explicitly: the code defaults
+  # to localhost:7732, which is right for development and silently wrong in
+  # production, where Google would refuse the mismatch.
+  FORMULA_LAB_GOOGLE_REDIRECT_URI = "https://formula-lab.fly.dev/api/auth/google/callback"
 
 [http_service]
   internal_port = 7731
