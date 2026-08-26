@@ -52,11 +52,11 @@ export function Header({
           type="button"
           // Editing an existing formula shares this route but is not "New",
           // so the highlight would otherwise be misleading.
-          className={`nav-link${route === "editor" && !editingExisting ? " is-active" : ""}`}
-          aria-current={route === "editor" && !editingExisting}
+          className={`nav-link${route === "home" && !editingExisting ? " is-active" : ""}`}
+          aria-current={route === "home" && !editingExisting}
           onClick={onNewFormula}
         >
-          New
+          Home
         </button>
         <button
           type="button"

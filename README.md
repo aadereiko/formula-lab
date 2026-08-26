@@ -40,7 +40,7 @@ Three pages:
 
 | Page | Path | What it is for |
 | ---- | ---- | -------------- |
-| **New** | `/` | Write a formula, describe it, save it. The landing page |
+| **Home** | `/` | Write a formula, describe it, save it. The landing page |
 | **Calculator** | `/calculator` | Fill in values and solve |
 | **My formulas** | `/formulas` | Everything you have saved |
 
@@ -75,11 +75,19 @@ number and the imaginary unit. Write `exp(1)` if you want *e*.
 
 ### Saving your own
 
-The **New** page is where a formula gets written. Alongside the expression it
+The **Home** page is where a formula gets written. Alongside the expression it
 takes a name, a description, and — generated from whatever the formula
 mentions — **a description for each variable**. Type `F = 1/2 rho C_d A v^2` and
 five description fields appear, one per symbol, with a running "3 of 5
 described" count.
+
+Each of those fields suggests an example in the right shape: `v` prompts with
+"e.g. velocity (m/s)", `rho` with "e.g. density (kg/m³)". The examples come from
+the built-in library rather than a separate table, so they cannot drift out of
+step with it; a subscripted name falls back to its base letter, which is why
+`v_0` also suggests velocity. Nothing is saved until **Save formula** is
+pressed — there is no implicit form submission, so Enter in a field does not
+commit a half-written formula.
 
 Those descriptions are then shown wherever the formula is used: under its name
 on the calculator, beside every input field, and as a legend on its card. A

@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 
-/** `editor` is the default landing page: a blank formula waiting to be written. */
-export type Route = "editor" | "calculator" | "formulas";
+/** `home` is the landing page: a blank formula waiting to be written. */
+export type Route = "home" | "calculator" | "formulas";
 
 const PATHS: Record<Route, string> = {
-  editor: "/",
+  home: "/",
   calculator: "/calculator",
   formulas: "/formulas",
 };
@@ -13,7 +13,7 @@ function routeFor(pathname: string): Route {
   const path = pathname.replace(/\/+$/, "");
   if (path === "/formulas") return "formulas";
   if (path === "/calculator") return "calculator";
-  return "editor";
+  return "home";
 }
 
 /**

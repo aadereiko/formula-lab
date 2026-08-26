@@ -205,3 +205,28 @@ def test_additive_migration_adds_missing_columns(tmp_path):
     finally:
         db.engine = original
         engine.dispose()
+
+
+def test_library_carries_example_descriptions_per_symbol(client):
+    """The editor uses these as placeholder text when describing a variable."""
+    body = client.get("/api/library").json()
+    hints = body["variable_hints"]
+
+    assert hints["m"] == "mass (kg)"
+    assert hints["v"] == "velocity (m/s)"
+    # Overridden: the library's first mention of rho is resistivity, but as a
+    # generic example density is the more useful suggestion.
+    assert hints["rho"] == "density (kg/m³)"
+    assert hints["I"] == "current (A)"
+    assert body["fallback_hint"]
+
+    # Every hint should demonstrate the "name (unit)" shape the field wants.
+    assert sum("(" in value for value in hints.values()) > len(hints) // 2
+
+
+def test_hints_cover_every_library_variable(client):
+    body = client.get("/api/library").json()
+    hints = body["variable_hints"]
+    for formula in body["formulas"]:
+        for variable in formula["variables"]:
+            assert variable["symbol"] in hints, f"{formula['id']}: {variable['symbol']}"

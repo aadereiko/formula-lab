@@ -12,6 +12,9 @@ interface Props {
   analyzeError: string | null;
   pending: boolean;
   signedIn: boolean;
+  /** Example description per symbol, shown as placeholder text. */
+  hints: Record<string, string>;
+  fallbackHint: string;
   values: Record<string, string>;
   solveFor: string | null;
   onSave: (draft: FormulaDraft, asNew: boolean) => Promise<void>;
@@ -26,6 +29,8 @@ export function EditorPage({
   analyzeError,
   pending,
   signedIn,
+  hints,
+  fallbackHint,
   values,
   solveFor,
   onSave,
@@ -65,6 +70,19 @@ export function EditorPage({
 
   const describedCount = Object.keys(submittedNotes).length;
 
+  /**
+   * An example description for a symbol.
+   *
+   * Falls back to the base letter for subscripted names, which is where most
+   * physics variables live: `v_0` has no entry of its own but `v` does, and
+   * "velocity (m/s)" is a far better suggestion than a generic one.
+   */
+  const hintFor = (symbol: string): string => {
+    const base = symbol.split("_")[0] ?? symbol;
+    return hints[symbol] ?? hints[base] ?? fallbackHint;
+  };
+
+  /** Only ever reached from a Save button's onClick. */
   const submit = async (asNew: boolean) => {
     const trimmed = name.trim();
     if (!analysis) {
@@ -110,13 +128,9 @@ export function EditorPage({
         </div>
       </div>
 
-      <form
-        className="editor-form"
-        onSubmit={(event) => {
-          event.preventDefault();
-          void submit(false);
-        }}
-      >
+      {/* Deliberately not a <form>: implicit submission means Enter in any
+          field saves, and saving should take a press of the Save button. */}
+      <div className="editor-form">
         <section className="block">
           <label className="label" htmlFor="editor-expression">
             Formula
@@ -202,7 +216,10 @@ export function EditorPage({
                       className="variable-input note-input"
                       value={variableNotes[symbol] ?? ""}
                       maxLength={200}
-                      placeholder={`what ${symbol} is, and its unit`}
+                      // A concrete example beats an instruction: "e.g.
+                      // velocity (m/s)" shows both the wording and the unit
+                      // convention the field is asking for.
+                      placeholder={`e.g. ${hintFor(symbol)}`}
                       aria-label={`Description of ${symbol}`}
                       onChange={(event) =>
                         setVariableNotes((previous) => ({
@@ -236,11 +253,16 @@ export function EditorPage({
               Save as new
             </button>
           )}
-          <button type="submit" className="btn btn-primary" disabled={busy || !analysis}>
+          <button
+            type="button"
+            className="btn btn-primary"
+            disabled={busy || !analysis}
+            onClick={() => void submit(false)}
+          >
             {busy ? "…" : existing ? "Save changes" : "Save formula"}
           </button>
         </div>
-      </form>
+      </div>
     </div>
   );
 }

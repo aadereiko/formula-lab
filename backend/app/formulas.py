@@ -194,6 +194,43 @@ CONSTANTS: list[dict[str, Any]] = [
 ]
 
 
+#: Shown when a symbol has no example of its own, purely to demonstrate the
+#: "name (unit)" shape a good description has.
+FALLBACK_HINT = "mass (kg)"
+
+
+#: A few symbols whose everyday meaning is broader than their first appearance
+#: in the library. `rho` is density far more often than resistivity, and
+#: `theta` is an angle before it is a launch angle. Kept deliberately short --
+#: the library is still the source for the other fifty-odd.
+_HINT_OVERRIDES = {
+    "rho": "density (kg/m³)",
+    "theta": "angle (radians)",
+    "phi": "angle (radians)",
+    # The library mentions moment of inertia before current, but `I` alongside
+    # V and R is the more common reading.
+    "I": "current (A)",
+}
+
+
+def variable_hints() -> dict[str, str]:
+    """An example description per symbol, drawn from the built-in library.
+
+    Used as placeholder text when someone writes their own formula, so the
+    field suggests "velocity (m/s)" rather than leaving the format to guess.
+
+    Derived rather than hand-written: the library already says what `m`, `v`
+    and `theta` mean, and a second table would drift out of step with it.
+    First mention wins, which favours the earlier, more elementary formulas.
+    """
+    hints: dict[str, str] = {}
+    for formula in FORMULAS:
+        for variable in formula["variables"]:
+            hints.setdefault(variable["symbol"], variable["description"])
+    hints.update(_HINT_OVERRIDES)
+    return hints
+
+
 def categories() -> list[str]:
     """Category names in the order they first appear in :data:`FORMULAS`."""
     seen: list[str] = []

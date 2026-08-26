@@ -117,6 +117,10 @@ async def formula_library() -> dict[str, object]:
     return {
         "categories": formulas.categories(),
         "formulas": formulas.FORMULAS,
+        # Example descriptions per symbol, so the editor can suggest the shape
+        # of a good one. Bundled here to keep the page to a single fetch.
+        "variable_hints": formulas.variable_hints(),
+        "fallback_hint": formulas.FALLBACK_HINT,
     }
 
 

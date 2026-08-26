@@ -952,3 +952,7 @@ textarea.text-input { resize: vertical; line-height: 1.5; }
 @media (max-width: 899px) {
   .editor-actions .btn { flex: 1; }
 }
+
+/* The home page is one column of fields with no sidebar, so it reads better
+   centred than pinned to the left edge of a wide window. */
+.editor { margin-inline: auto; }

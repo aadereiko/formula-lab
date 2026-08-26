@@ -46,6 +46,10 @@ export interface LibraryFormula {
 export interface Library {
   categories: string[];
   formulas: LibraryFormula[];
+  /** Example description per symbol, e.g. { m: "mass (kg)" }. */
+  variable_hints: Record<string, string>;
+  /** Used when a symbol has no example of its own. */
+  fallback_hint: string;
 }
 
 export interface Constant {

@@ -248,7 +248,7 @@ export default function App() {
       setActiveSaved(formula);
     }
     setMenuOpen(false);
-    navigate("editor");
+    navigate("home");
   };
 
   const startNewFormula = () => {
@@ -262,7 +262,7 @@ export default function App() {
     setResult(null);
     setResultError(null);
     setMenuOpen(false);
-    navigate("editor");
+    navigate("home");
   };
 
   const restore = (entry: HistoryEntry) => {
@@ -399,7 +399,7 @@ export default function App() {
           </div>
         )}
 
-        {route === "editor" ? (
+        {route === "home" ? (
           <EditorPage
             existing={editing}
             expression={expression}
@@ -408,6 +408,8 @@ export default function App() {
             analyzeError={analyzeError}
             pending={expression.trim() !== debouncedExpression.trim()}
             signedIn={signedIn}
+            hints={library?.variable_hints ?? {}}
+            fallbackHint={library?.fallback_hint ?? "mass (kg)"}
             values={relevantValues}
             solveFor={solveFor}
             onSave={performSave}
