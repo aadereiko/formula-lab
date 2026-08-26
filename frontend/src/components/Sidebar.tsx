@@ -16,6 +16,7 @@ interface Props {
   signedIn: boolean;
   onOpenSaved: (formula: StoredFormula) => void;
   onDeleteSaved: (formula: StoredFormula) => void;
+  onTogglePin: (formula: StoredFormula) => void;
   onSeeAll: () => void;
   onNewFormula: () => void;
 }
@@ -33,6 +34,7 @@ export function Sidebar({
   signedIn,
   onOpenSaved,
   onDeleteSaved,
+  onTogglePin,
   onSeeAll,
   onNewFormula,
 }: Props) {
@@ -73,6 +75,7 @@ export function Sidebar({
               error={savedError}
               onOpen={onOpenSaved}
               onDelete={onDeleteSaved}
+              onTogglePin={onTogglePin}
               onSeeAll={onSeeAll}
               onNewFormula={onNewFormula}
             />

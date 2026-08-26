@@ -92,6 +92,8 @@ class SavedFormulaRequest(BaseModel):
     solve_for: str | None = Field(default=None, max_length=64)
     #: What each symbol means: {"m": "mass (kg)"}.
     variable_notes: dict[str, str] = Field(default_factory=dict)
+    #: Pinned formulas sort to the top of every list.
+    pinned: bool = False
 
 
 class SavedFormulaResponse(BaseModel):
@@ -102,6 +104,7 @@ class SavedFormulaResponse(BaseModel):
     values: dict[str, str]
     variable_notes: dict[str, str]
     solve_for: str | None
+    pinned: bool
     created_at: datetime
     updated_at: datetime
 

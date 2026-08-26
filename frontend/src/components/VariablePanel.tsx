@@ -1,4 +1,5 @@
 import type { Constant } from "../types";
+import { IconTarget } from "./icons";
 
 interface Props {
   symbols: string[];
@@ -106,10 +107,12 @@ export function VariablePanel({
                   <button
                     type="button"
                     className={`solve-toggle${isTarget ? " is-active" : ""}`}
+                    aria-pressed={isTarget}
                     title={isTarget ? "Stop solving for this" : `Solve for ${symbol}`}
                     onClick={() => onSolveForChange(isTarget ? null : symbol)}
                   >
-                    solve
+                    <IconTarget />
+                    Solve
                   </button>
                 )}
               </div>

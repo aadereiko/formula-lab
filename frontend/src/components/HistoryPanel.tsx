@@ -1,4 +1,5 @@
 import type { HistoryEntry } from "../types";
+import { IconClear } from "./icons";
 
 interface Props {
   entries: HistoryEntry[];
@@ -14,6 +15,7 @@ export function HistoryPanel({ entries, onRestore, onClear }: Props) {
       <div className="block-head">
         <span className="label">Recent</span>
         <button type="button" className="ghost-btn" onClick={onClear}>
+          <IconClear size={12} />
           Clear
         </button>
       </div>

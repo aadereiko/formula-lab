@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { Logo } from "../components/Logo";
+import { IconPin } from "../components/icons";
 import type { StoredFormula } from "../useFormulaStore";
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
   onOpen: (formula: StoredFormula) => void;
   onEdit: (formula: StoredFormula) => void;
   onDelete: (formula: StoredFormula) => void;
+  onTogglePin: (formula: StoredFormula) => void;
   onSignIn: () => void;
   onNew: () => void;
 }
@@ -24,6 +26,7 @@ export function FormulasPage({
   onOpen,
   onEdit,
   onDelete,
+  onTogglePin,
   onSignIn,
   onNew,
 }: Props) {
@@ -113,6 +116,11 @@ export function FormulasPage({
                 click from reaching this one. */}
             <button type="button" className="formula-main" onClick={() => onOpen(formula)}>
               <span className="formula-line">
+                {formula.pinned && (
+                  <span className="pin-marker" aria-label="Pinned">
+                    <IconPin size={12} filled />
+                  </span>
+                )}
                 <span className="formula-name">{formula.name}</span>
                 {formula.serverId === null && (
                   <span className="card-tag" title="Stored in this browser only">
@@ -147,6 +155,16 @@ export function FormulasPage({
                 </>
               ) : (
                 <>
+                  <button
+                    type="button"
+                    className={`btn btn-small btn-icon${formula.pinned ? " is-on" : ""}`}
+                    aria-pressed={formula.pinned}
+                    aria-label={formula.pinned ? `Unpin ${formula.name}` : `Pin ${formula.name}`}
+                    title={formula.pinned ? "Unpin" : "Pin to the top"}
+                    onClick={() => onTogglePin(formula)}
+                  >
+                    <IconPin filled={formula.pinned} />
+                  </button>
                   <button
                     type="button"
                     className="btn btn-small"

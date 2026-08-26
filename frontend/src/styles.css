@@ -1588,3 +1588,75 @@ textarea.text-input { resize: vertical; line-height: 1.5; }
   .constants-section .block-head { flex-wrap: wrap; }
   .constants-search { max-width: none; width: 100%; }
 }
+
+/* ── pinning ─────────────────────────────────────────────────────────── */
+
+/* A small filled pin ahead of the name, so a pinned row is recognisable at a
+   glance without reading the controls at the other end of it. */
+.pin-marker {
+  display: inline-flex;
+  align-items: center;
+  color: var(--accent);
+  flex: none;
+  margin-right: 5px;
+  vertical-align: -1px;
+}
+
+.saved-pin {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: none;
+  color: var(--ink-faint);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s, color 0.12s, background 0.12s;
+}
+.saved-list li:hover .saved-pin,
+.saved-pin:focus-visible,
+/* A pinned row keeps its control visible: the state has to be undoable
+   without hunting for where it lives. */
+.saved-pin.is-on {
+  opacity: 1;
+  pointer-events: auto;
+}
+.saved-pin:hover { color: var(--accent); background: var(--bg-sunken); }
+.saved-pin.is-on { color: var(--accent); }
+
+/* An icon-only button keeps the pill shape but drops the label's padding. */
+.btn-icon { padding-inline: 8px; gap: 0; }
+.btn-icon.is-on { color: var(--accent); border-color: var(--accent); }
+
+/* ── solve toggle ────────────────────────────────────────────────────── */
+
+/* Sentence case and a crosshair, so it reads as an action rather than as a
+   lowercase token, and matches the other buttons on the page. */
+.solve-toggle {
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 6px 10px;
+}
+.solve-toggle svg { flex: none; }
+.solve-toggle.is-active {
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--accent-ink);
+}
+
+/* ── history ─────────────────────────────────────────────────────────── */
+
+.history-item { gap: 16px; }
+.history-item code { flex: 1; min-width: 0; }
+.history-result { flex: none; }
+.ghost-btn { display: inline-flex; align-items: center; gap: 5px; }
+.ghost-btn svg { flex: none; }
+
+@media (max-width: 899px) {
+  .saved-pin { opacity: 1; pointer-events: auto; }
+}

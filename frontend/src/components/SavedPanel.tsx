@@ -1,4 +1,5 @@
 import type { StoredFormula } from "../useFormulaStore";
+import { IconPin } from "./icons";
 
 interface Props {
   formulas: StoredFormula[];
@@ -8,6 +9,7 @@ interface Props {
   error: string | null;
   onOpen: (formula: StoredFormula) => void;
   onDelete: (formula: StoredFormula) => void;
+  onTogglePin: (formula: StoredFormula) => void;
   onSeeAll: () => void;
   onNewFormula: () => void;
 }
@@ -22,6 +24,7 @@ export function SavedPanel({
   error,
   onOpen,
   onDelete,
+  onTogglePin,
   onSeeAll,
   onNewFormula,
 }: Props) {
@@ -52,8 +55,25 @@ export function SavedPanel({
               aria-current={formula.key === activeKey}
               onClick={() => onOpen(formula)}
             >
-              <span className="saved-name">{formula.name}</span>
+              <span className="saved-name">
+                {formula.pinned && (
+                  <span className="pin-marker" aria-label="Pinned">
+                    <IconPin size={11} filled />
+                  </span>
+                )}
+                {formula.name}
+              </span>
               <code className="saved-expr">{formula.expression}</code>
+            </button>
+            <button
+              type="button"
+              className={`saved-pin${formula.pinned ? " is-on" : ""}`}
+              aria-pressed={formula.pinned}
+              aria-label={formula.pinned ? `Unpin ${formula.name}` : `Pin ${formula.name}`}
+              title={formula.pinned ? "Unpin" : "Pin to the top"}
+              onClick={() => onTogglePin(formula)}
+            >
+              <IconPin size={12} filled={formula.pinned} />
             </button>
             <button
               type="button"

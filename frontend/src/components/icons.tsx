@@ -41,3 +41,23 @@ export function IconEdit({ size = 14 }: { size?: number }) {
     </svg>
   );
 }
+
+/** A pin seen from the side; filled once the formula is actually pinned. */
+export function IconPin({ size = 14, filled = false }: { size?: number; filled?: boolean }) {
+  return (
+    <svg width={size} height={size} {...base} fill={filled ? "currentColor" : "none"}>
+      <path d="M9 4h6l-1 5 3 3H7l3-3-1-5z" />
+      <path d="M12 12v8" stroke="currentColor" fill="none" />
+    </svg>
+  );
+}
+
+/** A crosshair: the variable being solved for. */
+export function IconTarget({ size = 13 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} {...base}>
+      <circle cx="12" cy="12" r="6.5" />
+      <path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3" />
+    </svg>
+  );
+}

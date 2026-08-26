@@ -76,6 +76,14 @@ feature, and half-doing it silently would be worse than being explicit.
 `E` and `I` are ordinary variables here (energy and current), not Euler's
 number and the imaginary unit. Write `exp(1)` if you want *e*.
 
+### Pinning
+
+Any saved formula can be pinned, and pinned ones sort to the top of every list —
+the sidebar and the *My formulas* page alike. The order is applied on **read**
+rather than when a row changes, so it holds for whatever is already in the store
+rather than only for rows touched since the feature existed. The server applies
+the same ordering, so the two stores never disagree.
+
 ### Saving your own
 
 Press **Save** and a dialog asks for a name, a description, and — generated
@@ -320,7 +328,7 @@ formula cannot be one that fails the moment it is reopened.
 | `/api/auth/google/start` | GET | – | Begin Google sign-in |
 | `/api/auth/google/callback` | GET | – | Google returns here |
 | `/api/formulas` | GET, POST | ✓ | List / create your formulas |
-| `/api/formulas/{id}` | PUT, DELETE | ✓ | Update / delete one of yours |
+| `/api/formulas/{id}` | PUT, DELETE | ✓ | Update / delete one of yours (`pinned` included) |
 | `/api/my-constants` | GET, POST | ✓ | List / create your own constants |
 | `/api/my-constants/{id}` | PUT, DELETE | ✓ | Update / delete one of yours |
 
@@ -418,6 +426,13 @@ One small cube comes loose partway through — out of the solid, a moment in the
 air, and back. At rest it sits at the centre of the cube, where the six faces
 enclose it completely, so it is simply invisible until it travels out. No fading
 required.
+
+Its Z travel is *negative*, and that sign is the whole trick. The piece moves in
+the cube's local space and is then rotated by the body's `rotateY(-36deg)`, which
+maps screen-x to `x·cos − z·sin`. Moving equally in +x and +z therefore very
+nearly cancels — measured, it cleared the silhouette by exactly zero pixels,
+which is why the piece appeared never to leave. Flipping Z makes the two terms
+add.
 
 The flat SVG mark stays for the favicon and for static decoration, where nothing
 needs to rotate. The signed-out control carries the same cube as a wireframe

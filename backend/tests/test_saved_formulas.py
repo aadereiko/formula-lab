@@ -289,3 +289,60 @@ def test_corrupt_stored_json_reads_as_empty(client, session_factory):
     listed = client.get("/api/formulas").json()[0]
     assert listed["variable_notes"] == {}
     assert listed["values"] == {}
+
+
+# -- pinning --------------------------------------------------------------
+
+def test_pinned_defaults_to_false_and_round_trips(client):
+    sign_up(client, "sam@example.com")
+    created = client.post("/api/formulas", json=KINETIC).json()
+    assert created["pinned"] is False
+
+    updated = client.put(
+        f"/api/formulas/{created['id']}", json={**KINETIC, "pinned": True}
+    ).json()
+    assert updated["pinned"] is True
+    assert client.get("/api/formulas").json()[0]["pinned"] is True
+
+
+def test_pinned_formulas_sort_first(client):
+    """Ordering lives on the server so every list agrees on it."""
+    sign_up(client, "sam@example.com")
+    ids = {}
+    for name in ["first", "second", "third"]:
+        ids[name] = client.post(
+            "/api/formulas", json={"name": name, "expression": "a = b*c"}
+        ).json()["id"]
+
+    # `first` is the oldest, so without pinning it sorts last.
+    assert [f["name"] for f in client.get("/api/formulas").json()] == ["third", "second", "first"]
+
+    client.put(
+        f"/api/formulas/{ids['first']}",
+        json={"name": "first", "expression": "a = b*c", "pinned": True},
+    )
+    listed = [f["name"] for f in client.get("/api/formulas").json()]
+    assert listed[0] == "first", listed
+
+
+def test_unpinning_restores_recency_order(client):
+    sign_up(client, "sam@example.com")
+    formula_id = client.post("/api/formulas", json={"name": "old", "expression": "a = b"}).json()["id"]
+    client.post("/api/formulas", json={"name": "new", "expression": "x = y"})
+
+    client.put(f"/api/formulas/{formula_id}", json={"name": "old", "expression": "a = b", "pinned": True})
+    assert client.get("/api/formulas").json()[0]["name"] == "old"
+
+    client.put(f"/api/formulas/{formula_id}", json={"name": "old", "expression": "a = b", "pinned": False})
+    assert client.get("/api/formulas").json()[0]["name"] == "old"  # now newest by update time
+
+
+def test_pinning_is_per_account(client):
+    sign_up(client, "a@example.com")
+    mine = client.post("/api/formulas", json={**KINETIC, "pinned": True}).json()
+    assert mine["pinned"] is True
+    client.post("/api/auth/logout")
+
+    sign_up(client, "b@example.com")
+    theirs = client.post("/api/formulas", json=KINETIC).json()
+    assert theirs["pinned"] is False

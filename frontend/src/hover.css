@@ -277,9 +277,9 @@
 /* ── the loose piece ─────────────────────────────────────────────────── */
 
 .cube3d-chip {
-  --chip: calc(var(--cube) * 0.34);
+  --chip: calc(var(--cube) * 0.42);
   --chip-half: calc(var(--chip) / 2);
-  --pop: calc(var(--cube) * 0.66);
+  --pop: calc(var(--cube) * 0.8);
   position: absolute;
   /* At rest it sits at the centre of the cube, where the six faces enclose it
      completely -- so it is invisible until it travels out, and no opacity trick
@@ -306,16 +306,29 @@
 
 /* Out of the cube, a moment in the air, and back inside -- where the faces
    hide it again until the next cycle. Timed to happen while the cube itself is
-   still, so the two do not compete. */
+   still, so the two do not compete.
+ *
+ * The Z is negative, and that sign is the whole trick. The chip's translation
+ * happens in the cube's local space and is then rotated by the body's
+ * `rotateY(-36deg)`, which maps screen-x to `x·cos - z·sin`. Moving equally in
+ * +x and +z therefore very nearly cancels: measured, an equal-and-positive pop
+ * cleared the cube's silhouette by exactly zero pixels, which is why the piece
+ * looked like it never left. Flipping Z makes the two terms add instead. */
 @keyframes cube-detach {
-  0%, 30% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  0%, 30% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
   40% {
-    transform: translate3d(var(--pop), calc(var(--pop) * -0.85), var(--pop)) rotate(16deg);
+    transform: translate3d(var(--pop), calc(var(--pop) * -0.75), calc(var(--pop) * -1))
+      rotate(16deg);
   }
   54% {
-    transform: translate3d(var(--pop), calc(var(--pop) * -0.85), var(--pop)) rotate(-10deg);
+    transform: translate3d(var(--pop), calc(var(--pop) * -0.75), calc(var(--pop) * -1))
+      rotate(-12deg);
   }
-  64%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  64%, 100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -50,6 +50,7 @@ def _as_response(formula: SavedFormula) -> SavedFormulaResponse:
         values=_load_map(formula.values_json),
         variable_notes=_load_map(formula.variable_notes),
         solve_for=formula.solve_for,
+        pinned=formula.pinned,
         created_at=formula.created_at,
         updated_at=formula.updated_at,
     )
@@ -136,10 +137,12 @@ def list_formulas(
     user: User = Depends(auth.current_user),
     session: Session = Depends(get_session),
 ) -> list[SavedFormulaResponse]:
+    # Pinned first, then most recently touched. Ordering here rather than in the
+    # client means every consumer -- the sidebar, the list page -- agrees.
     rows = session.scalars(
         select(SavedFormula)
         .where(SavedFormula.user_id == user.id)
-        .order_by(SavedFormula.updated_at.desc())
+        .order_by(SavedFormula.pinned.desc(), SavedFormula.updated_at.desc())
     ).all()
     return [_as_response(row) for row in rows]
 
@@ -168,6 +171,7 @@ def create_formula(
         values_json=_values_json(payload),
         variable_notes=_variable_notes_json(payload, symbols),
         solve_for=payload.solve_for,
+        pinned=payload.pinned,
     )
     session.add(formula)
     try:
@@ -198,6 +202,7 @@ def update_formula(
     formula.values_json = _values_json(payload)
     formula.variable_notes = _variable_notes_json(payload, symbols)
     formula.solve_for = payload.solve_for
+    formula.pinned = payload.pinned
     try:
         session.commit()
     except IntegrityError:

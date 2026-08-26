@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import * as api from "./api";
 import { ApiError } from "./api";
 import { usePersistentState } from "./hooks";
@@ -22,6 +22,8 @@ export interface StoredFormula {
   /** What each symbol means: { m: "mass (kg)" }. */
   variableNotes: Record<string, string>;
   solveFor: string | null;
+  /** Pinned formulas sort to the top of every list. */
+  pinned: boolean;
   updatedAt: string;
 }
 
@@ -32,6 +34,7 @@ export interface FormulaDraft {
   values: Record<string, string>;
   variableNotes: Record<string, string>;
   solveFor: string | null;
+  pinned: boolean;
 }
 
 const LOCAL_KEY = "formula-lab.local-formulas";
@@ -47,6 +50,7 @@ const fromServer = (row: SavedFormula): StoredFormula => ({
   values: row.values,
   variableNotes: row.variable_notes,
   solveFor: row.solve_for,
+  pinned: row.pinned,
   updatedAt: row.updated_at,
 });
 
@@ -57,11 +61,16 @@ const toRequest = (draft: FormulaDraft): SavedFormulaInput => ({
   values: draft.values,
   variable_notes: draft.variableNotes,
   solve_for: draft.solveFor,
+  pinned: draft.pinned,
 });
 
 /** Ids only need to be unique within this browser. */
 let localCounter = 0;
 const nextLocalKey = () => `local-${Date.now().toString(36)}-${localCounter++}`;
+
+/** Pinned first, then most recently touched: the same order the server applies. */
+const byPinThenRecency = (a: StoredFormula, b: StoredFormula) =>
+  Number(b.pinned) - Number(a.pinned) || b.updatedAt.localeCompare(a.updatedAt);
 
 const describe = (error: unknown) =>
   error instanceof ApiError || error instanceof Error
@@ -92,7 +101,18 @@ export function useFormulaStore(signedIn: boolean) {
 
   useEffect(reload, [reload]);
 
-  const formulas = signedIn ? server : local;
+  /**
+   * Sorted on read, not on write.
+   *
+   * Sorting only when a row changed left whatever localStorage already held in
+   * its stored order, so a pinned formula saved before the feature existed --
+   * or simply written by an older version -- stayed where it was. One sort over
+   * whichever source is active is both simpler and correct.
+   */
+  const formulas = useMemo(
+    () => [...(signedIn ? server : local)].sort(byPinThenRecency),
+    [signedIn, server, local],
+  );
 
   const nameTaken = useCallback(
     (name: string, exceptKey?: string) =>
@@ -156,6 +176,20 @@ export function useFormulaStore(signedIn: boolean) {
     [signedIn, nameTaken, setLocal],
   );
 
+  const togglePin = useCallback(
+    async (target: StoredFormula): Promise<StoredFormula> =>
+      update(target, {
+        name: target.name,
+        expression: target.expression,
+        note: target.note,
+        values: target.values,
+        variableNotes: target.variableNotes,
+        solveFor: target.solveFor,
+        pinned: !target.pinned,
+      }),
+    [update],
+  );
+
   const remove = useCallback(
     async (target: StoredFormula) => {
       if (signedIn && target.serverId !== null) {
@@ -198,6 +232,7 @@ export function useFormulaStore(signedIn: boolean) {
         values: item.values,
         variableNotes: item.variableNotes ?? {},
         solveFor: item.solveFor,
+        pinned: item.pinned ?? false,
       };
       try {
         await api.createSaved(toRequest(draft));
@@ -231,6 +266,7 @@ export function useFormulaStore(signedIn: boolean) {
     save,
     update,
     remove,
+    togglePin,
     migrateLocal,
     reload,
   };

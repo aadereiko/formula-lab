@@ -11,7 +11,10 @@ interface Props {
   fallbackHint: string;
   existing: StoredFormula | null;
   storageNote: string | null;
-  onSave: (draft: Omit<FormulaDraft, "values" | "solveFor">, asNew: boolean) => Promise<void>;
+  onSave: (
+    draft: Omit<FormulaDraft, "values" | "solveFor" | "pinned">,
+    asNew: boolean,
+  ) => Promise<void>;
   onCancel: () => void;
 }
 

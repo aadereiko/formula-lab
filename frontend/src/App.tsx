@@ -288,11 +288,17 @@ export default function App() {
 
   // -- saving --------------------------------------------------------------
   const performSave = async (
-    details: Omit<FormulaDraft, "values" | "solveFor">,
+    details: Omit<FormulaDraft, "values" | "solveFor" | "pinned">,
     asNew: boolean,
   ) => {
     const existing = saving?.existing ?? null;
-    const draft: FormulaDraft = { ...details, values: relevantValues, solveFor };
+    const draft: FormulaDraft = {
+      ...details,
+      values: relevantValues,
+      solveFor,
+      // Saving should not silently unpin something.
+      pinned: asNew ? false : (existing?.pinned ?? false),
+    };
     const updating = existing !== null && !asNew;
     const stored = updating ? await store.update(existing, draft) : await store.save(draft);
 
@@ -301,6 +307,16 @@ export default function App() {
     setDescriptions(stored.variableNotes);
     setSaving(null);
     flash(updating ? "Saved changes" : signedIn ? "Saved" : "Saved in this browser");
+  };
+
+  const togglePin = async (formula: StoredFormula) => {
+    try {
+      const next = await store.togglePin(formula);
+      if (activeSaved?.key === next.key) setActiveSaved(next);
+      flash(next.pinned ? "Pinned" : "Unpinned");
+    } catch (error) {
+      flash(describeError(error));
+    }
   };
 
   const deleteSaved = async (formula: StoredFormula) => {
@@ -385,6 +401,7 @@ export default function App() {
           signedIn={signedIn}
           onOpenSaved={openSaved}
           onDeleteSaved={deleteSaved}
+          onTogglePin={togglePin}
           onSeeAll={() => navigate("formulas")}
           onNewFormula={startNewFormula}
         />
@@ -432,6 +449,7 @@ export default function App() {
             onOpen={openSaved}
             onEdit={editFormula}
             onDelete={deleteSaved}
+            onTogglePin={togglePin}
             onSignIn={() => promptSignIn("Sign in to keep your formulas across devices.")}
             onNew={startNewFormula}
           />
@@ -499,8 +517,8 @@ export default function App() {
             )}
 
             <ResultPanel result={result} error={resultError} busy={busy} />
-            <HistoryPanel entries={history} onRestore={restore} onClear={() => setHistory([])} />
             <HelpPanel capabilities={capabilities} />
+            <HistoryPanel entries={history} onRestore={restore} onClear={() => setHistory([])} />
           </div>
         )}
       </main>

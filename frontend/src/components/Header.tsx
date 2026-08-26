@@ -49,7 +49,7 @@ export function Header({
       )}
 
       <button type="button" className="brand" onClick={() => onNavigate("home")}>
-        <CubeMark size={19} />
+        <CubeMark size={16} />
         <span className="brand-name">Formula Lab</span>
       </button>
 
