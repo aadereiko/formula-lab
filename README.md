@@ -618,6 +618,56 @@ One trap worth recording: the labels are lowercase in the source and uppercased
 by `text-transform`. Checking the palette against the *displayed* text tests a
 different string from the one that gets hashed.
 
+## Offline
+
+The app installs and it computes without a network. Two separate pieces.
+
+**A service worker** caches the shell and the catalogue, so the app opens with
+nothing connected. Hand-written rather than generated: a generator precaches
+`dist/**`, which here means all three copies of every KaTeX font — 19 `.woff2`,
+20 `.woff`, 20 `.ttf` — when a browser reads exactly one format. That is 540 KB
+of somebody's data spent on files that will never be opened.
+
+Three policies, because the three kinds of request want different things.
+Hashed build assets are cached forever, since the filename contains the content
+hash and a new build asks for a new name. `/api/library`, `/api/constants` and
+`/api/capabilities` are network-first with a cache fallback — 14 KB, 2 KB and
+2 KB, changing only on deploy. Everything else is network-only, emphatically
+including anything authenticated: a cached `/api/formulas` could show one
+account another's data, which is worse than any offline gap.
+
+**A local engine** answers `analyze` and `evaluate` when the server cannot be
+reached — `src/offline/`. It parses the same syntax with a hand-written Pratt
+parser, renders the same LaTeX so the preview survives, and solves by finding
+the root **numerically** rather than rearranging symbolically. Nothing in a
+browser can rearrange `F = m a` into `F/a` without shipping a computer algebra
+system; bisection needs no algebra at all.
+
+That trade is better than it sounds and its edges are worth knowing. Measured
+against the API over every library formula: **analyze agrees 44/44, and solving
+agrees on 149 of 153 variable-directions.** The four it cannot do are the ones
+whose answer is complex — the server returns `-1.0*I`, and a real-number solver
+has nowhere to go. It says so rather than inventing a number. What else is lost
+is the exact form: `sqrt(2)` comes back as 1.41421.
+
+Only a *transport* failure falls through to it. A 400 is the server having read
+the formula and rejected it, and answering that locally would mean two verdicts
+on one input. `navigator.onLine` is never consulted — it reports whether an
+interface is up, not whether anything replied, and it lies in both directions.
+The failed request is the signal.
+
+Plotting is the one feature that does not follow. A plot is four hundred
+evaluations and the offline solver does one root at a time, so the panel says
+`Plotting needs a connection.` instead.
+
+`npm run check-offline` asserts the engine against values taken from the API,
+bundling the TypeScript in memory so no backend need be running. Two of its
+cases are regressions rather than examples: bisection reported the *pole* of
+`v = d/t` at t = 0 as a root, because `f` runs from −∞ to +∞ across a pole and
+that is a sign change by any test a bracket can apply; and a geometric probe
+ladder returned an answer exactly 2π out for Snell's law, because `[3, 10]`
+holds several roots of `sin`.
+
 ## On a phone
 
 Below 700px the header's nav becomes three icons — a flask, a bookmark, a pi —

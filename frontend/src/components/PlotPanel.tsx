@@ -161,7 +161,13 @@ export function PlotPanel({
       .catch((failure) => {
         if (failure instanceof DOMException && failure.name === "AbortError") return;
         setData(null);
-        setError(describe(failure));
+        // A plot is four hundred evaluations, and the offline engine solves one
+        // at a time by bisection -- so this is the one feature that genuinely
+        // cannot follow the app offline. Say that, rather than reporting the
+        // transport error underneath it.
+        const unreachable =
+          failure instanceof ApiError && !failure.userFacing && failure.status === 0;
+        setError(unreachable ? "Plotting needs a connection." : describe(failure));
       })
       .finally(() => setBusy(false));
     return () => controller.abort();

@@ -16,4 +16,4 @@ test fails if the two drift, because a version shown in the UI that disagrees
 with the package metadata is worse than no version at all.
 """
 
-VERSION = "1.1.0"
+VERSION = "1.2.0"

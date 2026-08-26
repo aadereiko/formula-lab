@@ -13,6 +13,7 @@ import type {
   UserConstant,
   UserConstantInput,
 } from "./types";
+import { analyzeOffline, evaluateOffline } from "./offline";
 
 /**
  * The backend distinguishes two failure kinds, and the UI must too:
@@ -44,7 +45,14 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     // An aborted request is a superseded keystroke, not a network failure --
     // rethrow it unchanged so callers can recognise and ignore it.
     if (error instanceof DOMException && error.name === "AbortError") throw error;
-    throw new ApiError("Cannot reach the API. Is the backend running on port 7731?", false);
+    // The port hint is for whoever forgot to start the backend; a user on a
+    // train needs to hear that they are offline, not a port number.
+    throw new ApiError(
+      import.meta.env.DEV
+        ? "Cannot reach the API. Is the backend running on port 7731?"
+        : "No connection.",
+      false,
+    );
   }
 
   if (response.ok) {
@@ -83,8 +91,64 @@ function send<T>(method: string, path: string, body?: unknown, signal?: AbortSig
 const post = <T>(path: string, body?: unknown, signal?: AbortSignal) =>
   send<T>("POST", path, body, signal);
 
+/**
+ * The server first, the local engine when it cannot be reached.
+ *
+ * Only a *transport* failure falls through. A 400 is the server having read the
+ * formula and rejected it, and answering that from a second engine would mean
+ * two different verdicts on the same input -- so a rejection stands.
+ *
+ * `navigator.onLine` is not consulted. It reports whether an interface is up,
+ * not whether anything is reachable, and it lies in both directions: true on a
+ * captive-portal wifi, false on some VPNs. A failed request is the only honest
+ * signal, so the attempt *is* the check.
+ */
+async function withOfflineFallback<T>(
+  attempt: () => Promise<T>,
+  offline: () => T,
+): Promise<T> {
+  try {
+    return await attempt();
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") throw error;
+    const unreachable = error instanceof ApiError && !error.userFacing && error.status === 0;
+    if (!unreachable) throw error;
+    try {
+      const result = offline();
+      offlineListeners.forEach((listener) => listener(true));
+      return result;
+    } catch (localError) {
+      offlineListeners.forEach((listener) => listener(true));
+      // The local engine's own message is the useful one: it knows whether the
+      // formula was unparseable or merely beyond what it can solve.
+      throw new ApiError((localError as Error).message, true, 0);
+    }
+  }
+}
+
+type OfflineListener = (offline: boolean) => void;
+const offlineListeners = new Set<OfflineListener>();
+
+/** Notifies the UI the first time a request has to be answered locally. */
+export function onOfflineChange(listener: OfflineListener): () => void {
+  offlineListeners.add(listener);
+  return () => offlineListeners.delete(listener);
+}
+
+/** Called once a request succeeds again, so the banner can clear itself. */
+export function reportOnline(): void {
+  offlineListeners.forEach((listener) => listener(false));
+}
+
 export const analyze = (expression: string, signal?: AbortSignal) =>
-  post<AnalyzeResponse>("/api/analyze", { expression }, signal);
+  withOfflineFallback(
+    async () => {
+      const result = await post<AnalyzeResponse>("/api/analyze", { expression }, signal);
+      reportOnline();
+      return result;
+    },
+    () => analyzeOffline(expression),
+  );
 
 export const evaluate = (
   expression: string,
@@ -93,10 +157,17 @@ export const evaluate = (
   precision: number,
   signal?: AbortSignal,
 ) =>
-  post<EvaluateResponse>(
-    "/api/evaluate",
-    { expression, values, solve_for: solveFor, precision },
-    signal,
+  withOfflineFallback(
+    async () => {
+      const result = await post<EvaluateResponse>(
+        "/api/evaluate",
+        { expression, values, solve_for: solveFor, precision },
+        signal,
+      );
+      reportOnline();
+      return result;
+    },
+    () => evaluateOffline(expression, values, precision, solveFor),
   );
 
 /** Several hundred evaluations in one request, so the body carries the sweep

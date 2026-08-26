@@ -77,6 +77,10 @@ export default function App() {
   const [builtInConstants, setBuiltInConstants] = useState<Constant[]>([]);
   const [capabilities, setCapabilities] = useState<Capabilities | null>(null);
   const [offline, setOffline] = useState<string | null>(null);
+  /* Set the first time a request has to be answered by the local engine, and
+     cleared as soon as one reaches the server again. Distinct from `offline`
+     above, which is the startup fetch having failed outright. */
+  const [computingLocally, setComputingLocally] = useState(false);
 
   const [activeSaved, setActiveSaved] = useState<StoredFormula | null>(null);
   const [activeLibraryId, setActiveLibraryId] = useState<string | null>(null);
@@ -108,6 +112,11 @@ export default function App() {
       })
       .catch((error) => setOffline(describeError(error)));
   }, []);
+
+  // The api layer reports when it had to fall back, because it is the only
+  // place that knows: `navigator.onLine` says an interface is up, not that
+  // anything answered.
+  useEffect(() => api.onOfflineChange(setComputingLocally), []);
 
   useEffect(() => {
     if (oauthError) setAuthOpen(true);
@@ -441,6 +450,16 @@ export default function App() {
           it would otherwise occupy. */}
       <main className={`workspace${route === "home" ? "" : " is-full"}`}>
         {offline && <p className="banner">{offline}</p>}
+        {computingLocally && (
+          <p className="offline-note" role="status">
+            <span className="offline-dot" aria-hidden="true" />
+            <span>
+              <strong>Offline.</strong> Solving on this device — answers are found
+              numerically, so an exact form like <code>sqrt(2)</code> and a complex
+              result need a connection. Saving and plotting are paused.
+            </span>
+          </p>
+        )}
         {notice && (
           <p className="notice" role="status">
             {notice}

@@ -24,6 +24,7 @@ test:
 	cd backend && .venv/bin/python -m pytest -q
 	cd frontend && npx tsc --noEmit
 	cd frontend && node scripts/check-styles.mjs
+	cd frontend && node scripts/check-offline.mjs
 
 build:
 	cd frontend && npm run build
