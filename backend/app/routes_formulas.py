@@ -23,22 +23,32 @@ from .security import FormulaError, check_symbol_name
 router = APIRouter(prefix="/api/formulas", tags=["formulas"])
 
 MAX_SAVED_PER_USER = 200
+MAX_VARIABLE_NOTE = 200
+
+
+def _load_map(raw: str) -> dict[str, str]:
+    """Parse a stored JSON object, tolerating anything unexpected.
+
+    These columns are written by this app, but a hand-edited database or a
+    change of format should degrade to "no data" rather than 500 on read.
+    """
+    try:
+        parsed = json.loads(raw)
+    except (TypeError, ValueError):
+        return {}
+    if not isinstance(parsed, dict):
+        return {}
+    return {str(key): str(value) for key, value in parsed.items()}
 
 
 def _as_response(formula: SavedFormula) -> SavedFormulaResponse:
-    try:
-        values = json.loads(formula.values_json)
-        if not isinstance(values, dict):
-            values = {}
-    except (TypeError, ValueError):
-        values = {}
-
     return SavedFormulaResponse(
         id=formula.id,
         name=formula.name,
         expression=formula.expression,
         note=formula.note,
-        values={str(k): str(v) for k, v in values.items()},
+        values=_load_map(formula.values_json),
+        variable_notes=_load_map(formula.variable_notes),
         solve_for=formula.solve_for,
         created_at=formula.created_at,
         updated_at=formula.updated_at,
@@ -61,7 +71,23 @@ def _owned_formula(formula_id: int, user: User, session: Session) -> SavedFormul
     return formula
 
 
-def _validated_payload(payload: SavedFormulaRequest) -> tuple[str, str]:
+def _variable_notes_json(payload: SavedFormulaRequest, symbols: list[str]) -> str:
+    """Keep only descriptions for symbols the formula actually contains.
+
+    Stale entries would otherwise accumulate every time someone edits an
+    expression, and be shown against variables that no longer exist.
+    """
+    cleaned: dict[str, str] = {}
+    for symbol, description in payload.variable_notes.items():
+        if symbol not in symbols:
+            continue
+        text = str(description).strip()
+        if text:
+            cleaned[symbol] = text[:MAX_VARIABLE_NOTE]
+    return json.dumps(cleaned)
+
+
+def _validated_payload(payload: SavedFormulaRequest) -> tuple[str, str, list[str]]:
     """Check the expression parses, and normalise the name.
 
     Saving a formula that cannot be parsed would produce a library entry that
@@ -87,7 +113,7 @@ def _validated_payload(payload: SavedFormulaRequest) -> tuple[str, str]:
                 detail=f"'{payload.solve_for}' is not a variable in this formula.",
             )
 
-    return name, analysis["expression"]
+    return name, analysis["expression"], analysis["symbols"]
 
 
 def _values_json(payload: SavedFormulaRequest) -> str:
@@ -133,13 +159,14 @@ def create_formula(
             detail=f"You have reached the limit of {MAX_SAVED_PER_USER} saved formulas.",
         )
 
-    name, expression = _validated_payload(payload)
+    name, expression, symbols = _validated_payload(payload)
     formula = SavedFormula(
         user_id=user.id,
         name=name,
         expression=expression,
         note=payload.note.strip(),
         values_json=_values_json(payload),
+        variable_notes=_variable_notes_json(payload, symbols),
         solve_for=payload.solve_for,
     )
     session.add(formula)
@@ -163,12 +190,13 @@ def update_formula(
     session: Session = Depends(get_session),
 ) -> SavedFormulaResponse:
     formula = _owned_formula(formula_id, user, session)
-    name, expression = _validated_payload(payload)
+    name, expression, symbols = _validated_payload(payload)
 
     formula.name = name
     formula.expression = expression
     formula.note = payload.note.strip()
     formula.values_json = _values_json(payload)
+    formula.variable_notes = _variable_notes_json(payload, symbols)
     formula.solve_for = payload.solve_for
     try:
         session.commit()

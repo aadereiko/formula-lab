@@ -7,8 +7,11 @@ interface Props {
   menuOpen: boolean;
   showMenu: boolean;
   route: Route;
+  /** True when the editor is working on an existing formula, not a new one. */
+  editingExisting: boolean;
   savedCount: number;
   onNavigate: (next: Route) => void;
+  onNewFormula: () => void;
   onToggleMenu: () => void;
   onAccount: () => void;
 }
@@ -19,8 +22,10 @@ export function Header({
   menuOpen,
   showMenu,
   route,
+  editingExisting,
   savedCount,
   onNavigate,
+  onNewFormula,
   onToggleMenu,
   onAccount,
 }: Props) {
@@ -43,6 +48,16 @@ export function Header({
       </button>
 
       <nav className="nav">
+        <button
+          type="button"
+          // Editing an existing formula shares this route but is not "New",
+          // so the highlight would otherwise be misleading.
+          className={`nav-link${route === "editor" && !editingExisting ? " is-active" : ""}`}
+          aria-current={route === "editor" && !editingExisting}
+          onClick={onNewFormula}
+        >
+          New
+        </button>
         <button
           type="button"
           className={`nav-link${route === "calculator" ? " is-active" : ""}`}

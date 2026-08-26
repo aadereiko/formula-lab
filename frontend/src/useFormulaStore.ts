@@ -16,8 +16,11 @@ export interface StoredFormula {
   serverId: number | null;
   name: string;
   expression: string;
+  /** What the formula is for. Labelled "Description" in the UI. */
   note: string;
   values: Record<string, string>;
+  /** What each symbol means: { m: "mass (kg)" }. */
+  variableNotes: Record<string, string>;
   solveFor: string | null;
   updatedAt: string;
 }
@@ -27,6 +30,7 @@ export interface FormulaDraft {
   expression: string;
   note: string;
   values: Record<string, string>;
+  variableNotes: Record<string, string>;
   solveFor: string | null;
 }
 
@@ -41,6 +45,7 @@ const fromServer = (row: SavedFormula): StoredFormula => ({
   expression: row.expression,
   note: row.note,
   values: row.values,
+  variableNotes: row.variable_notes,
   solveFor: row.solve_for,
   updatedAt: row.updated_at,
 });
@@ -50,6 +55,7 @@ const toRequest = (draft: FormulaDraft): SavedFormulaInput => ({
   expression: draft.expression,
   note: draft.note,
   values: draft.values,
+  variable_notes: draft.variableNotes,
   solve_for: draft.solveFor,
 });
 
@@ -190,6 +196,7 @@ export function useFormulaStore(signedIn: boolean) {
         expression: item.expression,
         note: item.note,
         values: item.values,
+        variableNotes: item.variableNotes ?? {},
         solveFor: item.solveFor,
       };
       try {

@@ -88,6 +88,7 @@ export interface SavedFormula {
   expression: string;
   note: string;
   values: Record<string, string>;
+  variable_notes: Record<string, string>;
   solve_for: string | null;
   created_at: string;
   updated_at: string;
@@ -98,5 +99,6 @@ export interface SavedFormulaInput {
   expression: string;
   note?: string;
   values?: Record<string, string>;
+  variable_notes?: Record<string, string>;
   solve_for?: string | null;
 }

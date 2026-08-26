@@ -192,3 +192,100 @@ def test_deleting_a_user_removes_their_formulas(client, session_factory):
         session.delete(session.query(User).one())
         session.commit()
         assert session.query(SavedFormula).count() == 0, "ON DELETE CASCADE did not fire"
+
+
+# -- descriptions ---------------------------------------------------------
+
+DESCRIBED = {
+    "name": "Kinetic energy",
+    "expression": "E = 1/2 m v^2",
+    "note": "Energy of a moving body.",
+    "variable_notes": {"E": "energy (J)", "m": "mass (kg)", "v": "speed (m/s)"},
+}
+
+
+def test_description_and_variable_notes_round_trip(client):
+    sign_up(client, "sam@example.com")
+    created = client.post("/api/formulas", json=DESCRIBED)
+    assert created.status_code == 201
+    body = created.json()
+    assert body["note"] == "Energy of a moving body."
+    assert body["variable_notes"] == DESCRIBED["variable_notes"]
+
+    # And survive a re-read rather than only being echoed back.
+    listed = client.get("/api/formulas").json()[0]
+    assert listed["variable_notes"]["m"] == "mass (kg)"
+
+
+def test_notes_for_symbols_not_in_the_formula_are_dropped(client):
+    """Otherwise stale entries pile up every time the expression is edited."""
+    sign_up(client, "sam@example.com")
+    created = client.post(
+        "/api/formulas",
+        json={
+            "name": "Ohm",
+            "expression": "V = I*R",
+            "variable_notes": {"V": "volts", "I": "amps", "zzz": "gone"},
+        },
+    ).json()
+    assert set(created["variable_notes"]) == {"V", "I"}
+
+
+def test_editing_an_expression_prunes_orphaned_notes(client):
+    sign_up(client, "sam@example.com")
+    formula_id = client.post("/api/formulas", json=DESCRIBED).json()["id"]
+
+    updated = client.put(
+        f"/api/formulas/{formula_id}",
+        json={
+            "name": "Kinetic energy",
+            "expression": "E = 1/2 m u^2",  # v became u
+            "variable_notes": DESCRIBED["variable_notes"],
+        },
+    ).json()
+    assert "v" not in updated["variable_notes"]
+    assert updated["variable_notes"]["m"] == "mass (kg)"
+
+
+def test_blank_variable_notes_are_not_stored(client):
+    sign_up(client, "sam@example.com")
+    created = client.post(
+        "/api/formulas",
+        json={"name": "Ohm", "expression": "V = I*R", "variable_notes": {"V": "  ", "I": "amps"}},
+    ).json()
+    assert created["variable_notes"] == {"I": "amps"}
+
+
+def test_variable_note_length_is_capped(client):
+    sign_up(client, "sam@example.com")
+    created = client.post(
+        "/api/formulas",
+        json={"name": "Ohm", "expression": "V = I*R", "variable_notes": {"V": "x" * 500}},
+    ).json()
+    assert len(created["variable_notes"]["V"]) == 200
+
+
+def test_formulas_without_descriptions_still_work(client):
+    """The fields are optional -- older saved rows have neither."""
+    sign_up(client, "sam@example.com")
+    created = client.post("/api/formulas", json={"name": "Bare", "expression": "a = b*c"}).json()
+    assert created["note"] == ""
+    assert created["variable_notes"] == {}
+
+
+def test_corrupt_stored_json_reads_as_empty(client, session_factory):
+    """A hand-edited database should not turn every read into a 500."""
+    from app.db import SavedFormula
+
+    sign_up(client, "sam@example.com")
+    client.post("/api/formulas", json=DESCRIBED)
+
+    with session_factory() as session:
+        row = session.query(SavedFormula).one()
+        row.variable_notes = "not json at all"
+        row.values_json = "[1, 2, 3]"  # valid JSON, wrong shape
+        session.commit()
+
+    listed = client.get("/api/formulas").json()[0]
+    assert listed["variable_notes"] == {}
+    assert listed["values"] == {}

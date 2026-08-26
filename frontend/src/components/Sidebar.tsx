@@ -17,6 +17,7 @@ interface Props {
   onOpenSaved: (formula: StoredFormula) => void;
   onDeleteSaved: (formula: StoredFormula) => void;
   onSeeAll: () => void;
+  onNewFormula: () => void;
 }
 
 export function Sidebar({
@@ -33,6 +34,7 @@ export function Sidebar({
   onOpenSaved,
   onDeleteSaved,
   onSeeAll,
+  onNewFormula,
 }: Props) {
   const [query, setQuery] = useState("");
 
@@ -72,6 +74,7 @@ export function Sidebar({
               onOpen={onOpenSaved}
               onDelete={onDeleteSaved}
               onSeeAll={onSeeAll}
+              onNewFormula={onNewFormula}
             />
           </section>
 

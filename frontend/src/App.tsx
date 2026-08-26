@@ -12,9 +12,9 @@ import { Header } from "./components/Header";
 import { HelpPanel } from "./components/HelpPanel";
 import { HistoryPanel } from "./components/HistoryPanel";
 import { ResultPanel } from "./components/ResultPanel";
-import { SaveDialog } from "./components/SaveDialog";
 import { Sidebar } from "./components/Sidebar";
 import { VariablePanel } from "./components/VariablePanel";
+import { EditorPage } from "./pages/EditorPage";
 import { FormulasPage } from "./pages/FormulasPage";
 import type {
   AnalyzeResponse,
@@ -27,10 +27,6 @@ import type {
 } from "./types";
 
 const HISTORY_LIMIT = 10;
-
-type SaveIntent =
-  | { mode: "current"; existing: StoredFormula | null }
-  | { mode: "edit"; existing: StoredFormula };
 
 const isAbort = (error: unknown) =>
   error instanceof DOMException && error.name === "AbortError";
@@ -47,8 +43,8 @@ export default function App() {
   const signedIn = Boolean(auth.user);
   const store = useFormulaStore(signedIn);
 
-  const [expression, setExpression] = useState("F = m*a");
-  const [values, setValues] = useState<Record<string, string>>({ F: "10", a: "2" });
+  const [expression, setExpression] = useState("");
+  const [values, setValues] = useState<Record<string, string>>({});
   const [solveFor, setSolveFor] = useState<string | null>(null);
   const [precision, setPrecision] = useState(6);
 
@@ -64,7 +60,9 @@ export default function App() {
   const [offline, setOffline] = useState<string | null>(null);
 
   const [activeSaved, setActiveSaved] = useState<StoredFormula | null>(null);
-  const [activeLibraryId, setActiveLibraryId] = useState<string | null>("newton2");
+  const [activeLibraryId, setActiveLibraryId] = useState<string | null>(null);
+  /** The formula the editor is working on: null for a new one. */
+  const [editing, setEditing] = useState<StoredFormula | null>(null);
   const [descriptions, setDescriptions] = useState<Record<string, string>>({});
   const [history, setHistory] = usePersistentState<HistoryEntry[]>("formula-lab.history", []);
 
@@ -72,14 +70,6 @@ export default function App() {
   const [authOpen, setAuthOpen] = useState(false);
   const [authReason, setAuthReason] = useState<string | null>(null);
   const [accountOpen, setAccountOpen] = useState(false);
-  /**
-   * What a save is meant to do. Stated rather than inferred: "Save" on the
-   * calculator writes the current working state, while "Rename" on the
-   * formulas page must touch only the name and note -- comparing object
-   * identity to guess between them would quietly overwrite a saved
-   * expression with whatever the calculator happened to hold.
-   */
-  const [saveIntent, setSaveIntent] = useState<SaveIntent | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [migrateDismissed, setMigrateDismissed] = useState(false);
 
@@ -240,11 +230,39 @@ export default function App() {
     setSolveFor(formula.solveFor);
     setActiveSaved(formula);
     setActiveLibraryId(null);
-    setDescriptions({});
+    // The formula's own variable descriptions take the place of the built-in
+    // library's, so the calculator explains a user's formula the same way.
+    setDescriptions(formula.variableNotes ?? {});
     setResult(null);
     setResultError(null);
     setMenuOpen(false);
     navigate("calculator");
+  };
+
+  const editFormula = (formula: StoredFormula | null) => {
+    setEditing(formula);
+    if (formula) {
+      setExpression(formula.expression);
+      setValues(formula.values);
+      setSolveFor(formula.solveFor);
+      setActiveSaved(formula);
+    }
+    setMenuOpen(false);
+    navigate("editor");
+  };
+
+  const startNewFormula = () => {
+    setEditing(null);
+    setExpression("");
+    setValues({});
+    setSolveFor(null);
+    setActiveSaved(null);
+    setActiveLibraryId(null);
+    setDescriptions({});
+    setResult(null);
+    setResultError(null);
+    setMenuOpen(false);
+    navigate("editor");
   };
 
   const restore = (entry: HistoryEntry) => {
@@ -265,35 +283,17 @@ export default function App() {
   // -- saving --------------------------------------------------------------
   // No account required: a guest's formulas go to localStorage, and the store
   // presents both the same way.
-  const performSave = async (name: string, note: string, asNew: boolean) => {
-    const intent = saveIntent;
-    if (!intent) return;
+  const performSave = async (draft: FormulaDraft, asNew: boolean) => {
+    const updating = editing !== null && !asNew;
+    const stored = updating ? await store.update(editing!, draft) : await store.save(draft);
 
-    const source =
-      intent.mode === "edit"
-        ? {
-            expression: intent.existing.expression,
-            values: intent.existing.values,
-            solveFor: intent.existing.solveFor,
-          }
-        : { expression: analysis!.expression, values: relevantValues, solveFor };
-
-    const draft: FormulaDraft = { name, note, ...source };
-    const updating = intent.existing !== null && !asNew;
-    const stored = updating
-      ? await store.update(intent.existing!, draft)
-      : await store.save(draft);
-
-    // Keep the calculator's badge in step, but never adopt a formula that a
-    // rename-and-duplicate produced somewhere else.
-    if (intent.mode === "current" && !asNew) setActiveSaved(stored);
-    else if (intent.mode === "edit" && updating && activeSaved?.key === stored.key) {
-      setActiveSaved(stored);
-    }
-
+    setEditing(stored);
+    setActiveSaved(stored);
     setActiveLibraryId(null);
-    setSaveIntent(null);
-    flash(updating ? "Updated" : signedIn ? "Saved" : "Saved in this browser");
+    setDescriptions(stored.variableNotes);
+    flash(updating ? "Saved changes" : signedIn ? "Saved" : "Saved in this browser");
+    // Land on the calculator so the formula can be used straight away.
+    navigate("calculator");
   };
 
   const deleteSaved = async (formula: StoredFormula) => {
@@ -340,6 +340,8 @@ export default function App() {
         menuOpen={menuOpen}
         route={route}
         showMenu={route === "calculator"}
+        editingExisting={editing !== null}
+        onNewFormula={startNewFormula}
         savedCount={store.formulas.length}
         onNavigate={navigate}
         onToggleMenu={() => setMenuOpen((open) => !open)}
@@ -361,10 +363,13 @@ export default function App() {
           onOpenSaved={openSaved}
           onDeleteSaved={deleteSaved}
           onSeeAll={() => navigate("formulas")}
+          onNewFormula={startNewFormula}
         />
       )}
 
-      <main className={`workspace${route === "formulas" ? " is-full" : ""}`}>
+      {/* Only the calculator has a sidebar, so every other route reclaims the
+          space it would occupy. */}
+      <main className={`workspace${route === "calculator" ? "" : " is-full"}`}>
         {offline && <p className="banner">{offline}</p>}
         {notice && (
           <p className="notice" role="status">
@@ -394,7 +399,21 @@ export default function App() {
           </div>
         )}
 
-        {route === "formulas" ? (
+        {route === "editor" ? (
+          <EditorPage
+            existing={editing}
+            expression={expression}
+            onExpressionChange={onExpressionChange}
+            analysis={analysis}
+            analyzeError={analyzeError}
+            pending={expression.trim() !== debouncedExpression.trim()}
+            signedIn={signedIn}
+            values={relevantValues}
+            solveFor={solveFor}
+            onSave={performSave}
+            onCancel={editing ? () => navigate("formulas") : null}
+          />
+        ) : route === "formulas" ? (
           <FormulasPage
             formulas={store.formulas}
             loading={store.loading}
@@ -402,10 +421,10 @@ export default function App() {
             signedIn={signedIn}
             limit={store.limit}
             onOpen={openSaved}
-            onEdit={(formula) => setSaveIntent({ mode: "edit", existing: formula })}
+            onEdit={editFormula}
             onDelete={deleteSaved}
             onSignIn={() => promptSignIn("Sign in to keep your formulas across devices.")}
-            onNew={() => navigate("calculator")}
+            onNew={startNewFormula}
           />
         ) : (
           <div className="panes">
@@ -418,7 +437,8 @@ export default function App() {
                 pending={expression.trim() !== debouncedExpression.trim()}
                 canSave={Boolean(analysis)}
                 savedName={activeSaved?.name ?? null}
-                onSave={() => setSaveIntent({ mode: "current", existing: activeSaved })}
+                description={activeSaved?.note || null}
+                onSave={() => editFormula(activeSaved)}
               />
 
               <VariablePanel
@@ -466,16 +486,6 @@ export default function App() {
           </div>
         )}
       </main>
-
-      {saveIntent && (saveIntent.existing || analysis) && (
-        <SaveDialog
-          expression={(saveIntent.existing ?? analysis!).expression}
-          existing={saveIntent.existing}
-          storageNote={signedIn ? null : "Saved in this browser until you sign in."}
-          onSave={performSave}
-          onCancel={() => setSaveIntent(null)}
-        />
-      )}
 
       {authOpen && !auth.user && (
         <AuthDialog

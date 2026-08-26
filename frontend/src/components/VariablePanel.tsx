@@ -67,7 +67,11 @@ export function VariablePanel({
               <div className="variable-id">
                 <span className="variable-symbol">{symbol}</span>
                 {descriptions[symbol] && (
-                  <span className="variable-desc">{descriptions[symbol]}</span>
+                  // `title` as well as visible text: a description the user
+                  // wrote themselves can be longer than the column is wide.
+                  <span className="variable-desc" title={descriptions[symbol]}>
+                    {descriptions[symbol]}
+                  </span>
                 )}
               </div>
 

@@ -9,6 +9,7 @@ interface Props {
   onOpen: (formula: StoredFormula) => void;
   onDelete: (formula: StoredFormula) => void;
   onSeeAll: () => void;
+  onNewFormula: () => void;
 }
 
 const PREVIEW_COUNT = 6;
@@ -22,6 +23,7 @@ export function SavedPanel({
   onOpen,
   onDelete,
   onSeeAll,
+  onNewFormula,
 }: Props) {
   if (loading) return <div className="saved-empty">Loading…</div>;
   if (error) return <div className="saved-empty is-error">{error}</div>;
@@ -29,8 +31,10 @@ export function SavedPanel({
   if (formulas.length === 0) {
     return (
       <div className="saved-empty">
-        Press <strong>Save</strong> on a formula to keep it
-        {signedIn ? "." : " in this browser."}
+        <button type="button" className="link" onClick={onNewFormula}>
+          Add a formula
+        </button>{" "}
+        to keep it{signedIn ? "." : " in this browser."}
       </div>
     );
   }

@@ -160,3 +160,48 @@ def test_static_paths_cannot_escape_the_bundle_directory(tmp_path):
         "does-not-exist.js",
     ]:
         assert resolve_static_file(root, attempt) is None, attempt
+
+
+def test_additive_migration_adds_missing_columns(tmp_path):
+    """`create_all` never alters an existing table, so a new column would be
+    invisible until the database was deleted -- discarding real data."""
+    from sqlalchemy import create_engine, inspect, text
+
+    from app import db
+
+    path = tmp_path / "legacy.db"
+    legacy = create_engine(f"sqlite:///{path}")
+
+    # A table shaped like an older release: no variable_notes column.
+    with legacy.begin() as connection:
+        connection.execute(text("""
+            CREATE TABLE saved_formulas (
+                id INTEGER PRIMARY KEY, user_id INTEGER NOT NULL,
+                name VARCHAR(120) NOT NULL, expression VARCHAR(500) NOT NULL,
+                note TEXT NOT NULL DEFAULT '', values_json TEXT NOT NULL DEFAULT '{}',
+                solve_for VARCHAR(64), created_at DATETIME, updated_at DATETIME
+            )
+        """))
+        connection.execute(text(
+            "INSERT INTO saved_formulas (id, user_id, name, expression) "
+            "VALUES (1, 1, 'Existing', 'a = b*c')"
+        ))
+    legacy.dispose()
+
+    engine = create_engine(f"sqlite:///{path}")
+    original = db.engine
+    try:
+        db.engine = engine          # ensure_columns inspects the module engine
+        db.ensure_columns()
+        columns = {c["name"] for c in inspect(engine).get_columns("saved_formulas")}
+        assert "variable_notes" in columns
+
+        with engine.connect() as connection:
+            row = connection.execute(
+                text("SELECT name, variable_notes FROM saved_formulas WHERE id = 1")
+            ).one()
+        assert row[0] == "Existing"          # the existing row survived
+        assert row[1] == "{}"               # and got the server default
+    finally:
+        db.engine = original
+        engine.dispose()

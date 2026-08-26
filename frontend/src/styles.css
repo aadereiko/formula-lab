@@ -345,9 +345,13 @@ h1, h2, h3 { font-weight: 550; }
 .variable-desc {
   font-size: 11.5px;
   color: var(--ink-faint);
+  line-height: 1.35;
+  /* Wrap to at most two lines rather than clipping: these are the user's own
+     words, and a truncated unit is worse than a slightly taller row. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .variable-controls { display: flex; align-items: center; gap: 6px; }
@@ -886,3 +890,65 @@ h1, h2, h3 { font-weight: 550; }
 }
 
 .field-label { display: inline-flex; align-items: baseline; gap: 6px; }
+
+/* ── editor page ─────────────────────────────────────────────────────── */
+
+.editor { max-width: 720px; }
+.editor-form { display: flex; flex-direction: column; gap: 26px; }
+
+/* Name and description fields: plain boxes, unlike the underlined formula
+   input, so it stays obvious which field is the formula itself. */
+.text-input {
+  width: 100%;
+  background: var(--bg);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  padding: 9px 11px;
+  font: inherit;
+  font-size: 16px;
+  color: var(--ink);
+  min-height: 40px;
+}
+.text-input:focus { outline: none; border-color: var(--accent); }
+textarea.text-input { resize: vertical; line-height: 1.5; }
+
+/* A description needs more room than a number does. */
+.note-input { max-width: none; font-family: inherit; font-size: 15px; }
+
+.editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--line);
+  padding-top: 20px;
+}
+
+.formula-description {
+  margin: 10px 0 0;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  max-width: 60ch;
+}
+
+/* ── variable legend on a card ───────────────────────────────────────── */
+
+.card-legend {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 12.5px;
+}
+.card-legend > div { display: flex; gap: 8px; align-items: baseline; }
+.card-legend dt {
+  font-family: var(--mono);
+  color: var(--ink);
+  flex: 0 0 auto;
+  min-width: 2.2em;
+}
+.card-legend dd { margin: 0; color: var(--ink-faint); }
+
+@media (max-width: 899px) {
+  .editor-actions .btn { flex: 1; }
+}

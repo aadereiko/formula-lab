@@ -117,6 +117,17 @@ export function FormulasPage({
 
               {formula.note && <p className="card-note">{formula.note}</p>}
 
+              {Object.keys(formula.variableNotes ?? {}).length > 0 && (
+                <dl className="card-legend">
+                  {Object.entries(formula.variableNotes).map(([symbol, meaning]) => (
+                    <div key={symbol}>
+                      <dt>{symbol}</dt>
+                      <dd>{meaning}</dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
+
               {entries.length > 0 && (
                 <dl className="card-values">
                   {entries.map(([name, value]) => (
@@ -133,7 +144,7 @@ export function FormulasPage({
                   Open
                 </button>
                 <button type="button" className="btn btn-small" onClick={() => onEdit(formula)}>
-                  Rename
+                  Edit
                 </button>
                 {confirming === formula.key ? (
                   <>

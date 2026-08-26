@@ -8,6 +8,7 @@ interface Props {
   pending: boolean;
   canSave: boolean;
   savedName: string | null;
+  description: string | null;
   onSave: () => void;
 }
 
@@ -19,6 +20,7 @@ export function FormulaInput({
   pending,
   canSave,
   savedName,
+  description,
   onSave,
 }: Props) {
   return (
@@ -29,7 +31,7 @@ export function FormulaInput({
         </label>
         {savedName && <span className="saved-badge">{savedName}</span>}
         <button type="button" className="btn btn-small" disabled={!canSave} onClick={onSave}>
-          {savedName ? "Update" : "Save"}
+          {savedName ? "Edit" : "Save"}
         </button>
       </div>
 
@@ -44,6 +46,8 @@ export function FormulaInput({
         placeholder="E = 1/2 m v^2"
         onChange={(event) => onChange(event.target.value)}
       />
+
+      {description && <p className="formula-description">{description}</p>}
 
       <div className="preview" aria-live="polite">
         {error ? (

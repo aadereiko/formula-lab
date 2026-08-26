@@ -20,7 +20,10 @@ from sqlalchemy import (
     UniqueConstraint,
     create_engine,
     event,
+    inspect,
+    text,
 )
+from sqlalchemy.schema import CreateColumn
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, relationship
 
 BACKEND_ROOT = Path(__file__).resolve().parent.parent
@@ -97,7 +100,20 @@ class SavedFormula(Base):
     )
     name: Mapped[str] = mapped_column(String(120), nullable=False)
     expression: Mapped[str] = mapped_column(String(500), nullable=False)
+    #: What the formula is for, in the user's words. Named `note` for historical
+    #: reasons; it is the description shown throughout the UI.
     note: Mapped[str] = mapped_column(Text, default="", nullable=False)
+    #: What each symbol means, as JSON: {"m": "mass (kg)", ...}. Kept as one
+    #: column rather than a child table -- these are always read and written
+    #: together with the formula, and never queried on their own.
+    variable_notes: Mapped[str] = mapped_column(
+        Text,
+        nullable=False,
+        default="{}",
+        # A server default is what makes ALTER TABLE ADD COLUMN legal for a
+        # NOT NULL column on a table that already has rows.
+        server_default=text("'{}'"),
+    )
     # Last-used inputs, as JSON text. Stored so reopening a formula lands on a
     # working example rather than an empty form.
     values_json: Mapped[str] = mapped_column(Text, default="{}", nullable=False)
@@ -110,13 +126,35 @@ class SavedFormula(Base):
     owner: Mapped[User] = relationship(back_populates="formulas")
 
 
-def init_db() -> None:
-    """Create any missing tables.
+def ensure_columns() -> None:
+    """Add model columns that the existing tables are missing.
 
-    Enough for a project with additive schema changes; a destructive change
-    (renaming or dropping a column) would want Alembic.
+    ``create_all`` creates missing *tables* and never alters existing ones, so
+    a newly added column stays invisible until the database is recreated --
+    which would mean discarding real data. This closes that gap for the only
+    safe case: adding a column.
+
+    Renames and drops are deliberately not attempted. If one is ever needed,
+    that is the point to bring in Alembic.
     """
+    inspector = inspect(engine)
+    for table in Base.metadata.sorted_tables:
+        if not inspector.has_table(table.name):
+            continue  # create_all will make it in full
+        present = {column["name"] for column in inspector.get_columns(table.name)}
+        missing = [column for column in table.columns if column.name not in present]
+        for column in missing:
+            # CreateColumn renders the type, nullability and server default the
+            # way this dialect expects, rather than us assembling DDL by hand.
+            definition = CreateColumn(column).compile(dialect=engine.dialect)
+            with engine.begin() as connection:
+                connection.execute(text(f"ALTER TABLE {table.name} ADD COLUMN {definition}"))
+
+
+def init_db() -> None:
+    """Bring the database up to date with the models."""
     Base.metadata.create_all(bind=engine)
+    ensure_columns()
 
 
 def get_session() -> Iterator[Session]:

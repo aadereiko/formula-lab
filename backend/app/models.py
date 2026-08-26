@@ -86,9 +86,12 @@ class UserResponse(BaseModel):
 class SavedFormulaRequest(BaseModel):
     name: str = Field(..., min_length=1, max_length=120)
     expression: str = Field(..., min_length=1, max_length=500)
+    #: What the formula is for. Shown as "Description" in the UI.
     note: str = Field(default="", max_length=2000)
     values: dict[str, str] = Field(default_factory=dict)
     solve_for: str | None = Field(default=None, max_length=64)
+    #: What each symbol means: {"m": "mass (kg)"}.
+    variable_notes: dict[str, str] = Field(default_factory=dict)
 
 
 class SavedFormulaResponse(BaseModel):
@@ -97,6 +100,7 @@ class SavedFormulaResponse(BaseModel):
     expression: str
     note: str
     values: dict[str, str]
+    variable_notes: dict[str, str]
     solve_for: str | None
     created_at: datetime
     updated_at: datetime

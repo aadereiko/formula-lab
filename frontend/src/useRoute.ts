@@ -1,20 +1,25 @@
 import { useCallback, useEffect, useState } from "react";
 
-export type Route = "calculator" | "formulas";
+/** `editor` is the default landing page: a blank formula waiting to be written. */
+export type Route = "editor" | "calculator" | "formulas";
 
 const PATHS: Record<Route, string> = {
-  calculator: "/",
+  editor: "/",
+  calculator: "/calculator",
   formulas: "/formulas",
 };
 
 function routeFor(pathname: string): Route {
-  return pathname.replace(/\/+$/, "") === "/formulas" ? "formulas" : "calculator";
+  const path = pathname.replace(/\/+$/, "");
+  if (path === "/formulas") return "formulas";
+  if (path === "/calculator") return "calculator";
+  return "editor";
 }
 
 /**
- * Minimal history-API routing for two views.
+ * Minimal history-API routing.
  *
- * No router dependency: there are two destinations, and the server already
+ * No router dependency: there are three destinations, and the server already
  * serves index.html for unknown paths (as does Vite in development), so real
  * URLs work without hash fragments.
  */

@@ -21,8 +21,8 @@ make install     # backend/.venv + npm dependencies
 make dev         # API on 7731, web on 7732
 ```
 
-Open <http://localhost:7732>. No account is needed to use the calculator; one
-is needed only to save formulas.
+Open <http://localhost:7732>. It starts on a blank **New formula** page; no
+account is needed for anything.
 
 ### Ports
 
@@ -35,6 +35,14 @@ Chosen to sit outside the ranges other local projects use (Vite's 5173–5175,
 8080/8123/8765, the 74xx range), so this runs alongside them.
 
 ## Using it
+
+Three pages:
+
+| Page | Path | What it is for |
+| ---- | ---- | -------------- |
+| **New** | `/` | Write a formula, describe it, save it. The landing page |
+| **Calculator** | `/calculator` | Fill in values and solve |
+| **My formulas** | `/formulas` | Everything you have saved |
 
 Pick a formula from the sidebar, type your own, or open one you saved.
 
@@ -67,10 +75,22 @@ number and the imaginary unit. Write `exp(1)` if you want *e*.
 
 ### Saving your own
 
-Press **Save**, give it a name, and it appears under *Your formulas* and on the
-**My formulas** page. Saved formulas keep the values you last used, so reopening
-one lands on a working example rather than an empty form. Editing an open
-formula offers **Update** or **Save as new**.
+The **New** page is where a formula gets written. Alongside the expression it
+takes a name, a description, and — generated from whatever the formula
+mentions — **a description for each variable**. Type `F = 1/2 rho C_d A v^2` and
+five description fields appear, one per symbol, with a running "3 of 5
+described" count.
+
+Those descriptions are then shown wherever the formula is used: under its name
+on the calculator, beside every input field, and as a legend on its card. A
+formula you saved months ago explains its own symbols.
+
+Saved formulas also keep the values you last used, so reopening one lands on a
+working example rather than an empty form. **Edit** returns to the same page
+with everything filled in, offering *Save changes* or *Save as new*.
+
+Descriptions for symbols the expression no longer mentions are dropped on save,
+so renaming a variable does not leave a legend entry for something that is gone.
 
 **No account needed.** Without one, formulas are kept in this browser's
 `localStorage` (up to 50) — private to that browser, and gone if you clear site
