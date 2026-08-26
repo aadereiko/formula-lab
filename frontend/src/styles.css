@@ -2031,3 +2031,121 @@ textarea.text-input { resize: vertical; line-height: 1.5; }
 }
 .help-note .help-syntax { margin: 0 0 14px; }
 .help-note .help-syntax li { margin-bottom: 5px; }
+
+/* ── plots ───────────────────────────────────────────────────────────── */
+
+/* A curve, or an isometric surface, drawn as hand-written inline SVG -- the app
+   ships no charting library and does not want one. Every colour below is a
+   token, which is the whole reason the rules live here rather than as
+   attributes on the shapes: an SVG with a hardcoded stroke would be the one
+   thing on the page that ignored the theme. */
+
+.plot.is-busy { opacity: 0.55; }
+.plot-body { display: flex; flex-direction: column; gap: 12px; }
+.plot-controls { gap: 10px 14px; }
+.plot-controls + .plot-controls { margin-top: -4px; }
+
+/* One range, so the two bounds move together when the row has to wrap. */
+.plot-bounds { display: inline-flex; align-items: center; gap: 14px; }
+
+/* Narrow on purpose: a range bound is three or four characters. */
+.plot-input {
+  width: 6.5em;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 5px 8px;
+  font-family: var(--mono);
+  /* 16px on touch keeps iOS from zooming the page on focus. */
+  font-size: 16px;
+  color: var(--ink);
+  min-height: 32px;
+}
+.plot-input:focus { outline: none; border-color: var(--accent); }
+@media (hover: hover) {
+  .plot-input { font-size: 13px; }
+}
+
+/* The 3D switch: a chip with an on state, the same shape as the filter chips on
+   the formulas page. */
+.plot-dim.is-on { color: var(--accent); border-color: var(--accent); }
+
+.plot-figure { margin: 0; display: flex; flex-direction: column; gap: 8px; }
+
+/* The same tinted strip that says "this is output, not something to type into"
+   under every rendered formula in the app. */
+.plot-frame {
+  background: var(--bg-output);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px;
+}
+/* Height from the viewBox, width from the column: the box is measured and the
+   viewBox is set to those pixels, so one user unit is one pixel and the labels
+   below keep the size they were chosen at. See `useElementWidth`. */
+.plot-svg { display: block; width: 100%; height: auto; }
+
+/* `crispEdges` because these are all axis-aligned single-pixel lines, and
+   antialiasing turns a 1px line landing on a half pixel into a 2px smudge. */
+.plot-grid,
+.plot-axis {
+  fill: none;
+  stroke: var(--line);
+  stroke-width: 1;
+  shape-rendering: crispEdges;
+}
+.plot-axis { stroke: var(--line-strong); }
+
+.plot-tick { fill: var(--ink-faint); font-family: var(--mono); font-size: 9.5px; }
+.plot-name { fill: var(--ink-faint); font-family: var(--mono); font-size: 11px; }
+
+.plot-curve {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+/* A second solution branch, dashed rather than given a second colour. Both
+   roots of a quadratic are equally true, so one must not read as the lesser of
+   the pair -- and the app has exactly one accent to spend. */
+.plot-curve.is-alt { stroke-dasharray: 5 4; }
+
+/* One quad of the surface mesh. The fill is what does the hiding: painted back
+   to front, each cell covers the ones behind it, which is the whole
+   hidden-surface algorithm. Its opacity is set per cell and carries the
+   height -- see PlotPanel. */
+.plot-cell {
+  fill: var(--accent);
+  stroke: var(--accent);
+  stroke-opacity: 0.35;
+  stroke-width: 0.5;
+}
+.plot-base { fill: none; stroke: var(--line-strong); stroke-width: 1; }
+
+.plot-caption {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  font-size: 11.5px;
+  color: var(--ink-faint);
+}
+.plot-legend { display: inline-flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.plot-key { display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono); }
+/* A line, not a block: it stands for a stroke, so it should look like one. */
+.plot-swatch { width: 18px; border-top: 2px solid var(--accent); }
+.plot-swatch.is-alt { border-top-style: dashed; }
+.plot-range { font-family: var(--mono); }
+.plot-note { color: var(--ink-soft); }
+
+.plot-error { margin: 0; color: var(--danger); font-size: 13.5px; }
+.plot-placeholder { margin: 0; padding: 6px 4px; color: var(--ink-faint); font-size: 13px; }
+
+@media (max-width: 899px) {
+  /* Each axis row wraps to its own line rather than squeezing three controls
+     into one; `from`/`to` stay beside their fields. */
+  .plot-controls { gap: 8px 12px; }
+  .plot-input { width: 5.5em; }
+}

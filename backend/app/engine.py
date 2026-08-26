@@ -107,6 +107,13 @@ MAX_NODES = 200          # expression-tree size
 MAX_EXPONENT = 10_000    # |exponent| in any power
 MAX_SYMBOLS = 40         # distinct variables
 
+#: Sampling budget for a plot. A curve spends all of it along one axis; a
+#: surface is a grid, so its per-axis limit is the square root of the same
+#: number -- one request is one budget's worth of arithmetic either way.
+MAX_SAMPLES = 400
+MAX_GRID_SAMPLES = 20
+DEFAULT_SAMPLES = 160
+
 
 # ``lambda`` is a Python keyword, so ``auto_symbol`` cannot wrap it in a
 # ``Symbol`` call -- the generated source ``Symbol('f')*lambda`` is a raw
@@ -372,6 +379,53 @@ def _describe_number(value: sympy.Basic, precision: int) -> dict[str, Any]:
     return payload
 
 
+def _rearrange(
+    lhs_text: str,
+    rhs_text: str,
+    known: dict[sympy.Symbol, sympy.Float],
+    target: str,
+) -> tuple[list[sympy.Expr], sympy.Expr, sympy.Expr]:
+    """Substitute the known values and solve an equation for one symbol.
+
+    Shared by :func:`evaluate` and :func:`plot`, because the substitution trick
+    and the three degenerate outcomes are the same rule whether the caller wants
+    one number or four hundred sample points -- and two copies of a rule like
+    that drift.
+
+    Substitution happens into each side separately rather than into an ``Eq``.
+    ``Eq(2.0, 0)`` auto-evaluates to the boolean ``False`` -- which has no
+    ``.lhs`` -- and that is reachable from ordinary input: in
+    ``a = (v - v_0)/t``, entering v equal to v_0 collapses the equation. Working
+    with the two sides keeps a real expression in hand.
+    """
+    target_symbol = _symbol_for(target)
+    lhs_expr = _parse_side(lhs_text).subs(known)
+    rhs_expr = _parse_side(rhs_text).subs(known)
+
+    raw = lhs_expr - rhs_expr
+    # Two questions, two forms. Deciding whether the equation still says
+    # anything needs a normalised residual, so that test gets `simplify`.
+    # ``solve`` does not, and is better off without it: ``simplify`` rewrites
+    # ``sign(x)`` into a ``Piecewise``, which ``solve`` then splits into two
+    # spurious branches, one of them ``nan``.
+    residual = sympy.simplify(raw)
+    if residual == 0:
+        raise FormulaError(f"These values satisfy the equation for any '{target}'.")
+    if target_symbol not in residual.free_symbols:
+        raise FormulaError(
+            f"'{target}' drops out of the equation with these values, "
+            "so it cannot be determined."
+        )
+
+    try:
+        roots = sympy.solve(raw, target_symbol, dict=False)
+    except Exception as exc:
+        raise FormulaError(f"Could not solve for '{target}' ({type(exc).__name__}).") from exc
+    if not roots:
+        raise FormulaError(f"No solution for '{target}' with these values.")
+    return roots, lhs_expr, rhs_expr
+
+
 def evaluate(
     expression: str,
     values: dict[str, Any] | None = None,
@@ -431,35 +485,11 @@ def evaluate(
             if name != target
         }
 
-        # Substitute into each side separately rather than into an ``Eq``.
-        # ``Eq(2.0, 0)`` auto-evaluates to the boolean ``False`` -- which has no
-        # ``.lhs`` -- and that is reachable from ordinary input: in
-        # ``a = (v - v_0)/t``, entering v equal to v_0 collapses the equation.
-        # Working with the two sides keeps a real expression in hand.
-        lhs_expr = _parse_side(lhs_text).subs(known)
-        rhs_expr = _parse_side(rhs_text).subs(known)
+        roots, lhs_expr, rhs_expr = _rearrange(lhs_text, rhs_text, known, target)
         steps.append({
             "label": "Substituted",
             "latex": f"{_latex(lhs_expr)} = {_latex(rhs_expr)}",
         })
-
-        residual = sympy.simplify(lhs_expr - rhs_expr)
-        if residual == 0:
-            raise FormulaError(
-                f"These values satisfy the equation for any '{target}'."
-            )
-        if target_symbol not in residual.free_symbols:
-            raise FormulaError(
-                f"'{target}' drops out of the equation with these values, "
-                "so it cannot be determined."
-            )
-
-        try:
-            roots = sympy.solve(residual, target_symbol, dict=False)
-        except Exception as exc:
-            raise FormulaError(f"Could not solve for '{target}' ({type(exc).__name__}).") from exc
-        if not roots:
-            raise FormulaError(f"No solution for '{target}' with these values.")
 
         solutions = [_describe_number(root, precision) for root in roots]
 
@@ -517,4 +547,238 @@ def evaluate(
             "latex": _number_latex(result["formatted"]) if result["value"] is not None else result["latex"],
         }],
         "symbols": symbols,
+    }
+
+
+# --------------------------------------------------------------------------
+# Sampling a formula for a plot
+# --------------------------------------------------------------------------
+
+#: How many solution branches a curve draws. A quadratic has two real roots and
+#: both are honest answers, so silently drawing one would be a lie -- but past
+#: two the picture stops being readable. A surface draws one: overlapping sheets
+#: in an isometric view are indistinguishable from each other.
+MAX_CURVE_BRANCHES = 2
+
+
+def _finite(value: Any) -> float | None:
+    """Coerce one sampled value to a plottable float, or ``None`` for a gap.
+
+    A gap is the honest answer at a point where the formula simply has no real
+    value: ``1/x`` at zero, ``sqrt`` of a negative, anything past the float
+    range. Reporting that per point instead of failing the request is what makes
+    an asymptote read as a break in the curve rather than an error message.
+    """
+    if isinstance(value, complex):
+        return None
+    try:
+        number = float(value)
+    except (TypeError, ValueError, OverflowError):
+        return None
+    if number != number or number in (float("inf"), float("-inf")):
+        return None
+    return number
+
+
+def _axis_bounds(name: str, axis: dict[str, Any]) -> tuple[float, float]:
+    try:
+        low = float(axis["min"])
+        high = float(axis["max"])
+    except (KeyError, TypeError, ValueError):
+        raise FormulaError(f"The range for '{name}' needs two numbers.") from None
+    for edge in (low, high):
+        # Pydantic accepts inf and nan as floats, so this is not redundant.
+        if edge != edge or edge in (float("inf"), float("-inf")):
+            raise FormulaError(f"The range for '{name}' must be finite.")
+    if low >= high:
+        raise FormulaError(f"The range for '{name}' must start below where it ends.")
+    return low, high
+
+
+def _axis_steps(low: float, high: float, count: int) -> list[float]:
+    """``count`` evenly spaced values, endpoints included.
+
+    Computed from the fraction rather than by accumulating a step, so the last
+    sample is exactly ``high`` and the curve reaches the edge of its frame.
+    """
+    span = high - low
+    return [low + span * index / (count - 1) for index in range(count)]
+
+
+def _sample(
+    expr: sympy.Expr,
+    args: list[sympy.Symbol],
+    grids: list[list[float]],
+) -> list[list[float | None]]:
+    """Sample one expression over a one- or two-dimensional grid.
+
+    One row per step of the *second* axis, so ``rows[j][i]`` is the value at the
+    i-th step of the first and the j-th of the second. A curve is a single row.
+
+    ``lambdify`` compiles the expression to a Python function once, which is the
+    only reason four hundred points is cheap: ``subs`` then ``evalf`` per point
+    is orders of magnitude slower and would spend the whole timeout on a single
+    plot. ``modules=["math"]`` keeps numpy out of it (it is not a dependency)
+    and has a second benefit -- a point outside the real domain raises rather
+    than quietly returning a complex number, which is exactly the gap we want.
+
+    ``dummify`` renames the parameters in the generated source. Our symbol names
+    are already identifier-shaped, so this is belt-and-braces around a function
+    body that is built by ``exec``.
+    """
+    try:
+        f = sympy.lambdify(args, expr, modules=["math"], dummify=True)
+    except Exception as exc:  # noqa: BLE001 - SymPy raises widely here
+        raise FormulaError(f"Cannot sample this formula ({type(exc).__name__}).") from exc
+
+    def row(rest: tuple[float, ...]) -> list[float | None]:
+        out: list[float | None] = []
+        for x in grids[0]:
+            try:
+                out.append(_finite(f(x, *rest)))
+            except Exception:  # noqa: BLE001 - one bad point is a gap, not a failure
+                out.append(None)
+        return out
+
+    if len(grids) == 1:
+        return [row(())]
+    return [row((second,)) for second in grids[1]]
+
+
+def _plot_axes(symbols: list[str], axes: list[dict[str, Any]]) -> tuple[list[str], list[tuple[float, float]]]:
+    if not 1 <= len(axes) <= 2:
+        raise FormulaError("A plot sweeps one variable, or two for a surface.")
+
+    swept: list[str] = []
+    bounds: list[tuple[float, float]] = []
+    for axis in axes:
+        name = check_symbol_name(str(axis.get("variable", "")))
+        if name not in symbols:
+            raise FormulaError(f"'{name}' does not appear in the formula.")
+        if name in swept:
+            raise FormulaError(f"'{name}' cannot be both axes of a plot.")
+        swept.append(name)
+        bounds.append(_axis_bounds(name, axis))
+    return swept, bounds
+
+
+def plot(
+    expression: str,
+    values: dict[str, Any] | None = None,
+    solve_for: str | None = None,
+    axes: list[dict[str, Any]] | None = None,
+    samples: int = DEFAULT_SAMPLES,
+) -> dict[str, Any]:
+    """Sample a formula across one or two variables, for a curve or a surface.
+
+    The same three checks as every other endpoint: :func:`analyze` runs the
+    character whitelist and the complexity guards first, so sampling never sees
+    a string the evaluator would have refused.
+
+    An equation is rearranged for its unknown *once*, symbolically, and the
+    resulting expression is sampled. Solving numerically at every point would be
+    correct too and around a hundred times slower.
+    """
+    info = analyze(expression)
+    symbols: list[str] = info["symbols"]
+    swept, bounds = _plot_axes(symbols, list(axes or []))
+    surface = len(swept) == 2
+    count = max(2, min(int(samples), MAX_GRID_SAMPLES if surface else MAX_SAMPLES))
+
+    assignments = _clean_values(values)
+    unknown = [name for name in assignments if name not in symbols]
+    if unknown:
+        raise FormulaError(f"'{unknown[0]}' does not appear in the formula.")
+    # A swept variable's value is ignored rather than refused. The workspace
+    # holds a value for every field it renders, and making the caller strip the
+    # one it is sweeping would only move that bookkeeping across the wire.
+    assignments = {name: value for name, value in assignments.items() if name not in swept}
+
+    blank = [name for name in symbols if name not in swept and name not in assignments]
+    lhs_text, rhs_text = _split_equation(_to_internal(info["expression"]))
+
+    if info["is_equation"]:
+        if solve_for:
+            check_symbol_name(solve_for)
+        # With exactly one blank left the intent is unambiguous, exactly as it is
+        # for a single evaluation.
+        target = solve_for or (blank[0] if len(blank) == 1 else None)
+        if target is None:
+            if not blank:
+                raise FormulaError("Leave one variable blank, or choose which one to plot.")
+            raise FormulaError(
+                "Fill in every variable except the axes and one to plot. Still blank: "
+                + ", ".join(blank)
+            )
+        if target not in symbols:
+            raise FormulaError(f"Cannot plot '{target}': it is not in the formula.")
+        if target in swept:
+            raise FormulaError(f"'{target}' is already an axis of this plot.")
+
+        still_blank = [name for name in blank if name != target]
+        if still_blank:
+            raise FormulaError("Missing value(s) for: " + ", ".join(still_blank))
+
+        # The target's own value is left out. It is routinely still filled in --
+        # the workspace keeps whatever was last typed there, and a plot is
+        # perfectly reasonable while it holds a value -- and substituting it
+        # would rearrange the equation for a symbol that is no longer in it.
+        known = {
+            _symbol_for(name): value
+            for name, value in assignments.items()
+            if name != target
+        }
+        roots, _lhs, _rhs = _rearrange(lhs_text, rhs_text, known, target)
+        target_symbol = _symbol_for(target)
+        # A root still mentioning the target is an implicit condition, not a
+        # value we can evaluate at a point.
+        branches = [root for root in roots if target_symbol not in root.free_symbols]
+        if not branches:
+            raise FormulaError(f"Could not rearrange the formula to plot '{target}'.")
+        label = target
+    else:
+        if solve_for:
+            raise FormulaError("Add an '=' to the formula to plot one variable against another.")
+        if blank:
+            raise FormulaError("Missing value(s) for: " + ", ".join(blank))
+        known = {_symbol_for(name): value for name, value in assignments.items()}
+        branches = [_parse_side(lhs_text).subs(known)]
+        label = "value"
+
+    drawn = branches[: 1 if surface else MAX_CURVE_BRANCHES]
+    axis_symbols = [_symbol_for(name) for name in swept]
+    grids = [_axis_steps(low, high, count) for low, high in bounds]
+
+    series: list[dict[str, Any]] = []
+    seen: list[float] = []
+    for index, branch in enumerate(drawn):
+        rows = _sample(branch, axis_symbols, grids)
+        series.append({
+            "label": label if len(drawn) == 1 else f"{label} (branch {index + 1})",
+            "samples": rows,
+        })
+        seen.extend(value for row in rows for value in row if value is not None)
+
+    if not seen:
+        raise FormulaError(
+            f"'{label}' has no real value anywhere in that range. Try a different range."
+        )
+
+    return {
+        "mode": "surface" if surface else "curve",
+        "latex": info["latex"],
+        "value_label": label,
+        "axes": [
+            {"variable": name, "min": low, "max": high, "samples": count}
+            for name, (low, high) in zip(swept, bounds)
+        ],
+        "series": series,
+        "value_min": min(seen),
+        "value_max": max(seen),
+        # Said out loud rather than left for the reader to notice: a curve that
+        # is one of several branches looks exactly like a complete answer.
+        "note": (
+            f"Showing {len(drawn)} of {len(branches)} solutions for '{label}'."
+            if len(branches) > len(drawn) else ""
+        ),
     }

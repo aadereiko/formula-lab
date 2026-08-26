@@ -12,6 +12,8 @@ from typing import Any
 
 from pydantic import BaseModel, EmailStr, Field
 
+from .engine import DEFAULT_SAMPLES, MAX_SAMPLES
+
 
 class AnalyzeRequest(BaseModel):
     expression: str = Field(..., max_length=500, description="Formula or equation")
@@ -57,6 +59,56 @@ class EvaluateResponse(BaseModel):
 
 class ErrorResponse(BaseModel):
     error: str
+
+
+# --------------------------------------------------------------------------
+# Plots
+# --------------------------------------------------------------------------
+
+class PlotAxis(BaseModel):
+    """One variable to sweep, and over what."""
+
+    variable: str = Field(..., max_length=64)
+    #: Not constrained to be finite here -- pydantic accepts inf and nan as
+    #: floats, so the engine checks. Nor ordered: "min above max" is a message
+    #: worth writing ourselves rather than leaving to a 422.
+    min: float
+    max: float
+
+
+class PlotRequest(BaseModel):
+    expression: str = Field(..., max_length=500)
+    values: dict[str, Any] = Field(default_factory=dict)
+    #: Which variable the plot is *of*. Inferred from the single blank when the
+    #: formula is an equation and only one is left, exactly as evaluation does.
+    solve_for: str | None = Field(default=None, max_length=64)
+    #: One axis draws a curve, two a surface.
+    axes: list[PlotAxis] = Field(..., min_length=1, max_length=2)
+    #: Points along each axis. The engine lowers this for a surface, where the
+    #: grid is the square of it, and reports back what it actually used.
+    samples: int = Field(default=DEFAULT_SAMPLES, ge=2, le=MAX_SAMPLES)
+
+
+class PlotAxisResponse(PlotAxis):
+    samples: int
+
+
+class PlotSeries(BaseModel):
+    label: str
+    #: One row per step of the second axis; a curve has a single row. ``None`` is
+    #: a point where the formula has no real value -- a gap, not a zero.
+    samples: list[list[float | None]]
+
+
+class PlotResponse(BaseModel):
+    mode: str
+    latex: str
+    value_label: str
+    axes: list[PlotAxisResponse]
+    series: list[PlotSeries]
+    value_min: float | None
+    value_max: float | None
+    note: str = ""
 
 
 # --------------------------------------------------------------------------

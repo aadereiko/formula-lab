@@ -29,6 +29,47 @@ export interface EvaluateResponse {
   steps: Step[];
 }
 
+/** One variable to sweep, and over what. */
+export interface PlotAxisInput {
+  variable: string;
+  min: number;
+  max: number;
+}
+
+export interface PlotRequest {
+  expression: string;
+  values: Record<string, string>;
+  solve_for: string | null;
+  /** One axis draws a curve, two a surface. */
+  axes: PlotAxisInput[];
+  samples: number;
+}
+
+/** An axis as the server resolved it, carrying the sample count it settled on. */
+export interface PlotAxis extends PlotAxisInput {
+  samples: number;
+}
+
+export interface PlotSeries {
+  label: string;
+  /** One row per step of the second axis; a curve has a single row. `null` is a
+   *  point where the formula has no real value — a gap, not a zero. */
+  samples: (number | null)[][];
+}
+
+export interface PlotResponse {
+  mode: "curve" | "surface";
+  latex: string;
+  /** What the vertical axis is: the variable solved for, or "value". */
+  value_label: string;
+  axes: PlotAxis[];
+  series: PlotSeries[];
+  value_min: number | null;
+  value_max: number | null;
+  /** Non-empty when something about the plot needs saying out loud. */
+  note: string;
+}
+
 export interface FormulaVariable {
   symbol: string;
   description: string;

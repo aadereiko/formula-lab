@@ -5,6 +5,8 @@ import type {
   Constant,
   EvaluateResponse,
   Library,
+  PlotRequest,
+  PlotResponse,
   SavedFormula,
   SavedFormulaInput,
   User,
@@ -96,6 +98,11 @@ export const evaluate = (
     { expression, values, solve_for: solveFor, precision },
     signal,
   );
+
+/** Several hundred evaluations in one request, so the body carries the sweep
+ *  itself rather than the client asking point by point. */
+export const plot = (request: PlotRequest, signal?: AbortSignal) =>
+  post<PlotResponse>("/api/plot", request, signal);
 
 export const fetchLibrary = () => request<Library>("/api/library");
 export const fetchConstants = () =>

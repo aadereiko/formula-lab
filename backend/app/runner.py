@@ -23,6 +23,10 @@ from .security import FormulaError
 WORKERS = 2
 ANALYZE_TIMEOUT = 3.0
 EVALUATE_TIMEOUT = 5.0
+#: A plot is one rearrangement plus a few hundred cheap calls into compiled
+#: code, so the extra second over an evaluation is for the ``solve``, not the
+#: sampling.
+PLOT_TIMEOUT = 6.0
 
 _pool: futures.ProcessPoolExecutor | None = None
 
@@ -63,6 +67,14 @@ def _worker(operation: str, payload: dict[str, Any]) -> dict[str, Any]:
                 payload.get("values"),
                 payload.get("solve_for"),
                 payload.get("precision", 6),
+            )}
+        if operation == "plot":
+            return {"ok": True, "data": engine.plot(
+                payload["expression"],
+                payload.get("values"),
+                payload.get("solve_for"),
+                payload.get("axes"),
+                payload.get("samples", engine.DEFAULT_SAMPLES),
             )}
         return {"ok": False, "error": f"Unknown operation: {operation}"}
     except FormulaError as exc:
@@ -108,6 +120,23 @@ def evaluate(
         "precision": precision,
     }
     return _call("evaluate", payload, EVALUATE_TIMEOUT)
+
+
+def plot(
+    expression: str,
+    values: dict[str, Any] | None = None,
+    solve_for: str | None = None,
+    axes: list[dict[str, Any]] | None = None,
+    samples: int = engine.DEFAULT_SAMPLES,
+) -> dict[str, Any]:
+    payload = {
+        "expression": expression,
+        "values": values,
+        "solve_for": solve_for,
+        "axes": axes,
+        "samples": samples,
+    }
+    return _call("plot", payload, PLOT_TIMEOUT)
 
 
 def warmup() -> None:

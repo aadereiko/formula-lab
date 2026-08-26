@@ -27,7 +27,9 @@ from .engine import (
     ALLOWED_FUNCTIONS,
     FUNCTION_HELP,
     MAX_EXPONENT,
+    MAX_GRID_SAMPLES,
     MAX_NODES,
+    MAX_SAMPLES,
     MAX_SYMBOLS,
 )
 from .models import (
@@ -36,6 +38,8 @@ from .models import (
     ErrorResponse,
     EvaluateRequest,
     EvaluateResponse,
+    PlotRequest,
+    PlotResponse,
 )
 from .security import MAX_LENGTH, FormulaError
 
@@ -126,6 +130,8 @@ async def capabilities() -> dict[str, object]:
             "max_nodes": MAX_NODES,
             "max_exponent": MAX_EXPONENT,
             "max_symbols": MAX_SYMBOLS,
+            "max_samples": MAX_SAMPLES,
+            "max_grid_samples": MAX_GRID_SAMPLES,
         },
         "syntax": [
             "Implicit multiplication: `2m` means `2*m`",
@@ -180,6 +186,27 @@ async def evaluate(request: EvaluateRequest) -> EvaluateResponse:
         request.values,
         request.solve_for,
         request.precision,
+    ))
+
+
+@app.post(
+    "/api/plot",
+    response_model=PlotResponse,
+    responses={400: {"model": ErrorResponse}},
+)
+async def plot(request: PlotRequest) -> PlotResponse:
+    """Sample a formula over one variable for a curve, or two for a surface.
+
+    Goes through the same validation and the same worker pool as evaluation: a
+    plot is several hundred evaluations, so it is exactly the request that must
+    not get a laxer parser or a longer leash.
+    """
+    return PlotResponse(**runner.plot(
+        request.expression,
+        request.values,
+        request.solve_for,
+        [axis.model_dump() for axis in request.axes],
+        request.samples,
     ))
 
 

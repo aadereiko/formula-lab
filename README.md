@@ -101,6 +101,54 @@ loses them: `sqrt(x)` becomes a `Pow` rather than a `sqrt` node, and `pi` is a
 numeric atom. Asking the tree about `2*pi*sqrt(L/g)` reports nothing at all —
 precisely the formula whose notation most wants explaining.
 
+### Plots
+
+Under the answer sits a **Plot** panel: the same formula, the same values, and
+the same variable you are already solving for — asked over a range instead of at
+a point. Pick a variable to sweep and its bounds, and you get a curve of the
+answer against it. Press **3D** and a second variable becomes a second axis,
+drawn as an isometric surface.
+
+It is a panel rather than a page because a plot is not a different feature. The
+value axis is whichever variable the workspace is solving for, so there is no
+second selector asking the same question twice: *leave one blank* already decides
+which quantity is the answer. Sweeping a variable takes it out of that reckoning,
+which is why `F = m a` with only `m` filled in will happily plot F against a —
+once `a` is an axis, F is the only blank left.
+
+The range defaults to zero-to-twice whatever the variable is currently set to,
+keeping the origin in frame; a variable with no value yet defaults to 0–10 and
+can be swept without ever being filled in.
+
+**An asymptote is a gap, not an error.** `1/x` has no value at zero, so that
+point comes back as null and the curve breaks there rather than the request
+failing. The sample count is odd for the same reason — an odd count over a
+symmetric range lands on the range's own centre, which is where an asymptote
+usually sits. With an even one, `1/x` over −5…5 steps either side of zero without
+ever hitting it, and the two limbs get joined by a near-vertical line.
+
+**Both roots are drawn.** `v² = v₀² + 2 a s` solved for `v` is ±√(2as), and
+showing one of them would be a lie; the second is dashed rather than given a
+second colour, because both are equally true and the app has one accent to
+spend. A surface draws one branch and says so in its caption — two isometric
+sheets over each other are indistinguishable.
+
+The drawing is **hand-written inline SVG**, with no charting library: about a
+hundred lines for the axes, the ticks and the path, and thirty for the surface.
+Every colour goes through the theme tokens, so a plot follows dark and light like
+everything else. Two details are load-bearing rather than decorative:
+
+- The `viewBox` is set to the panel's **measured pixel width**. A viewBox is its
+  own coordinate system, so anything drawn in it scales with the box — a 10px
+  axis label would render at 5px on a phone and 20px on a desktop. Measuring
+  makes one user unit one pixel at every size.
+- The surface is **filled quads painted back to front**, not a wireframe. The
+  projection is orthographic and height maps to screen −y only, so depth depends
+  on nothing but the two swept coordinates — which makes painter's order *exact*:
+  sort by `i + j` and every cell covers the ones behind it. That is the whole
+  hidden-surface problem solved by a sort, and it is why a filled mesh was worth
+  more here than a wireframe, which without occlusion reads as a tangle.
+
 ### Pinning
 
 Any saved formula can be pinned, and pinned ones sort to the top of every list —
@@ -389,6 +437,8 @@ type a formula   ──/api/analyze──▶ validate → parse ─────�
 render inputs
 fill values      ──/api/evaluate─▶ validate ──────────────────▶ substitute
                  ◀─── result ────  solve for the unknown         + solve/evalf
+sweep a range    ──/api/plot─────▶ validate → rearrange ──────▶ lambdify
+                 ◀── samples ───   once, then sample             + N calls
 press Save       ──/api/formulas─▶ authenticate → own row ────▶ SQLite
 ```
 
@@ -410,7 +460,19 @@ Every formula crosses three checks before it is worth anything:
    GIL and cannot be cancelled in a thread.
 
 Saved formulas are validated by the same parser on the way in, so a stored
-formula cannot be one that fails the moment it is reopened.
+formula cannot be one that fails the moment it is reopened. So are plots: the
+sweep goes through `analyze` before a single point is taken, because several
+hundred evaluations behind one request is exactly what must not get a laxer
+parser or a longer leash. The point count is capped at 400, and a surface — being
+a grid — is capped at 20 per axis, so one request is one budget's arithmetic
+either way.
+
+`lambdify` compiles the rearranged expression to a Python function once, which is
+the only reason 400 points is cheap; `subs` then `evalf` per point is orders of
+magnitude slower and would spend the whole timeout on a single plot. It is asked
+for the `math` module only — numpy is not a dependency, and the real-domain
+functions have the useful property that a point outside their domain *raises*
+instead of quietly returning a complex number, which is exactly the gap we want.
 
 ## API
 
@@ -418,6 +480,7 @@ formula cannot be one that fails the moment it is reopened.
 | -------- | ------ | ---- | ------- |
 | `/api/analyze` | POST | – | Variables, LaTeX, equation or not |
 | `/api/evaluate` | POST | – | Evaluate, or solve for one variable |
+| `/api/plot` | POST | – | Sample over one variable, or two |
 | `/api/library` | GET | – | Built-in formula catalogue |
 | `/api/constants` | GET | – | Built-in physical constants |
 | `/api/capabilities` | GET | – | Allowed functions and limits |
@@ -452,7 +515,7 @@ else's formula returns **404**, not 403 — a 403 would confirm the id exists.
 make test
 ```
 
-201 backend tests, a frontend typecheck, and a style check. Several earn their
+243 backend tests, a frontend typecheck, and a style check. Several earn their
 keep beyond ordinary coverage:
 
 - `test_every_library_formula_parses` runs all 44 shipped formulas through the
@@ -477,6 +540,14 @@ keep beyond ordinary coverage:
   that.
 - `test_case_and_spacing_do_not_make_a_second_category` — the whole point of
   remembering a rubric is that it comes back the same, not nearly the same.
+- `test_the_plotted_variable_ignores_the_value_it_still_holds` — found in a
+  browser, not in a test. The workspace keeps whatever was last typed into a
+  field, so the variable being plotted usually *does* still carry a value, and
+  substituting it rearranged the equation for a symbol that was no longer in it.
+- `test_an_asymptote_is_a_gap_not_an_error` and
+  `test_a_surface_is_capped_to_the_square_root_of_the_same_budget` — the two
+  rules that make sampling safe to expose: one bad point is a hole, and N is
+  caller-supplied.
 
 `scripts/check-styles.mjs` runs in `npm run build` and answers a question the
 type checker structurally cannot: **does every class the components render have
@@ -627,7 +698,7 @@ cd frontend && python3 scripts/make-icons.py
 ```
 backend/
   app/security.py         input whitelist -- the security boundary
-  app/engine.py           parse, guard, substitute, solve  (imports only SymPy)
+  app/engine.py           parse, guard, substitute, solve, sample  (only SymPy)
   app/runner.py           process pool + wall-clock timeout
   app/formulas.py         built-in formula and constant catalogues
   app/db.py               engine, session, ORM models
@@ -645,13 +716,14 @@ frontend/
   scripts/make-icons.py   dependency-free SVG -> PNG rasteriser
   scripts/check-styles.mjs every rendered class has a rule -- see Tests
   src/api.ts              typed client; separates user-fixable errors from ours
+  src/plot.ts             tick steps, curve paths, the isometric projection
   src/useAuth.ts          session state, derived from the server
   src/useFormulaStore.ts  saved formulas: one interface over server or browser
   src/useConstantStore.ts the same, for constants, merged over the built-ins
   src/useCategories.ts    the same, for the rubrics you coin
   src/useLibraryPins.ts   the same, for pins on the built-in library
   src/App.tsx             state, debouncing, auto-evaluate
-  src/components/         formula input, variables, results, sidebar, auth, dialogs
+  src/components/         formula input, variables, results, plots, sidebar, dialogs
   src/styles.css          tokens and layout; the light theme is a token swap
   src/hover.css           the cartoon hover system, gated on real class names
 Dockerfile                two-stage build; one image serves both halves

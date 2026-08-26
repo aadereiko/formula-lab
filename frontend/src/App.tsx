@@ -19,6 +19,7 @@ import { FormulaInput } from "./components/FormulaInput";
 import { Header } from "./components/Header";
 import { HelpPanel } from "./components/HelpPanel";
 import { HistoryPanel } from "./components/HistoryPanel";
+import { PlotPanel } from "./components/PlotPanel";
 import { ResultPanel } from "./components/ResultPanel";
 import { SaveDialog } from "./components/SaveDialog";
 import { Sidebar } from "./components/Sidebar";
@@ -548,6 +549,20 @@ export default function App() {
             )}
 
             <ResultPanel result={result} error={resultError} busy={busy} />
+
+            {/* Under the answer, because a plot is the same question asked over a
+                range rather than a different feature: it reuses the formula, the
+                values and whichever variable the workspace is solving for. */}
+            {analysis && (
+              <PlotPanel
+                expression={analysis.expression}
+                symbols={symbols}
+                values={relevantValues}
+                isEquation={isEquation}
+                target={target}
+              />
+            )}
+
             <HelpPanel capabilities={capabilities} />
             <HistoryPanel entries={history} onRestore={restore} onClear={() => setHistory([])} />
           </div>
