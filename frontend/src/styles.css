@@ -1111,7 +1111,15 @@ textarea.text-input { resize: vertical; line-height: 1.5; }
   border-radius: 8px;
   padding: 12px 14px;
   margin-top: 14px;
-  min-height: 0;
+  /* No `min-height: 0` here. On a block box it would be a no-op -- 0 is already
+     the default -- so the only thing it ever did was override `min-height:
+     auto` on a *flex item*, which is the rule that stops an item shrinking
+     below its own content. The dialog body is a column flex container whose
+     content overflows, so this box was squeezed to a zero-height content area
+     and a display-mode fraction spilled out through the border, above and
+     below. `flex-shrink` states the intent directly: a preview never wants to
+     be compressed under what it is previewing. */
+  flex-shrink: 0;
 }
 .preview-strip .preview-hint { line-height: 1.5; }
 

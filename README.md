@@ -587,17 +587,24 @@ backend/
   app/oauth_google.py     Google authorization-code flow
   app/routes_formulas.py  CRUD for a user's own formulas
   app/routes_constants.py CRUD for a user's own constants
+  app/routes_categories.py  the rubrics a user invented
+  app/routes_library_pins.py  pins on the read-only library, by id
   app/main.py             routes, error handling, static serving
   tests/                  security, engine, HTTP, auth, ownership, OAuth
 frontend/
   public/icon.svg         the app mark; PNGs beside it are generated
   scripts/make-icons.py   dependency-free SVG -> PNG rasteriser
+  scripts/check-styles.py every rendered class has a rule -- see Tests
   src/api.ts              typed client; separates user-fixable errors from ours
   src/useAuth.ts          session state, derived from the server
   src/useFormulaStore.ts  saved formulas: one interface over server or browser
   src/useConstantStore.ts the same, for constants, merged over the built-ins
+  src/useCategories.ts    the same, for the rubrics you coin
+  src/useLibraryPins.ts   the same, for pins on the built-in library
   src/App.tsx             state, debouncing, auto-evaluate
   src/components/         formula input, variables, results, sidebar, auth, dialogs
+  src/styles.css          tokens and layout; the light theme is a token swap
+  src/hover.css           the cartoon hover system, gated on real class names
 Dockerfile                two-stage build; one image serves both halves
 ```
 
