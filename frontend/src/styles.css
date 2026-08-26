@@ -869,7 +869,27 @@ h1, h2, h3 { font-weight: 550; }
 .page-title { margin: 0 0 4px; font-size: 21px; letter-spacing: -0.015em; }
 .page-sub { margin: 0; font-size: 13px; color: var(--ink-faint); max-width: 56ch; }
 .page-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.page-search { max-width: 320px; margin-bottom: 20px; }
+/* The search and the filters share one line, baseline-aligned. `.search`
+   carries its own bottom margin, so the row zeroes it and owns the spacing. */
+.page-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+.page-search { max-width: 320px; margin-bottom: 0; }
+
+.filter-chip { gap: 6px; }
+.filter-chip.is-on { color: var(--accent); border-color: var(--accent); }
+/* A count, not a badge: it says how many there are to find, and should not
+   compete with the label for attention. */
+.filter-count {
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  color: var(--ink-faint);
+}
+.filter-chip.is-on .filter-count { color: var(--accent); }
 
 .page-empty {
   padding: 40px 0;
@@ -1303,7 +1323,9 @@ textarea.text-input { resize: vertical; line-height: 1.5; }
 
 /* ── header end ──────────────────────────────────────────────────────── */
 
-.header-end { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+/* The theme toggle is an icon and the account control is a pill; at a shared
+   8px the icon read as part of the pill rather than a control of its own. */
+.header-end { margin-left: auto; display: flex; align-items: center; gap: 16px; }
 .account-btn { margin-left: 0; }
 
 /* ── saved formulas as a list ────────────────────────────────────────── */

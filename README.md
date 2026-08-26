@@ -154,6 +154,14 @@ Three things stop the sidebar growing without bound:
   *My formulas*, badged `HIDDEN`, because a formula you cannot find is
   indistinguishable from one you deleted. This is stored per account on the
   server, so the choice follows you between browsers.
+
+*My formulas* can be filtered by **pinned** and **hidden**, beside its search
+box. Each chip carries its count and appears only while something would match
+it, so a filter never promises a list it cannot produce. The two narrow
+together: asking for both means pinned *and* hidden. Whether a filter is in
+force is derived from that count rather than held in state — which closes a
+trap, since unhiding your last hidden formula while filtering by hidden would
+otherwise leave a live filter with nothing left to switch it off.
 - **Search**, at the top, spans your formulas *and* the library in one field —
   including a collapsed or hidden library, since a search that silently skips
   half the corpus is worse than no search.

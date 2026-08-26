@@ -33,18 +33,40 @@ export function FormulasPage({
   onNew,
 }: Props) {
   const [query, setQuery] = useState("");
+  const [wantPinned, setWantPinned] = useState(false);
+  const [wantHidden, setWantHidden] = useState(false);
   const [confirming, setConfirming] = useState<string | null>(null);
+
+  const pinnedCount = useMemo(
+    () => formulas.filter((formula) => formula.pinned).length,
+    [formulas],
+  );
+  const hiddenCount = useMemo(
+    () => formulas.filter((formula) => formula.hidden).length,
+    [formulas],
+  );
+
+  // A filter is only in force while something can match it. Derived rather
+  // than reset in an effect, which closes a trap: unhide your last hidden
+  // formula while filtering by hidden and the chip disappears, leaving a live
+  // filter with nothing left to switch it off.
+  const byPinned = wantPinned && pinnedCount > 0;
+  const byHidden = wantHidden && hiddenCount > 0;
+  const filtering = byPinned || byHidden;
 
   const visible = useMemo(() => {
     const needle = query.trim().toLowerCase();
-    if (!needle) return formulas;
-    return formulas.filter(
-      (formula) =>
+    return formulas.filter((formula) => {
+      if (byPinned && !formula.pinned) return false;
+      if (byHidden && !formula.hidden) return false;
+      if (!needle) return true;
+      return (
         formula.name.toLowerCase().includes(needle) ||
         formula.expression.toLowerCase().includes(needle) ||
-        formula.note.toLowerCase().includes(needle),
-    );
-  }, [formulas, query]);
+        formula.note.toLowerCase().includes(needle)
+      );
+    });
+  }, [formulas, query, byPinned, byHidden]);
 
   // An empty page carries its own single call to action, so the header's
   // actions would only compete with it.
@@ -95,20 +117,55 @@ export function FormulasPage({
 
       {error && <p className="banner">{error}</p>}
 
-      {formulas.length > 6 && (
-        <input
-          className="search page-search"
-          value={query}
-          placeholder="Search your formulas"
-          aria-label="Search your formulas"
-          onChange={(event) => setQuery(event.target.value)}
-        />
+      {(formulas.length > 6 || pinnedCount > 0 || hiddenCount > 0) && (
+        <div className="page-filters">
+          {formulas.length > 6 && (
+            <input
+              className="search page-search"
+              value={query}
+              placeholder="Search your formulas"
+              aria-label="Search your formulas"
+              onChange={(event) => setQuery(event.target.value)}
+            />
+          )}
+          {/* Offered only when something would match, so a filter never
+              promises a list it cannot produce. The two narrow together:
+              asking for both means pinned *and* hidden. */}
+          {pinnedCount > 0 && (
+            <button
+              type="button"
+              className={`btn btn-small filter-chip${byPinned ? " is-on" : ""}`}
+              aria-pressed={byPinned}
+              onClick={() => setWantPinned(!wantPinned)}
+            >
+              <IconPin size={12} filled={byPinned} />
+              Pinned
+              <span className="filter-count">{pinnedCount}</span>
+            </button>
+          )}
+          {hiddenCount > 0 && (
+            <button
+              type="button"
+              className={`btn btn-small filter-chip${byHidden ? " is-on" : ""}`}
+              aria-pressed={byHidden}
+              onClick={() => setWantHidden(!wantHidden)}
+            >
+              <IconEye size={12} crossed />
+              Hidden
+              <span className="filter-count">{hiddenCount}</span>
+            </button>
+          )}
+        </div>
       )}
 
       {loading && <p className="page-sub">Loading…</p>}
 
       {!loading && visible.length === 0 && (
-        <p className="page-sub">No matches for “{query}”.</p>
+        <p className="page-sub">
+          {query.trim()
+            ? `No matches for “${query}”${filtering ? " with these filters" : ""}.`
+            : "Nothing matches these filters."}
+        </p>
       )}
 
       <ul className="formula-list">
