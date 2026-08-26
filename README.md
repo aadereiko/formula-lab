@@ -480,6 +480,34 @@ its colour and becomes a neutral chip rather than a faded blue — a washed-out
 accent still reads as "the blue button, but dirty", where a grey chip reads as
 unavailable.
 
+## Tags
+
+`local`, `hidden`, `replaced by yours` — small coloured labels, each with a
+border and the same hard offset shadow as everything else raised in the app.
+
+The colour is **derived from the name**, not passed in, so a new tag needs no
+palette decision and cannot collide with an existing one by accident. A `djb2`
+hash of the label picks one of eight hues; only that hue is inlined, and how
+light and saturated it reads is left to the theme tokens, so one rule serves
+both themes.
+
+Two regions of the wheel are deliberately absent, each reserved elsewhere: the
+accent blue, because a tag is not clickable and one wearing the colour of every
+button in the app would say otherwise; and red, because that is `--danger`, and
+`local` is not a warning.
+
+The **order** of the palette carries as much weight as the values. Short similar
+words tend to hash into *neighbouring* buckets, so the list is interleaved
+rather than sorted — consecutive entries sit at least 64° apart on the wheel.
+Sorted by hue, `local` and `hidden` came out as two adjacent ambers, which is
+exactly the pair that must never collide since they appear side by side.
+Interleaved, they are orange and cyan, and that property holds for whatever tag
+is added next in a way that hand-picking hues for today's pair would not.
+
+One trap worth recording: the labels are lowercase in the source and uppercased
+by `text-transform`. Checking the palette against the *displayed* text tests a
+different string from the one that gets hashed.
+
 ## Theme
 
 Dark, light, or matching the system, cycled from one control in the header and

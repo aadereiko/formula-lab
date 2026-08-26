@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Logo } from "../components/Logo";
 import { IconEye, IconPin } from "../components/icons";
+import { Tag } from "../components/Tag";
 import type { StoredFormula } from "../useFormulaStore";
 
 interface Props {
@@ -182,14 +183,10 @@ export function FormulasPage({
                 )}
                 <span className="formula-name">{formula.name}</span>
                 {formula.serverId === null && (
-                  <span className="card-tag" title="Stored in this browser only">
-                    local
-                  </span>
+                  <Tag label="local" title="Stored in this browser only" />
                 )}
                 {formula.hidden && (
-                  <span className="card-tag" title="Not shown in the sidebar menu">
-                    hidden
-                  </span>
+                  <Tag label="hidden" title="Not shown in the sidebar menu" />
                 )}
                 <code className="formula-expr">{formula.expression}</code>
               </span>

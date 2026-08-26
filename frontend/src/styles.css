@@ -32,6 +32,15 @@
   --mono: "JetBrains Mono", ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
   --header-h: 56px;
   --side-w: 264px;
+
+  /* A tag's hue comes from its name, inlined by the Tag component. How that
+     hue reads is a theme decision, so it lives here with every other token:
+     on near-black the text has to be light and the shadow darker than the
+     page, and both invert under a light background. */
+  --tag-sat: 62%;
+  --tag-ink-l: 74%;
+  --tag-line-l: 44%;
+  --tag-shadow-l: 20%;
   color-scheme: dark;
 }
 
@@ -59,6 +68,11 @@
     --accent-ink: #ffffff;
     --danger: #d92d2d;
     --shadow-ink: #131c3d;
+
+    --tag-sat: 58%;
+    --tag-ink-l: 34%;
+    --tag-line-l: 66%;
+    --tag-shadow-l: 86%;
     color-scheme: light;
   }
 }
@@ -81,6 +95,11 @@
     --accent-ink: #ffffff;
     --danger: #d92d2d;
     --shadow-ink: #131c3d;
+
+    --tag-sat: 58%;
+    --tag-ink-l: 34%;
+    --tag-line-l: 66%;
+    --tag-shadow-l: 86%;
     color-scheme: light;
 }
 
@@ -926,15 +945,26 @@ h1, h2, h3 { font-weight: 550; }
 
 .card-head { display: flex; align-items: baseline; gap: 8px; }
 .card-name { margin: 0; font-size: 15px; font-weight: 550; overflow-wrap: anywhere; }
-.card-tag {
+/* ── tags ────────────────────────────────────────────────────────────── */
+
+/* Colour comes from the name, so two tags are told apart before they are read
+   and a new one needs no palette decision. Only the hue is inlined; the three
+   lightnesses are tokens, which is what lets one rule serve both themes.
+   The shadow is the app's hard offset rather than a blur, matching every other
+   raised thing -- see hover.css. */
+.tag {
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--ink-faint);
-  border: 1px solid var(--line-strong);
-  border-radius: 3px;
   padding: 1px 5px;
+  border-radius: 4px;
   flex: none;
+  color: hsl(var(--tag-h) var(--tag-sat) var(--tag-ink-l));
+  border: 1px solid hsl(var(--tag-h) var(--tag-sat) var(--tag-line-l));
+  box-shadow: 2px 2px 0 hsl(var(--tag-h) calc(var(--tag-sat) - 20%) var(--tag-shadow-l));
+  /* A tag can sit next to text on a baseline; the shadow should not drag the
+     line box down with it. */
+  line-height: 1.5;
 }
 
 .card-math { font-size: 16px; }
@@ -1592,8 +1622,6 @@ textarea.text-input { resize: vertical; line-height: 1.5; }
   gap: 8px;
   min-width: 0;
 }
-.shadowed-tag { flex: none; }
-
 /* Same treatment as the sidebar: revealed on hover, never clickable while
    hidden, red only under the cursor. */
 .constant-actions { display: flex; align-items: center; gap: 6px; opacity: 0; }

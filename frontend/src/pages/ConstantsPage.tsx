@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import type { Constant } from "../types";
 import type { ConstantDraft, StoredConstant } from "../useConstantStore";
+import { Tag } from "../components/Tag";
 
 interface Props {
   own: StoredConstant[];
@@ -248,7 +249,7 @@ export function ConstantsPage({
               <span className="constant-name">
                 {constant.name}
                 {shadowed.has(constant.symbol) && (
-                  <span className="card-tag shadowed-tag">replaced by yours</span>
+                  <Tag label="replaced by yours" title="Your value is used instead of the built-in one" />
                 )}
               </span>
             </li>
