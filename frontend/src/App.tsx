@@ -6,6 +6,7 @@ import { useRoute } from "./useRoute";
 import { useTheme } from "./useTheme";
 import { useAuth, useOAuthError } from "./useAuth";
 import { useFormulaStore, type FormulaDraft, type StoredFormula } from "./useFormulaStore";
+import { useCategories } from "./useCategories";
 import { useLibraryPins } from "./useLibraryPins";
 import {
   useConstantStore,
@@ -52,6 +53,13 @@ export default function App() {
   const signedIn = Boolean(auth.user);
   const store = useFormulaStore(signedIn);
   const libraryPins = useLibraryPins(signedIn);
+  // Rubrics already carried by a stored formula count as the user's own, so one
+  // typed straight into the dialog is offered again without a separate record.
+  const categoriesInUse = useMemo(
+    () => store.formulas.map((formula) => formula.category).filter(Boolean),
+    [store.formulas],
+  );
+  const categoryStore = useCategories(signedIn, categoriesInUse);
 
   const [expression, setExpression] = useState("");
   const [values, setValues] = useState<Record<string, string>>({});
@@ -305,6 +313,10 @@ export default function App() {
     const updating = existing !== null && !asNew;
     const stored = updating ? await store.update(existing, draft) : await store.save(draft);
 
+    // Recorded after the save succeeds: a rubric for a formula that failed to
+    // save is a suggestion for something that does not exist.
+    if (stored.category) void categoryStore.remember(stored.category);
+
     setActiveSaved(stored);
     setActiveLibraryId(null);
     setDescriptions(stored.variableNotes);
@@ -493,9 +505,7 @@ export default function App() {
                 canSave={Boolean(analysis)}
                 savedName={activeSaved?.name ?? null}
                 description={activeSaved?.note || null}
-                symbols={symbols}
                 functions={analysis?.functions_used ?? []}
-                constants={constantStore.effective}
                 functionHelp={capabilities?.function_help ?? {}}
                 onSave={() => setSaving({ existing: activeSaved })}
               onClear={expression.trim() ? startNewFormula : null}
@@ -553,7 +563,10 @@ export default function App() {
           fallbackHint={library?.fallback_hint ?? "mass (kg)"}
           existing={saving.existing}
           storageNote={signedIn ? null : "Saved in this browser until you sign in."}
-          categories={library?.categories ?? []}
+          categories={[...categoryStore.categories, ...(library?.categories ?? [])]}
+          ownCategories={categoryStore.categories}
+          canForgetCategory={categoryStore.canForget}
+          onForgetCategory={categoryStore.forget}
           onSave={performSave}
           onCancel={() => setSaving(null)}
         />

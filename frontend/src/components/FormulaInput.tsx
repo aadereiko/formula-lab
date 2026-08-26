@@ -1,4 +1,3 @@
-import type { Constant } from "../types";
 import { FormulaLegend } from "./FormulaLegend";
 import { IconClear, IconEdit, IconSave } from "./icons";
 import { MathView } from "./MathView";
@@ -12,10 +11,8 @@ interface Props {
   canSave: boolean;
   savedName: string | null;
   description: string | null;
-  /** Recognised tokens, explained beneath the field. */
-  symbols: string[];
+  /** Functions the formula calls, explained beneath the field. */
   functions: string[];
-  constants: Constant[];
   functionHelp: Record<string, string>;
   onSave: () => void;
   /** Null when there is nothing to clear. */
@@ -31,9 +28,7 @@ export function FormulaInput({
   canSave,
   savedName,
   description,
-  symbols,
   functions,
-  constants,
   functionHelp,
   onSave,
   onClear,
@@ -91,12 +86,7 @@ export function FormulaInput({
         )}
       </div>
 
-      <FormulaLegend
-        symbols={symbols}
-        functions={functions}
-        constants={constants}
-        functionHelp={functionHelp}
-      />
+      <FormulaLegend functions={functions} functionHelp={functionHelp} />
     </section>
   );
 }

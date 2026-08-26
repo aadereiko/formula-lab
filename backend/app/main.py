@@ -17,6 +17,7 @@ from . import (
     formulas,
     oauth_google,
     routes_auth,
+    routes_categories,
     routes_constants,
     routes_formulas,
     routes_library_pins,
@@ -92,6 +93,7 @@ app.include_router(oauth_google.router)
 app.include_router(routes_formulas.router)
 app.include_router(routes_constants.router)
 app.include_router(routes_library_pins.router)
+app.include_router(routes_categories.router)
 
 
 @app.get("/api/health")

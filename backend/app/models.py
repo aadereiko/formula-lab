@@ -116,6 +116,16 @@ class SavedFormulaResponse(BaseModel):
 
 
 # --------------------------------------------------------------------------
+# User-defined categories
+# --------------------------------------------------------------------------
+
+class CategoryRequest(BaseModel):
+    #: Trimmed and whitespace-collapsed server-side, so the length cap here is
+    #: a bound on the payload rather than the final name.
+    name: str = Field(..., min_length=1, max_length=120)
+
+
+# --------------------------------------------------------------------------
 # User-defined constants
 # --------------------------------------------------------------------------
 

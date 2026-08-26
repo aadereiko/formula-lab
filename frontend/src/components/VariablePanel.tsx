@@ -13,6 +13,16 @@ interface Props {
   onSubmit: () => void;
 }
 
+/**
+ * What the chip is offering. The label is rounded to stay narrow, so the
+ * tooltip carries the two things the digits cannot: which constant this is, and
+ * the exact figure.
+ */
+function chipTip(constant: Constant): string {
+  const exact = [constant.value, constant.unit].filter(Boolean).join(" ");
+  return constant.name ? `${constant.name} · ${exact}` : exact;
+}
+
 /** Formats a constant compactly: 6.674e-11 rather than 0.00000000006674. */
 function formatConstant(value: number): string {
   const magnitude = Math.abs(value);
@@ -94,9 +104,9 @@ export function VariablePanel({
                   <button
                     type="button"
                     className="chip"
-                    title={`${constant.name} = ${constant.value} ${constant.unit}`}
+                    data-tip={chipTip(constant)}
                     disabled={isTarget}
-                    onClick={() => onValueChange(symbol, formatConstant(constant.value))}
+                    onClick={() => onValueChange(symbol, String(constant.value))}
                   >
                     {formatConstant(constant.value)}
                     <span className="chip-unit">{constant.unit}</span>

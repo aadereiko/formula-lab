@@ -11,8 +11,13 @@ interface Props {
   fallbackHint: string;
   existing: StoredFormula | null;
   storageNote: string | null;
-  /** The built-in library's rubrics, offered as suggestions. */
+  /** Every rubric that can be suggested: the library's and the user's own. */
   categories: string[];
+  /** The user's own rubrics, which are the only ones they can stop offering. */
+  ownCategories: string[];
+  /** False while a formula still uses the rubric, so the × can be withheld. */
+  canForgetCategory: (name: string) => boolean;
+  onForgetCategory: (name: string) => void;
   onSave: (
     draft: Omit<FormulaDraft, "values" | "solveFor" | "pinned" | "hidden">,
     asNew: boolean,
@@ -38,6 +43,9 @@ export function SaveDialog({
   existing,
   storageNote,
   categories,
+  ownCategories,
+  canForgetCategory,
+  onForgetCategory,
   onSave,
   onCancel,
 }: Props) {
@@ -187,6 +195,37 @@ export function SaveDialog({
                 <option key={name} value={name} />
               ))}
             </datalist>
+            {ownCategories.length > 0 && (
+              // A datalist only opens if you know it is there. Your own rubrics
+              // are few and worth one click, so they are also shown outright.
+              <span className="cat-chips">
+                {ownCategories.map((name) => (
+                  <span
+                    key={name}
+                    className={`cat-chip${name === category ? " is-on" : ""}`}
+                  >
+                    <button
+                      type="button"
+                      className="cat-chip-name"
+                      onClick={() => setCategory(name)}
+                    >
+                      {name}
+                    </button>
+                    {canForgetCategory(name) && (
+                      <button
+                        type="button"
+                        className="cat-chip-drop"
+                        aria-label={`Stop offering ${name}`}
+                        data-tip="Stop offering this"
+                        onClick={() => onForgetCategory(name)}
+                      >
+                        &times;
+                      </button>
+                    )}
+                  </span>
+                ))}
+              </span>
+            )}
           </label>
 
           <label className="field">

@@ -94,6 +94,9 @@ class User(Base):
     pinned_library: Mapped[list["PinnedLibraryFormula"]] = relationship(
         back_populates="owner", cascade="all, delete-orphan", passive_deletes=True
     )
+    categories: Mapped[list["UserCategory"]] = relationship(
+        back_populates="owner", cascade="all, delete-orphan", passive_deletes=True
+    )
 
 
 class SavedFormula(Base):
@@ -204,6 +207,36 @@ class PinnedLibraryFormula(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
 
     owner: Mapped[User] = relationship(back_populates="pinned_library")
+
+
+class UserCategory(Base):
+    """A rubric somebody invented, kept so it can be offered again.
+
+    A formula's `category` is free text, so a custom rubric already works
+    without this table -- but only for as long as a formula is filed under it.
+    Holding the names separately is what lets one be suggested next time,
+    survive the last formula in it being deleted, and be spelled consistently
+    instead of retyped slightly differently each time.
+
+    The built-in library's rubrics are not stored here. They come from the
+    library and would otherwise be duplicated into every account.
+    """
+
+    __tablename__ = "user_categories"
+    __table_args__ = (
+        # One spelling per user. Case is folded on the way in rather than by a
+        # collation, so the rule holds the same on SQLite and Postgres.
+        UniqueConstraint("user_id", "name", name="uq_user_category_name"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    name: Mapped[str] = mapped_column(String(60), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    owner: Mapped[User] = relationship(back_populates="categories")
 
 
 def ensure_columns() -> None:

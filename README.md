@@ -78,16 +78,23 @@ number and the imaginary unit. Write `exp(1)` if you want *e*.
 
 ### What the app recognised
 
-Under the rendered formula sits a strip of the pieces the parser recognised: any
-symbol that is a known constant, with its value, and any function that was
-called. Each carries the full explanation as a tooltip — so `T = 2*pi*sqrt(L/g)`
-tells you `g` is standard gravity at 9.80665 m/s² and that trigonometry here
-takes radians, without opening the help panel.
+Under the rendered formula sits a strip of the **functions** the parser
+recognised, each carrying its explanation as a tooltip — so `T = 2*pi*sqrt(L/g)`
+tells you that trigonometry here takes radians without opening the help panel.
 
 A text field cannot be hovered token by token, which is why the strip sits
 beneath it rather than annotating inside it. The tooltip answers `:focus` as well
 as `:hover`, because a tap focuses but never hovers — on a phone the
 hover-only version would have been unreachable.
+
+**Constants are explained on their own chip instead.** Every constant the
+formula mentions already has a row in the panel below, with a chip offering its
+value; that chip is where the tooltip belongs, because it is the place you act
+on the number. Listing it in the strip as well was two hints for one fact. The
+chip label stays rounded to keep the row narrow, so the tooltip carries the two
+things the digits cannot — which constant it is, and the exact figure. Clicking
+inserts that exact figure: it used to paste the rounded label, which quietly
+turned `c` into 2.997925e+08.
 
 The functions are read from the **source text**, not the parse tree. The tree
 loses them: `sqrt(x)` becomes a `Pow` rather than a `sqrt` node, and `pi` is a
@@ -112,11 +119,25 @@ on read so a pin can never dangle.
 
 ### Rubrics
 
-Saved formulas take a category, offered as a free-text field with the built-in
-library's rubrics as suggestions — so your own formulas group in the menu the
-same way the built-in ones do. Uncategorised formulas collect under *Other*,
-last, because a heading called "Other" at the top is the least useful thing on
-the screen.
+Saved formulas take a category, offered as a free-text field — so your own
+formulas group in the menu the same way the built-in ones do. Uncategorised
+formulas collect under *Other*, last, because a heading called "Other" at the
+top is the least useful thing on the screen.
+
+**Your own rubrics are remembered.** The suggestions are the built-in library's
+plus every category you have coined, kept on the account when signed in and in
+the browser otherwise. A category is free text, so a custom rubric works without
+any of this — what the store adds is memory: the name comes back spelled the way
+you spelled it, and it survives the last formula filed under it being deleted.
+Your own are also shown as chips beneath the field, since a `datalist` gives no
+sign that it exists; clicking one fills the field, and the `×` stops offering
+it.
+
+Case and internal spacing are folded on the way in, so `Optics`, `optics` and
+`Optics  rig` cannot become three rubrics for one idea. Removing a name never
+touches the formulas filed under it — that would be a far bigger action than the
+one asked for — so a rubric still in use goes on being listed, and the `×` is
+withheld rather than lying about what it will do.
 
 The built-in library is **collapsed by default** in that menu: it is reference
 material, not the work. One click expands it, and a *hide* control removes it
@@ -403,7 +424,7 @@ else's formula returns **404**, not 403 — a 403 would confirm the id exists.
 make test
 ```
 
-186 backend tests, a frontend typecheck, and a style check. Several earn their
+201 backend tests, a frontend typecheck, and a style check. Several earn their
 keep beyond ordinary coverage:
 
 - `test_every_library_formula_parses` runs all 44 shipped formulas through the
@@ -423,6 +444,11 @@ keep beyond ordinary coverage:
   `test_ambiguous_symbols_are_left_out` do the same jobs for constants.
 - `test_unknown_library_ids_are_refused` — a pin is a foreign key to a
   file, and nothing else would stop it dangling.
+- `test_a_category_in_use_survives_removal` — deleting a rubric must not
+  silently re-file somebody's formulas, and the list has to keep reflecting
+  that.
+- `test_case_and_spacing_do_not_make_a_second_category` — the whole point of
+  remembering a rubric is that it comes back the same, not nearly the same.
 
 `scripts/check-styles.py` runs in `npm run build` and answers a question the
 type checker structurally cannot: **does every class the components render have

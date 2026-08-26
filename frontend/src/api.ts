@@ -143,3 +143,10 @@ export const deleteConstant = (id: number) => send<void>("DELETE", `/api/my-cons
 export const fetchLibraryPins = () => request<string[]>("/api/pinned-library");
 export const pinLibrary = (id: string) => send<void>("PUT", `/api/pinned-library/${id}`);
 export const unpinLibrary = (id: string) => send<void>("DELETE", `/api/pinned-library/${id}`);
+
+export const fetchCategories = () => request<string[]>("/api/categories");
+export const addCategory = (name: string) => post<void>("/api/categories", { name });
+// The name goes in the query rather than the path: a rubric is free text, and
+// `Optics / bench` would otherwise read as two path segments.
+export const removeCategory = (name: string) =>
+  send<void>("DELETE", `/api/categories?name=${encodeURIComponent(name)}`);

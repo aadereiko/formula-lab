@@ -298,7 +298,16 @@ h1, h2, h3 { font-weight: 550; }
   color: var(--ink);
 }
 
-.library-name, .saved-name { font-size: 13.5px; }
+/* One line, always. These are rows in a list of fixed-height entries, so a
+   name long enough to wrap does not make a taller row -- it makes the list
+   unreadable. The pin marker sits inside and survives the clip. */
+.library-name, .saved-name {
+  font-size: 13.5px;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .library-expr, .saved-expr { font-size: 11.5px; color: var(--ink-faint); }
 .library-item.is-active .library-expr,
 .saved-list li.is-active .saved-expr { color: var(--accent); }
@@ -1343,7 +1352,16 @@ textarea.text-input { resize: vertical; line-height: 1.5; }
 }
 
 .formula-line { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
-.formula-name { font-size: 14.5px; font-weight: 600; flex: none; }
+/* Shrinkable, not `flex: none`: a name that refuses to give up width pushes
+   the badges and the expression clean out of the row. */
+.formula-name {
+  font-size: 14.5px;
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .formula-expr {
   font-size: 12px;
   color: var(--ink-faint);
@@ -1651,11 +1669,51 @@ textarea.text-input { resize: vertical; line-height: 1.5; }
   position: relative;
 }
 .legend-chip code { font-size: 11.5px; color: var(--ink); }
-.legend-chip.is-constant { border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); }
-.legend-chip.is-constant code { color: var(--accent); }
-.legend-value { font-family: var(--mono); color: var(--ink-faint); }
-.legend-unit { margin-left: 4px; opacity: 0.75; }
 .legend-chip.is-function code { color: var(--ink-soft); }
+
+/* ── category chips ──────────────────────────────────────────────────── */
+
+/* Your own rubrics, offered outright rather than only inside a datalist that
+   gives no sign it exists. The name and the × are separate buttons: nesting one
+   button in another is invalid, and they do different things. */
+.cat-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.cat-chip {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid var(--line);
+  border-radius: var(--pill);
+  overflow: hidden;
+  font-size: 11.5px;
+  transition: border-color 0.12s, transform 0.12s var(--raise-ease),
+    box-shadow 0.12s var(--raise-ease);
+}
+.cat-chip:hover {
+  border-color: var(--line-strong);
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 var(--shadow-ink);
+}
+.cat-chip.is-on { border-color: var(--accent); }
+.cat-chip-name {
+  border: none;
+  background: none;
+  padding: 3px 9px;
+  font-size: 11.5px;
+  color: var(--ink-soft);
+}
+.cat-chip:hover .cat-chip-name { color: var(--ink); }
+.cat-chip.is-on .cat-chip-name { color: var(--accent); }
+.cat-chip-drop {
+  border: none;
+  border-left: 1px solid var(--line);
+  background: none;
+  padding: 0 7px;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--ink-faint);
+  /* The tooltip is positioned against this. */
+  position: relative;
+}
+.cat-chip-drop:hover { color: var(--danger); background: var(--bg-sunken); }
 
 /* ── tooltips ────────────────────────────────────────────────────────── */
 
