@@ -384,27 +384,29 @@ docker compose up --build
 Open <http://localhost:7731>. The SQLite file lives on a named volume so it
 survives rebuilds.
 
-### Fly.io
+### Fly.io — the recommended host
+
+`fly.toml` is committed, so there is no `fly launch` step and nothing to
+hand-edit except the app name and the URL:
 
 ```bash
-fly launch --no-deploy                       # generates fly.toml from the Dockerfile
-fly volumes create formula_data --size 1     # SQLite needs persistent disk
+fly apps create your-app                     # then set `app` in fly.toml to match
+fly volumes create formula_data --size 1     # SQLite is a file; it needs a disk
 fly secrets set FORMULA_LAB_SECRET="$(python3 -c 'import secrets; print(secrets.token_urlsafe(48))')"
-fly secrets set FORMULA_LAB_APP_URL="https://your-app.fly.dev/"
 fly deploy
 ```
 
-In `fly.toml`, mount the volume and expose the port:
+Then set `FORMULA_LAB_APP_URL` in `fly.toml` to the real URL, because Google
+sign-in redirects back to it.
 
-```toml
-[[mounts]]
-  source = "formula_data"
-  destination = "/data"
-
-[http_service]
-  internal_port = 7731
-  force_https = true
-```
+The committed config carries three decisions worth knowing. **512 MB, not 256**:
+`runner.py` keeps a pool of two worker processes, and a warm interpreter with
+SymPy loaded measures about 57 MB, so parent plus workers runs 150–200 MB under
+load — 256 MB survives idle and dies under use. **No scale-to-zero**: the
+database is a file on the volume, so stopping the machine saves nothing and
+costs a cold start on the next request. **One machine**: two would each mount
+their own volume and therefore their own database, and a user would see
+different data depending on which answered. Scaling out means Postgres first.
 
 ### Render / Railway
 

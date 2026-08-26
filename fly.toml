@@ -1,0 +1,50 @@
+# Fly.io deployment. `fly deploy` reads this and the Dockerfile; nothing else is
+# generated. Set the app name to your own before the first deploy.
+app = "formula-lab"
+primary_region = "ams"
+
+[build]
+  # The Dockerfile builds the front end and serves it from the API, so there is
+  # one image and one origin -- which is what keeps the session cookie
+  # first-party in production.
+
+[env]
+  # Everything else the image already sets. This one cannot be baked in: it is
+  # the public URL, and it differs per app.
+  FORMULA_LAB_APP_URL = "https://formula-lab.fly.dev/"
+
+[http_service]
+  internal_port = 7731
+  force_https = true
+  # No scale-to-zero. The database is a file on the volume below, so there is
+  # nothing to be gained by stopping the machine and a cold start would be paid
+  # on the first request instead.
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+[[http_service.checks]]
+  interval = "30s"
+  timeout = "3s"
+  grace_period = "20s"
+  method = "GET"
+  path = "/api/health"
+
+[[mounts]]
+  # SQLite is one file and it has to outlive a redeploy. The image already points
+  # FORMULA_LAB_DATABASE_URL at /data/formula_lab.db, so this is the whole of the
+  # persistence story -- forget it and every deploy starts empty.
+  source = "formula_data"
+  destination = "/data"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  # 512, not 256: `runner.py` keeps a pool of 2 worker processes and a warm
+  # interpreter with SymPy loaded measures ~57 MB, so parent plus workers is
+  # 150-200 MB under load. 256 MB would survive idle and OOM under use.
+  memory = "512mb"
+
+# One machine, deliberately. Two would each get their own volume and therefore
+# their own database, and users would see different data depending on which one
+# answered. Scaling out means moving to Postgres first -- set
+# FORMULA_LAB_DATABASE_URL and drop the mount above.
