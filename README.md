@@ -618,6 +618,25 @@ One trap worth recording: the labels are lowercase in the source and uppercased
 by `text-transform`. Checking the palette against the *displayed* text tests a
 different string from the one that gets hashed.
 
+## On a phone
+
+Below 700px the header's nav becomes three icons — a flask, a bookmark, a pi —
+and the wordmark gives way to the cube alone. Below 560px every dialog becomes a
+sheet rising from the bottom edge rather than a card floating in the middle. Two
+practical reasons: the actions land under the thumb, and when the on-screen
+keyboard opens it claims the bottom of the viewport, so a centred card is shoved
+upward and its buttons go off-screen while a bottom-anchored one is already where
+the keyboard pushes it. `env(safe-area-inset-bottom)` clears the home indicator.
+
+Inputs are 16px throughout, which is not a typographic choice: iOS zooms the
+page when you focus anything smaller.
+
+A variable's controls wrap on a narrow screen. `c` carries a chip reading
+`299792458 m/s`, the chip does not shrink, and input + chip + Solve came to 416px
+inside a 378px viewport — which scrolled the whole document sideways, not just
+the row. Wrapping moves the chip to a second line and keeps the number readable
+in full; shrinking it would have truncated the value instead.
+
 ## Theme
 
 Dark, light, or matching the system, cycled from one control in the header and

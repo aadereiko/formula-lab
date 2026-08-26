@@ -825,7 +825,14 @@ h1, h2, h3 { font-weight: 550; }
   /* Stack each variable so the label, input and buttons all get full width
      and comfortable touch targets. */
   .variable-row { grid-template-columns: 1fr; gap: 7px; padding: 11px 0; }
-  .variable-controls { gap: 8px; }
+  /* Wrapping, so a constant chip cannot push the page sideways. `c` carries
+     `299792458 m/s`, the chip is `flex: none`, and input + chip + Solve came to
+     416px inside a 378px viewport -- which scrolled the whole document
+     horizontally, not just the row. Wrapping drops the chip and Solve to a
+     second line and keeps the value readable in full; shrinking the chip would
+     have truncated the number instead. */
+  .variable-controls { gap: 8px; flex-wrap: wrap; }
+  .variable-input { flex: 1 1 100%; }
   .chip, .solve-toggle { min-height: 38px; padding: 8px 11px; }
   .saved-badge { max-width: 100%; }
 
@@ -1613,6 +1620,44 @@ textarea.text-input { resize: vertical; line-height: 1.5; }
 }
 .dialog-error { margin-right: auto; font-size: 12.5px; }
 
+/* ── dialogs on a phone ──────────────────────────────────────────────── */
+
+/* A sheet rising from the bottom edge rather than a card floating in the
+   middle. Two reasons, both practical: the actions land under the thumb instead
+   of halfway up the screen, and when the on-screen keyboard opens it takes the
+   bottom of the viewport -- a centred card gets shoved upward and its buttons
+   go off-screen, while a bottom-anchored one is already where the keyboard
+   pushes it.
+   After the base rules on purpose: these selectors are no more specific, so
+   source order is what makes them win. */
+@media (max-width: 560px) {
+  .overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .dialog {
+    max-width: none;
+    /* Square along the bottom, because that edge is the screen's edge. */
+    border-radius: 16px 16px 0 0;
+    border-bottom: none;
+    max-height: 92vh;
+    /* Clears the home indicator; zero on anything without one. */
+    padding-bottom: calc(22px + env(safe-area-inset-bottom));
+  }
+  .dialog-save {
+    border-radius: 16px 16px 0 0;
+    padding-bottom: 0;
+  }
+  .dialog-save .dialog-actions {
+    padding-bottom: calc(14px + env(safe-area-inset-bottom));
+  }
+
+  /* Full-width, thumb-sized targets. */
+  .auth-tabs { gap: 6px; }
+  .auth-tab { flex: 1; min-height: 40px; text-align: center; }
+  .auth-form .btn-primary, .btn-google { min-height: 46px; }
+}
+
 @media (max-width: 899px) {
   .header-end .btn-small { display: none; }   /* the sidebar already offers it */
   .formula-row { align-items: flex-start; flex-direction: column; gap: 0; }
@@ -2003,7 +2048,11 @@ textarea.text-input { resize: vertical; line-height: 1.5; }
      the narrowest phones without the nav needing to scroll. */
   .nav-link { width: 36px; height: 36px; }
   .header { padding: 0 10px; }
-  .dialog { padding: 18px 0 0; }
+  /* Only the save dialog: its head, body and actions pad themselves so the
+     body can scroll under a fixed footer. Applied to every `.dialog` -- which
+     it was -- it left the sign-in form's title, inputs and button running into
+     the edges of the screen. */
+  .dialog-save { padding: 18px 0 0; }
   .result-value { font-size: clamp(21px, 8vw, 28px); }
   .page-title { font-size: 19px; }
   .variable-row { padding: 10px 10px; margin-inline: -10px; }
