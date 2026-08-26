@@ -274,63 +274,8 @@
 .is-back .cube3d-cell:nth-child(even) { background: #3c78e8; }
 .is-bottom .cube3d-cell { background: #1b3fb8; }
 
-/* ── the ball, and its orbit ─────────────────────────────────────────── */
-
-.cube3d-ball {
-  /* The radius the keyframes below are fractions of. */
-  --orbit: var(--cube);
-  --ball: calc(var(--cube) * 0.34);
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: var(--ball);
-  height: var(--ball);
-  margin: calc(var(--ball) / -2) 0 0 calc(var(--ball) / -2);
-  border-radius: 50%;
-  /* Off-centre highlight, so a flat circle reads as a sphere. */
-  background: radial-gradient(circle at 34% 30%, #d6f3ff, #7fd8f5 42%, #2f9fc6);
-  animation: cube-orbit 15s linear infinite;
-}
-
-/* One circuit of the cube, then still until the next cycle.
- *
- * The path is keyframed as `translate3d` rather than as a `rotateY` on a parent,
- * which is the obvious way and the wrong one: a flat disc carried round by a
- * rotation turns with it, goes edge-on at the sides of the circle, and vanishes.
- * Sampling the circle instead leaves the ball facing the viewer throughout.
- *
- * Nothing hides it on the far side -- the cube does. The ball shares the faces'
- * 3D context, and at rest it sits at z = -0.85 of a cube width: behind the back
- * face and dead centre, so the six faces enclose it exactly as they did the
- * loose piece. `perspective` on the mark supplies the rest of the depth, 1.065x
- * its size at the front of the circle against 0.943x at the back.
- *
- * Each frame also carries a scale: 1.3 at the front of the circle down to 0.7
- * at the back. Perspective alone gives 1.065x against 0.943x, which is real
- * and invisible on a 24px mark; the scale is what makes the flight read.
- *
- * `linear`, because a circle travelled with easing reads as speeding up and
- * slowing down. The abrupt start at 24% costs nothing -- it happens while the
- * ball is still behind the cube. */
-@keyframes cube-orbit {
-  24% { transform: translate3d(calc(var(--orbit) * 0.0000), 0, calc(var(--orbit) * -0.8500)) scale(0.700); }
-  27% { transform: translate3d(calc(var(--orbit) * -0.4250), 0, calc(var(--orbit) * -0.7361)) scale(0.740); }
-  30% { transform: translate3d(calc(var(--orbit) * -0.7361), 0, calc(var(--orbit) * -0.4250)) scale(0.850); }
-  33% { transform: translate3d(calc(var(--orbit) * -0.8500), 0, calc(var(--orbit) * -0.0000)) scale(1.000); }
-  36% { transform: translate3d(calc(var(--orbit) * -0.7361), 0, calc(var(--orbit) * 0.4250)) scale(1.150); }
-  39% { transform: translate3d(calc(var(--orbit) * -0.4250), 0, calc(var(--orbit) * 0.7361)) scale(1.260); }
-  42% { transform: translate3d(calc(var(--orbit) * -0.0000), 0, calc(var(--orbit) * 0.8500)) scale(1.300); }
-  45% { transform: translate3d(calc(var(--orbit) * 0.4250), 0, calc(var(--orbit) * 0.7361)) scale(1.260); }
-  48% { transform: translate3d(calc(var(--orbit) * 0.7361), 0, calc(var(--orbit) * 0.4250)) scale(1.150); }
-  51% { transform: translate3d(calc(var(--orbit) * 0.8500), 0, calc(var(--orbit) * 0.0000)) scale(1.000); }
-  54% { transform: translate3d(calc(var(--orbit) * 0.7361), 0, calc(var(--orbit) * -0.4250)) scale(0.850); }
-  57% { transform: translate3d(calc(var(--orbit) * 0.4250), 0, calc(var(--orbit) * -0.7361)) scale(0.740); }
-  60% { transform: translate3d(calc(var(--orbit) * 0.0000), 0, calc(var(--orbit) * -0.8500)) scale(0.700); }
-}
-
 @media (prefers-reduced-motion: reduce) {
-  .cube3d-body,
-  .cube3d-ball {
+  .cube3d-body {
     animation: none;
   }
 }

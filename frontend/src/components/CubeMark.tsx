@@ -13,10 +13,9 @@ const CELLS = [0, 1, 2, 3];
  * a picture of a cube reads as a spinning picture. With actual faces, a
  * `rotateY` is a turntable, which is what a cube turning looks like.
  *
- * Three nested elements, because each owns one transform and a single element
- * cannot hold three: the body carries the resting orientation and the idle
- * turn, the spinner carries the hover turn, and a ball orbits on its own
- * schedule.
+ * Two nested elements, because each owns one transform and a single element
+ * cannot hold both: the body carries the resting orientation and the idle turn,
+ * the spinner carries the hover turn.
  */
 export function CubeMark({ size = 24 }: Props) {
   return (
@@ -35,11 +34,6 @@ export function CubeMark({ size = 24 }: Props) {
             </span>
           ))}
         </span>
-
-        {/* Orbits the cube: out from behind, round the front, and back. A
-            sibling of the faces rather than a child, so it shares their 3D
-            context and the cube can hide it on the far side of the circle. */}
-        <span className="cube3d-ball" />
       </span>
     </span>
   );
