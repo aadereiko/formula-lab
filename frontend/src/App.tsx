@@ -3,6 +3,7 @@ import * as api from "./api";
 import { ApiError } from "./api";
 import { useDebouncedValue, usePersistentState } from "./hooks";
 import { useRoute } from "./useRoute";
+import { useTheme } from "./useTheme";
 import { useAuth, useOAuthError } from "./useAuth";
 import { useFormulaStore, type FormulaDraft, type StoredFormula } from "./useFormulaStore";
 import {
@@ -46,6 +47,7 @@ export default function App() {
   const auth = useAuth();
   const oauthError = useOAuthError();
   const { route, navigate } = useRoute();
+  const theme = useTheme();
   const signedIn = Boolean(auth.user);
   const store = useFormulaStore(signedIn);
 
@@ -361,6 +363,9 @@ export default function App() {
         route={route}
         showMenu={route === "home"}
         savedCount={store.formulas.length}
+        theme={theme.theme}
+        nextTheme={theme.next}
+        onCycleTheme={theme.cycle}
         onNavigate={navigate}
         onToggleMenu={() => setMenuOpen((open) => !open)}
         onAccount={() => (auth.user ? setAccountOpen(true) : promptSignIn())}

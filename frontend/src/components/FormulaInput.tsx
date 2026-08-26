@@ -33,19 +33,21 @@ export function FormulaInput({
           Formula
         </label>
         {savedName && <span className="saved-badge">{savedName}</span>}
-        {onClear && (
-          <button type="button" className="chip" onClick={onClear}>
-            clear
+        <span className="block-actions">
+          {onClear && (
+            <button type="button" className="ghost-btn" onClick={onClear}>
+              Clear
+            </button>
+          )}
+          <button
+            type="button"
+            className="btn btn-primary btn-small"
+            disabled={!canSave}
+            onClick={onSave}
+          >
+            {savedName ? "Edit details" : "Save"}
           </button>
-        )}
-        <button
-          type="button"
-          className="btn btn-primary btn-small"
-          disabled={!canSave}
-          onClick={onSave}
-        >
-          {savedName ? "Edit details" : "Save"}
-        </button>
+        </span>
       </div>
 
       <input

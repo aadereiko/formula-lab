@@ -6,15 +6,22 @@
  * invitation is recognisably part of the same app while staying quiet — until
  * it is hovered, when it tumbles.
  */
-export function CubeGlyph({ size = 15 }: { size?: number }) {
+interface Props {
+  size?: number;
+  /** Filled reads as "assembled", which is how a signed-in account shows. */
+  solid?: boolean;
+}
+
+export function CubeGlyph({ size = 15, solid = false }: Props) {
   return (
     <svg
-      className="cube-glyph"
+      className={`cube-glyph${solid ? " is-solid" : ""}`}
       width={size}
       height={size}
       viewBox="0 0 64 64"
       aria-hidden="true"
-      fill="none"
+      fill={solid ? "currentColor" : "none"}
+      fillOpacity={solid ? 0.22 : undefined}
       stroke="currentColor"
       strokeWidth="4.5"
       strokeLinecap="round"

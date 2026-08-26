@@ -136,10 +136,7 @@
 }
 
 /* The mark is a cube with no rectangular face of its own, so a rectangular
-   shadow behind it reads as a mistake. It gets a small pop instead. */
-.brand .logo { transition: transform 0.13s var(--raise-ease); }
-.brand:hover .logo { transform: scale(1.08); }
-.brand:active .logo { transform: scale(1); }
+   shadow behind it would read as a mistake. It turns instead; see below. */
 
 /* Rows inside a scrolling list need to sit above their neighbours while raised,
    or the shadow lands under the next row instead of on it. */
@@ -164,21 +161,9 @@
 
 /* ── the mark ─────────────────────────────────────────────────────────── */
 
+/* The flat mark keeps its wrapper for static uses (empty states); the header
+   uses the CSS 3D cube below, which turns horizontally instead. */
 .logo-wrap { display: inline-flex; flex: none; }
-
-/* An occasional tumble rather than a constant one: the cube sits still for most
-   of the cycle, turns once, and settles. A logo that never stops moving pulls
-   the eye away from the work. */
-@keyframes cube-idle {
-  0%, 72% { transform: rotate(0deg); }
-  86% { transform: rotate(180deg); }
-  100% { transform: rotate(360deg); }
-}
-.logo-wrap { animation: cube-idle 14s cubic-bezier(0.5, 0, 0.4, 1) infinite; }
-
-/* And a full turn under the cursor, which unwinds when it leaves. */
-.brand .logo { transition: transform 0.55s cubic-bezier(0.3, 0, 0.25, 1); }
-.brand:hover .logo { transform: rotate(360deg) scale(1.06); }
 
 /* ── the sign-in invitation ───────────────────────────────────────────── */
 
@@ -204,8 +189,157 @@
 /* Both idle loops stop for anyone who has asked for less motion; the hover
    turns stay, since they are a direct response to an action. */
 @media (prefers-reduced-motion: reduce) {
-  .logo-wrap,
-  .account-btn.is-invitation .cube-glyph {
+  .account-btn.is-invitation .cube-glyph { animation: none; }
+}
+
+/* ── the cube, in three dimensions ────────────────────────────────────── */
+
+.cube3d {
+  --cube: 24px;
+  --half: calc(var(--cube) / 2);
+  width: var(--cube);
+  height: var(--cube);
+  flex: none;
+  display: inline-block;
+  /* Short enough to give the turn some depth, long enough that the near face
+     does not balloon as it swings past. */
+  perspective: calc(var(--cube) * 14);
+}
+
+.cube3d-body,
+.cube3d-spin {
+  /* `display: block` is load-bearing: these are spans, and `position:
+     relative` does not blockify, so they would stay inline and ignore the
+     height -- leaving the `inset: 0` faces nothing to fill. */
+  display: block;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+}
+
+/* Resting three-quarter view, chosen to match the flat mark in the favicon. */
+.cube3d-body {
+  transform: rotateX(-22deg) rotateY(-36deg);
+  animation: cube-turn 15s cubic-bezier(0.55, 0, 0.35, 1) infinite;
+}
+
+/* Still for most of the cycle, then one turn about the vertical axis. A mark
+   that never stops moving pulls the eye away from the work. */
+@keyframes cube-turn {
+  0%, 68% { transform: rotateX(-22deg) rotateY(-36deg); }
+  100% { transform: rotateX(-22deg) rotateY(324deg); }
+}
+
+/* Another horizontal turn under the cursor, unwinding when it leaves. */
+.cube3d-spin { transition: transform 0.7s cubic-bezier(0.3, 0, 0.25, 1); }
+.brand:hover .cube3d-spin { transform: rotateY(360deg); }
+
+.cube3d-face {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template: 1fr 1fr / 1fr 1fr;
+  gap: 1px;
+}
+.cube3d-face.is-front { transform: translateZ(var(--half)); }
+.cube3d-face.is-back { transform: rotateY(180deg) translateZ(var(--half)); }
+.cube3d-face.is-right { transform: rotateY(90deg) translateZ(var(--half)); }
+.cube3d-face.is-left { transform: rotateY(-90deg) translateZ(var(--half)); }
+.cube3d-face.is-top { transform: rotateX(90deg) translateZ(var(--half)); }
+.cube3d-face.is-bottom { transform: rotateX(-90deg) translateZ(var(--half)); }
+
+.cube3d-cell { background: #4d8dff; }
+
+/* Lighter above, darker to the side, and one odd hue per face, so the mark
+   reads as coloured blocks rather than a shaded solid. */
+.is-top .cube3d-cell:nth-child(1) { background: #9dbeff; }
+.is-top .cube3d-cell:nth-child(2) { background: #b8d0ff; }
+.is-top .cube3d-cell:nth-child(3) { background: #7fd8f5; }
+.is-top .cube3d-cell:nth-child(4) { background: #8cb0ff; }
+
+.is-front .cube3d-cell:nth-child(1) { background: #5b96ff; }
+.is-front .cube3d-cell:nth-child(2) { background: #4d8dff; }
+.is-front .cube3d-cell:nth-child(3) { background: #3f82f7; }
+.is-front .cube3d-cell:nth-child(4) { background: #6ba0ff; }
+
+.is-right .cube3d-cell:nth-child(1) { background: #2f62ee; }
+.is-right .cube3d-cell:nth-child(2) { background: #2454e6; }
+.is-right .cube3d-cell:nth-child(3) { background: #7b5bf0; }
+.is-right .cube3d-cell:nth-child(4) { background: #1e49d2; }
+
+.is-left .cube3d-cell:nth-child(odd) { background: #3a76e8; }
+.is-left .cube3d-cell:nth-child(even) { background: #2d63dd; }
+.is-back .cube3d-cell:nth-child(odd) { background: #4a86f2; }
+.is-back .cube3d-cell:nth-child(even) { background: #3c78e8; }
+.is-bottom .cube3d-cell { background: #1b3fb8; }
+
+/* ── the loose piece ─────────────────────────────────────────────────── */
+
+.cube3d-chip {
+  --chip: calc(var(--cube) * 0.38);
+  --chip-half: calc(var(--chip) / 2);
+  --pop: calc(var(--cube) * 0.42);
+  position: absolute;
+  top: calc(var(--cube) * -0.06);
+  right: calc(var(--cube) * -0.06);
+  width: var(--chip);
+  height: var(--chip);
+  transform-style: preserve-3d;
+  animation: cube-detach 15s cubic-bezier(0.4, 0, 0.3, 1) infinite;
+}
+
+.chip-face { position: absolute; inset: 0; }
+.chip-face.is-front { transform: translateZ(var(--chip-half)); background: #7fd8f5; }
+.chip-face.is-top {
+  transform: rotateX(90deg) translateZ(var(--chip-half));
+  background: #a9e6fa;
+}
+.chip-face.is-right {
+  transform: rotateY(90deg) translateZ(var(--chip-half));
+  background: #4fbfe4;
+}
+
+/* It lifts away, hangs for a moment, and settles back — timed to happen while
+   the cube itself is still, so the two do not compete. */
+@keyframes cube-detach {
+  0%, 34% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  44% {
+    transform: translate3d(var(--pop), calc(var(--pop) * -0.8), var(--pop)) rotate(14deg);
+  }
+  56% {
+    transform: translate3d(var(--pop), calc(var(--pop) * -0.8), var(--pop)) rotate(-8deg);
+  }
+  66%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cube3d-body,
+  .cube3d-chip {
     animation: none;
   }
 }
+
+/* ── quiet verbs ─────────────────────────────────────────────────────── */
+
+/* Actions read as words, not as monospace tokens: the pill treatment belongs to
+   values like `9.80665 m/s²`, and a lowercase monospace `clear` beside a
+   sans-serif label looked like a stray identifier. */
+.ghost-btn {
+  background: none;
+  border: none;
+  border-radius: var(--radius);
+  padding: 5px 9px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--ink-faint);
+  transition: color 0.12s, background 0.12s;
+}
+.ghost-btn:hover { color: var(--ink); background: var(--bg-sunken); }
+.ghost-btn:active { background: var(--bg-sunken); }
+
+.block-actions { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; }
+.block-head > .ghost-btn:last-child { margin-left: auto; }
+
+.theme-switch { color: var(--ink-faint); }
+.theme-switch:hover { color: var(--ink); }

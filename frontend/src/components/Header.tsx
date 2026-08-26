@@ -1,7 +1,9 @@
 import type { Route } from "../useRoute";
 import type { User } from "../types";
+import type { Theme } from "../useTheme";
 import { CubeGlyph } from "./CubeGlyph";
-import { Logo } from "./Logo";
+import { CubeMark } from "./CubeMark";
+import { ThemeSwitch } from "./ThemeSwitch";
 
 interface Props {
   user: User | null;
@@ -10,6 +12,9 @@ interface Props {
   showMenu: boolean;
   route: Route;
   savedCount: number;
+  theme: Theme;
+  nextTheme: Theme;
+  onCycleTheme: () => void;
   onNavigate: (next: Route) => void;
   onToggleMenu: () => void;
   onAccount: () => void;
@@ -22,6 +27,9 @@ export function Header({
   showMenu,
   route,
   savedCount,
+  theme,
+  nextTheme,
+  onCycleTheme,
   onNavigate,
   onToggleMenu,
   onAccount,
@@ -41,7 +49,7 @@ export function Header({
       )}
 
       <button type="button" className="brand" onClick={() => onNavigate("home")}>
-        <Logo size={20} />
+        <CubeMark size={22} />
         <span className="brand-name">Formula Lab</span>
       </button>
 
@@ -74,6 +82,7 @@ export function Header({
       </nav>
 
       <div className="header-end">
+        <ThemeSwitch theme={theme} next={nextTheme} onCycle={onCycleTheme} />
         <button
           type="button"
           className={`account-btn${user ? "" : " is-invitation"}`}
@@ -82,7 +91,10 @@ export function Header({
           {checking ? (
             "…"
           ) : user ? (
-            shortEmail(user.email)
+            <>
+              <CubeGlyph solid />
+              {shortEmail(user.email)}
+            </>
           ) : (
             <>
               <CubeGlyph />

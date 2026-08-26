@@ -377,6 +377,19 @@ its colour and becomes a neutral chip rather than a faded blue — a washed-out
 accent still reads as "the blue button, but dirty", where a grey chip reads as
 unavailable.
 
+## Theme
+
+Dark, light, or matching the system, cycled from one control in the header and
+remembered per browser. Three states rather than two, because *system* is not
+the same as picking whichever the system happens to be right now — it keeps
+following it.
+
+It is expressed as a `data-theme` attribute on `<html>`, and *system* sets no
+attribute at all so the `prefers-color-scheme` query stays in charge. Only the
+palette block reads it; every other rule in the app goes through the tokens and
+never asks about the scheme, which is what kept adding an explicit override to a
+one-place change.
+
 ## Hover
 
 Everything the pointer can act on lifts: buttons, navigation, library rows,
@@ -394,10 +407,21 @@ four variables — how far a surface travels, how far its shadow sits behind, an
 smaller values of both for small controls.
 
 The mark is the exception: a cube has no rectangular face, so a rectangular
-shadow behind it reads as a mistake. It scales and spins instead — a full turn
-under the cursor, and an occasional idle tumble so the header has a little life
-without anything moving constantly. The signed-out control carries the same cube
-as an outline, which tumbles when hovered and nudges now and then on its own.
+shadow behind it reads as a mistake. It turns instead, and to turn *horizontally*
+it has to be a real cube — spinning a picture of one reads as a spinning
+picture. So the header mark is six CSS faces in a `preserve-3d` box, each face
+divided into four coloured cells, and `rotateY` gives it a genuine turntable
+spin: a full turn under the cursor, and one on its own every fifteen seconds
+after sitting still for most of the cycle. One small cube rides on a corner and
+detaches while the rest is still, hangs for a moment, and settles back.
+
+The flat SVG mark stays for the favicon and for static decoration, where nothing
+needs to rotate. The signed-out control carries the same cube as a wireframe
+outline; signed in, it is filled — an assembled cube for an assembled account.
+
+Verbs are words, not tokens: `Clear`, `Copy`. The monospace pill is reserved for
+values like `9.80665 m/s²`, and a lowercase monospace `clear` beside a
+sans-serif label read like a stray identifier.
 
 Two cases are handled rather than ignored. A **disabled** control never lifts,
 because it has no colour of its own and rising would promise something it cannot

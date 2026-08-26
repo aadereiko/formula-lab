@@ -35,8 +35,14 @@
   color-scheme: dark;
 }
 
+/* Light values, applied either because the system asks for light and the user
+   has not overridden it, or because they chose light outright. The selector is
+   written twice because `@media` cannot appear inside a selector list; the
+   declarations themselves live in one place, and every other rule in the app
+   reads them through the tokens rather than asking about the scheme. */
 @media (prefers-color-scheme: light) {
-  :root {
+  :root:not([data-theme="dark"]) {
+
     --bg: #ffffff;
     --bg-soft: #f8f8f9;
     --bg-sunken: #ededf0;
@@ -55,6 +61,27 @@
     --shadow-ink: #131c3d;
     color-scheme: light;
   }
+}
+
+:root[data-theme="light"] {
+
+    --bg: #ffffff;
+    --bg-soft: #f8f8f9;
+    --bg-sunken: #ededf0;
+    --bg-output: #f4f5f7;
+    --line: #e6e6ea;
+    --line-strong: #cfcfd6;
+
+    --ink: #111113;
+    --ink-soft: #55555e;
+    --ink-faint: #8b8b95;
+
+    --accent: #2563eb;
+    --accent-soft: #e9f0ff;
+    --accent-ink: #ffffff;
+    --danger: #d92d2d;
+    --shadow-ink: #131c3d;
+    color-scheme: light;
 }
 
 * { box-sizing: border-box; }
@@ -151,8 +178,10 @@ h1, h2, h3 { font-weight: 550; }
   align-items: center;
   gap: 12px;
   padding: 0 16px;
-  background: color-mix(in srgb, var(--bg) 88%, transparent);
-  backdrop-filter: blur(8px);
+  /* Opaque rather than blurred: `backdrop-filter` establishes a backdrop root,
+     which flattens 3D transforms in its subtree -- and the mark in this bar is
+     a real rotating cube. */
+  background: var(--bg);
   border-bottom: 1px solid var(--line);
 }
 
