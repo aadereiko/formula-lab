@@ -116,6 +116,17 @@ which quantity is the answer. Sweeping a variable takes it out of that reckoning
 which is why `F = m a` with only `m` filled in will happily plot F against a —
 once `a` is an axis, F is the only blank left.
 
+The **swept** axis defaults to a variable that is not the equation's subject.
+`symbols` is ordered for display — shortest name, then alphabetical — which is a
+good rule for laying out variable rows and says nothing about which side of the
+equals sign a variable sits on. Taking the first one made `F = a*b` sweep F, the
+quantity you obviously wanted plotted, and then demand values for both a and b;
+`b = a + c` worked only because alphabetical order happened to put a first. So
+`analyze` reports a `subject` — the lone symbol on the left of an equation, or
+null when there is not one, because `v^2 = ...` is about no single variable and
+guessing would be worse than admitting it. F stays selectable by hand: sweeping
+it to see how a responds is a fair question, just not the one to assume.
+
 The range defaults to zero-to-twice whatever the variable is currently set to,
 keeping the origin in frame; a variable with no value yet defaults to 0–10 and
 can be swept without ever being filled in.
