@@ -742,6 +742,34 @@ frontend/
 Dockerfile                two-stage build; one image serves both halves
 ```
 
+## Version
+
+`backend/app/version.py` owns the number. It lives inside `app/` rather than at
+the repository root so it ships with the Docker image without the Dockerfile
+needing to know about it — the image copies `backend/app`, and a root-level
+VERSION file would simply be absent.
+
+The scheme, for something whose only API consumer is its own front end:
+
+- **major** — stored data or the URL scheme changes incompatibly
+- **minor** — a feature somebody would notice (plots, categories, accounts)
+- **patch** — fixes and polish
+
+The sidebar footer shows what `/api/capabilities` **reports**, not what the
+bundle was built with. That distinction earns its keep after a partial deploy:
+the version answering requests is the one worth knowing, and this app has
+already been caught serving a front end whose backend predated it by three hours.
+
+Bumping means editing `version.py` and `frontend/package.json` together, and
+`test_the_frontend_agrees_about_the_version` fails if they drift — a number on
+screen that nothing else in the build agrees with is worse than no number.
+Tag the commit to match:
+
+```bash
+git tag -a v1.1.0 -m "Plots, custom categories, coloured tags"
+git push origin v1.1.0
+```
+
 ## Licence
 
 MIT

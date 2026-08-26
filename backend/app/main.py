@@ -42,6 +42,7 @@ from .models import (
     PlotResponse,
 )
 from .security import MAX_LENGTH, FormulaError
+from .version import VERSION
 
 # Ports chosen to avoid collisions with other local projects.
 DEFAULT_PORT = 7731
@@ -60,7 +61,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Formula Lab API",
     description="Parse, evaluate and rearrange physics formulas.",
-    version="1.0.0",
+    version=VERSION,
     lifespan=lifespan,
 )
 
@@ -119,6 +120,10 @@ async def auth_providers() -> dict[str, bool]:
 async def capabilities() -> dict[str, object]:
     """What the parser accepts -- drives the in-app help panel."""
     return {
+        # Reported by the server rather than baked into the bundle: what matters
+        # is the version actually answering, which after a partial deploy is not
+        # necessarily the one the front end was built beside.
+        "version": VERSION,
         "functions": sorted(ALLOWED_FUNCTIONS),
         # One line each, so the editor can explain a function the moment a
         # formula uses it rather than making someone open the help panel.

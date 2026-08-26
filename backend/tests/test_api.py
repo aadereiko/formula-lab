@@ -244,3 +244,31 @@ def test_capabilities_explain_every_function(client):
 
     # The lines are one-liners, not paragraphs.
     assert all(len(value) < 90 for value in help_text.values())
+
+
+# --------------------------------------------------------------------------
+# Version
+# --------------------------------------------------------------------------
+
+def test_capabilities_reports_the_version(client):
+    from app.version import VERSION
+
+    assert client.get("/api/capabilities").json()["version"] == VERSION
+
+
+def test_the_frontend_agrees_about_the_version():
+    """One version, two files that have to say it.
+
+    The number is shown in the UI but owned by the backend, so a drift would put
+    a figure on screen that nothing else in the build agrees with. Cheaper to
+    fail here than to wonder later which one is true.
+    """
+    import json
+    from pathlib import Path
+
+    from app.version import VERSION
+
+    package = Path(__file__).resolve().parents[2] / "frontend" / "package.json"
+    assert json.loads(package.read_text())["version"] == VERSION, (
+        "frontend/package.json and app/version.py disagree -- bump both"
+    )

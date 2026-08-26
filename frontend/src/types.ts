@@ -104,6 +104,8 @@ export interface Constant {
 }
 
 export interface Capabilities {
+  /** What the server is running, which is the version worth showing. */
+  version: string;
   functions: string[];
   /** One line per function, shown when a formula uses it. */
   function_help: Record<string, string>;

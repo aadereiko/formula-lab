@@ -415,6 +415,7 @@ export default function App() {
 
       {route === "home" && (
         <Sidebar
+          version={capabilities?.version ?? null}
           open={menuOpen}
           onClose={() => setMenuOpen(false)}
           library={library}

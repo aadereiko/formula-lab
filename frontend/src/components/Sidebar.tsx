@@ -6,6 +6,8 @@ import { IconPin, IconSearch } from "./icons";
 
 interface Props {
   open: boolean;
+  /** Reported by the server, so the footer states what is actually running. */
+  version: string | null;
   onClose: () => void;
   library: Library | null;
   activeLibraryId: string | null;
@@ -32,6 +34,7 @@ const VISIBLE_LIMIT = 10;
 export function Sidebar(props: Props) {
   const {
     open,
+    version,
     onClose,
     library,
     activeLibraryId,
@@ -378,6 +381,20 @@ export function Sidebar(props: Props) {
             </>
           )}
         </div>
+
+        {/* Outside `.sidebar-scroll` on purpose: a credit you have to scroll
+            past the whole built-in library to reach is not a credit. */}
+        <footer className="side-footer">
+          <a
+            className="side-credit"
+            href="https://github.com/aadereiko"
+            target="_blank"
+            rel="noreferrer noopener"
+          >
+            Developed by aadereiko
+          </a>
+          {version && <span className="side-version">v{version}</span>}
+        </footer>
       </aside>
     </>
   );
