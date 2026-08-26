@@ -3,6 +3,7 @@ import type { User } from "../types";
 import type { Theme } from "../useTheme";
 import { CubeGlyph } from "./CubeGlyph";
 import { CubeMark } from "./CubeMark";
+import { IconBookmark, IconFlask, IconPi } from "./icons";
 import { ThemeSwitch } from "./ThemeSwitch";
 
 interface Props {
@@ -60,7 +61,8 @@ export function Header({
           aria-current={route === "home"}
           onClick={() => onNavigate("home")}
         >
-          Workspace
+          <IconFlask />
+          <span className="nav-text">Workspace</span>
         </button>
         <button
           type="button"
@@ -68,7 +70,8 @@ export function Header({
           aria-current={route === "formulas"}
           onClick={() => onNavigate("formulas")}
         >
-          My formulas
+          <IconBookmark />
+          <span className="nav-text">My formulas</span>
           {savedCount > 0 && <span className="nav-count">{savedCount}</span>}
         </button>
         <button
@@ -77,7 +80,8 @@ export function Header({
           aria-current={route === "constants"}
           onClick={() => onNavigate("constants")}
         >
-          Constants
+          <IconPi />
+          <span className="nav-text">Constants</span>
         </button>
       </nav>
 

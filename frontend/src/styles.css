@@ -1085,12 +1085,6 @@ h1, h2, h3 { font-weight: 550; }
   .notice-action { flex-direction: column; align-items: stretch; }
   .notice-buttons .btn { flex: 1; }
 }
-
-@media (max-width: 460px) {
-  /* The brand and both nav links will not fit next to the account button. */
-  .brand { display: none; }
-}
-
 .field-label { display: inline-flex; align-items: baseline; gap: 6px; }
 
 /* ── editor page ─────────────────────────────────────────────────────── */
@@ -1305,6 +1299,49 @@ textarea.text-input { resize: vertical; line-height: 1.5; }
 /* ── header ──────────────────────────────────────────────────────────── */
 
 .nav-link { transition: background 0.1s, color 0.1s; }
+/* Desktop reads the labels; the icons are in the DOM for the mobile swap
+   below, so they are hidden rather than conditionally rendered -- the header
+   should not re-mount its own buttons on a resize. */
+.nav-link svg { display: none; }
+
+/* This block sits *after* the desktop nav rules on purpose. Its selectors have
+   the same specificity as theirs and a media query adds none of its own, so
+   coming later in the file is the only reason `display: block` beats the
+   `display: none` above. Moved earlier, the icons silently never appear. */
+@media (max-width: 700px) {
+  /* Icons instead of labels. "Workspace / My formulas / Constants" plus the
+     account button is more than a phone has room for, and shortening the words
+     makes three cryptic abbreviations rather than one clear row. */
+  .nav-link svg { display: block; }
+  .nav-text { display: none; }
+  .nav-link {
+    /* Square, so the three read as a set of buttons rather than pills of
+       different widths. 40px is the touch-target floor. */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    position: relative;
+  }
+  /* The count no longer has a label to sit beside, so it becomes a badge on the
+     corner of the icon. */
+  .nav-count {
+    position: absolute;
+    top: 3px;
+    right: 1px;
+    min-width: 15px;
+    padding: 0 3px;
+    font-size: 9.5px;
+    line-height: 15px;
+    text-align: center;
+  }
+  /* The wordmark goes, the cube stays: something has to identify the app, and
+     the mark is the part that still reads at this size. */
+  .brand-name { display: none; }
+  .brand { padding-inline: 4px; }
+}
 .account-btn { transition: border-color 0.12s, color 0.12s; }
 
 @media (max-width: 899px) {
@@ -1547,9 +1584,24 @@ textarea.text-input { resize: vertical; line-height: 1.5; }
 .field .label { display: flex; align-items: baseline; gap: 8px; }
 .field-count { font-weight: 400; }
 
-.meaning-list { display: flex; flex-direction: column; gap: 8px; }
-.meaning-row { display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 10px; align-items: center; }
-.meaning-row .variable-symbol { justify-self: start; }
+/* One grid for the whole list, not one per row.
+   The symbol column was a fixed 74px, which aligned the inputs but stranded
+   each chip about fifty pixels from the field it labels. `max-content` closes
+   that gap -- and it has to be measured across every row at once, or an `a` row
+   and a `theta` row would size their columns independently and the inputs would
+   come out ragged. `display: contents` is what lets the rows share it. */
+.meaning-list {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 8px 10px;
+  align-items: center;
+}
+.meaning-row { display: contents; }
+/* `align-self`, not just `justify-self`: the symbol chip carries
+   `align-self: flex-start` for its use in the workspace, where it heads a
+   column, and that beat the grid's `align-items: center` here -- leaving a 25px
+   chip pinned to the top of a 42px row. */
+.meaning-row .variable-symbol { justify-self: start; align-self: center; }
 .meaning-row .text-input { font-size: 14px; min-height: 36px; }
 
 .dialog-save .dialog-actions {
@@ -1568,7 +1620,8 @@ textarea.text-input { resize: vertical; line-height: 1.5; }
   .formula-line { flex-wrap: wrap; gap: 6px; }
   .formula-actions { opacity: 1; padding: 0 4px 12px; }
   .blank-slate { min-height: 44vh; }
-  .meaning-row { grid-template-columns: 1fr; gap: 4px; }
+  /* Stacked on a narrow screen, so the column lives on the list. */
+  .meaning-list { grid-template-columns: 1fr; gap: 4px; }
   .dialog-save { max-height: 92vh; }
   .dialog-save .dialog-head, .dialog-body, .dialog-save .dialog-actions { padding-inline: 16px; }
 }
@@ -1946,9 +1999,9 @@ textarea.text-input { resize: vertical; line-height: 1.5; }
 }
 
 @media (max-width: 460px) {
-  /* Both nav labels shorten so all three destinations stay reachable without
-     scrolling on the narrowest phones. */
-  .nav-link { padding: 6px 7px; font-size: 12.5px; }
+  /* Slightly tighter icon buttons, so all three plus the account control fit
+     the narrowest phones without the nav needing to scroll. */
+  .nav-link { width: 36px; height: 36px; }
   .header { padding: 0 10px; }
   .dialog { padding: 18px 0 0; }
   .result-value { font-size: clamp(21px, 8vw, 28px); }

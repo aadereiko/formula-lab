@@ -103,3 +103,40 @@ export function IconGitHub({ size = 13 }: { size?: number }) {
     </svg>
   );
 }
+
+
+/* ── the three destinations ──────────────────────────────────────────────
+ * Shown instead of the labels on a narrow screen, where "Workspace / My
+ * formulas / Constants" cannot sit beside the account button. Each is two or
+ * three strokes: at 15px, detail turns to mud.
+ */
+
+/** A flask. The workspace is the bench -- and the app is called Formula Lab. */
+export function IconFlask({ size = 15 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} {...base}>
+      <path d="M9 3h6" />
+      <path d="M10 3v5L5 19h14L14 8V3" />
+    </svg>
+  );
+}
+
+/** A bookmark, for the things you kept. */
+export function IconBookmark({ size = 15 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} {...base}>
+      <path d="M7 3h10v18l-5-4-5 4z" />
+    </svg>
+  );
+}
+
+/** A pi. Nothing else says "constants" in three strokes. */
+export function IconPi({ size = 15 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} {...base}>
+      <path d="M5 8h14" />
+      <path d="M9.5 8v11" />
+      <path d="M15 8v11" />
+    </svg>
+  );
+}

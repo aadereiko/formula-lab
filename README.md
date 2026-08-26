@@ -742,6 +742,19 @@ frontend/
 Dockerfile                two-stage build; one image serves both halves
 ```
 
+## Inspecting the database
+
+```bash
+make db        # the local file
+make db-prod   # the deployed one, over fly ssh
+```
+
+`scripts/db.py` is read-only by construction: it counts rows and lists accounts
+with their formula counts, and has no code path that writes. It ships inside the
+image, which is the only reason `db-prod` is one line — passing that much Python
+through `fly ssh console -C` needs a page of nested quoting that nobody can
+maintain.
+
 ## Version
 
 `backend/app/version.py` owns the number. It lives inside `app/` rather than at

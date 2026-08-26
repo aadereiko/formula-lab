@@ -82,7 +82,7 @@ export function PlotPanel({
   target,
   subject,
 }: Props) {
-  const [open, setOpen] = usePersistentState("formula-lab.plot-open", false);
+  const [open, setOpen] = usePersistentState("formula-lab.plot-open", true);
   const [wantSurface, setWantSurface] = useState(false);
   /** Edited ranges, keyed by variable, so switching axis picks up that
    *  variable's own range rather than carrying the last one's numbers over. */

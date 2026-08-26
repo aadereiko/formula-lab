@@ -24,6 +24,9 @@ COPY backend/requirements.txt ./
 RUN pip install -r requirements.txt
 
 COPY backend/app ./app
+# A read-only database inspector, so `fly ssh console -C "python
+# scripts/db.py"` is one line instead of a page of nested shell quoting.
+COPY scripts/db.py ./scripts/db.py
 COPY --from=web /web/dist ./static
 
 # SQLite needs a writable directory that survives redeploys; mount a volume
