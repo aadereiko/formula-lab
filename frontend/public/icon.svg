@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Formula Lab">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5b8cff"/>
+      <stop offset="1" stop-color="#2454e6"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="15" fill="url(#tile)"/>
+  <!-- An equals sign with offset bars: an equation still being balanced.
+       Two shapes only, and bars thick enough to survive a 16px favicon. -->
+  <rect x="15" y="23" width="27" height="7" rx="3.5" fill="#fff"/>
+  <rect x="22" y="34" width="27" height="7" rx="3.5" fill="#fff" opacity="0.88"/>
+</svg>

@@ -130,8 +130,8 @@ export function EditorPage({
 
       {/* Deliberately not a <form>: implicit submission means Enter in any
           field saves, and saving should take a press of the Save button. */}
-      <div className="editor-form">
-        <section className="block">
+      <div className="editor-form surface">
+        <section className="surface-section">
           <label className="label" htmlFor="editor-expression">
             Formula
           </label>
@@ -147,7 +147,7 @@ export function EditorPage({
             onChange={(event) => onExpressionChange(event.target.value)}
           />
 
-          <div className="preview" aria-live="polite">
+          <div className="preview preview-strip" aria-live="polite">
             {analyzeError ? (
               <span className="preview-error">{analyzeError}</span>
             ) : analysis ? (
@@ -161,7 +161,7 @@ export function EditorPage({
           </div>
         </section>
 
-        <section className="block">
+        <section className="surface-section">
           <label className="label" htmlFor="editor-name">
             Name
           </label>
@@ -175,7 +175,7 @@ export function EditorPage({
           />
         </section>
 
-        <section className="block">
+        <section className="surface-section">
           <label className="label" htmlFor="editor-note">
             Description
           </label>
@@ -190,7 +190,7 @@ export function EditorPage({
           />
         </section>
 
-        <section className="block">
+        <section className="surface-section">
           <div className="block-head">
             <span className="label">What each part means</span>
             {symbols.length > 0 && (
@@ -235,9 +235,8 @@ export function EditorPage({
           )}
         </section>
 
-        {error && <p className="auth-error">{error}</p>}
-
         <div className="editor-actions">
+          {error && <p className="auth-error editor-error">{error}</p>}
           {onCancel && (
             <button type="button" className="btn" onClick={onCancel}>
               Cancel

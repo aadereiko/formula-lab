@@ -110,7 +110,7 @@ export function FormulasPage({
                 )}
               </div>
 
-              <div className="card-math">
+              <div className="card-math preview-strip">
                 <MathView latex={latexish(formula.expression)} />
               </div>
               <code className="card-source">{formula.expression}</code>

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { EvaluateResponse } from "../types";
+import { Logo } from "./Logo";
 import { MathView } from "./MathView";
 
 interface Props {
@@ -28,7 +29,9 @@ export function ResultPanel({ result, error, busy }: Props) {
     return (
       <section className="block result is-error">
         <span className="label">Result</span>
-        <p className="result-error">{error}</p>
+        <div className="result-card is-error">
+          <p className="result-error">{error}</p>
+        </div>
       </section>
     );
   }
@@ -37,7 +40,12 @@ export function ResultPanel({ result, error, busy }: Props) {
     return (
       <section className="block result">
         <span className="label">Result</span>
-        <p className="result-placeholder">Fill in the variables to see a result.</p>
+        <div className="result-card is-empty">
+          <span className="empty-mark" aria-hidden="true">
+            <Logo size={26} />
+          </span>
+          <p className="result-placeholder">Fill in the variables to see a result.</p>
+        </div>
       </section>
     );
   }
@@ -66,17 +74,19 @@ export function ResultPanel({ result, error, busy }: Props) {
         </button>
       </div>
 
-      <div className="result-headline">
-        <span className="result-name">{label}</span>
-        <span className="result-equals">=</span>
-        <span className="result-value">{primary.formatted}</span>
-      </div>
-
-      {exactIsInteresting(primary.exact, primary.formatted) && (
-        <div className="result-exact">
-          exact: <MathView latex={primary.latex} />
+      <div className="result-card">
+        <div className="result-headline">
+          <span className="result-name">{label}</span>
+          <span className="result-equals">=</span>
+          <span className="result-value">{primary.formatted}</span>
         </div>
-      )}
+
+        {exactIsInteresting(primary.exact, primary.formatted) && (
+          <div className="result-exact">
+            exact: <MathView latex={primary.latex} />
+          </div>
+        )}
+      </div>
 
       {others.length > 0 && (
         <div className="result-others">

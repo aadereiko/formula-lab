@@ -1,5 +1,6 @@
 import type { Route } from "../useRoute";
 import type { User } from "../types";
+import { Logo } from "./Logo";
 
 interface Props {
   user: User | null;
@@ -43,8 +44,10 @@ export function Header({
         </button>
       )}
 
-      <button type="button" className="brand" onClick={() => onNavigate("calculator")}>
-        Formula Lab
+      {/* The wordmark goes to the landing page, which is now Home. */}
+      <button type="button" className="brand" onClick={() => onNavigate("home")}>
+        <Logo size={20} />
+        <span className="brand-name">Formula Lab</span>
       </button>
 
       <nav className="nav">

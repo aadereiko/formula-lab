@@ -329,6 +329,22 @@ ordinary coverage:
 - `test_static_paths_cannot_escape_the_bundle_directory` — `FileResponse` will
   serve `../../etc/passwd` if handed that path.
 
+## The icon
+
+`frontend/public/icon.svg` is the source: a rounded tile and two offset bars —
+an equals sign still being balanced. Two shapes only, which is what keeps it
+readable shrunk to a 16px favicon.
+
+iOS will not use an SVG touch icon and a web manifest wants real bitmaps, so
+`scripts/make-icons.py` rasterises the same geometry to PNG. It has no
+dependencies — none of rsvg, cairo or PIL turned out to be installed — and
+draws the shapes directly, writing the file with `zlib` and `struct`. Rerun it
+after changing the mark:
+
+```bash
+cd frontend && python3 scripts/make-icons.py
+```
+
 ## Layout
 
 ```
@@ -345,6 +361,8 @@ backend/
   app/main.py             routes, error handling, static serving
   tests/                  security, engine, HTTP, auth, ownership, OAuth
 frontend/
+  public/icon.svg         the app mark; PNGs beside it are generated
+  scripts/make-icons.py   dependency-free SVG -> PNG rasteriser
   src/api.ts              typed client; separates user-fixable errors from ours
   src/useAuth.ts          session state, derived from the server
   src/App.tsx             state, debouncing, auto-evaluate

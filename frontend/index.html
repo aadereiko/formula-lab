@@ -3,8 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
     <title>Formula Lab</title>
-    <meta name="description" content="Type a physics formula, fill in what you know, and solve for what you don't." />
+    <meta
+      name="description"
+      content="Type a physics formula, fill in what you know, and solve for what you don't."
+    />
+
+    <!-- SVG first: one file, crisp at every size. The PNGs are for iOS, which
+         will not use an SVG touch icon, and for the web manifest. -->
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+
+    <!-- Two values so the browser chrome matches whichever theme is in use. -->
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0c0c0d" media="(prefers-color-scheme: dark)" />
+    <meta name="color-scheme" content="light dark" />
   </head>
   <body>
     <div id="root"></div>

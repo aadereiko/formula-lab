@@ -3,9 +3,11 @@
 
 :root {
   --bg: #ffffff;
-  --bg-soft: #fafafa;
+  --bg-soft: #fbfbfc;
   --bg-sunken: #f4f4f5;
-  --line: #e8e8ea;
+  /* Where rendered output sits, so it reads as a result rather than an input. */
+  --bg-output: #f7f8fa;
+  --line: #e9e9ec;
   --line-strong: #d4d4d8;
   --ink: #18181b;
   --ink-soft: #52525b;
@@ -24,10 +26,11 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #0c0c0d;
-    --bg-soft: #131315;
+    --bg-soft: #121214;
     --bg-sunken: #1a1a1d;
-    --line: #26262a;
-    --line-strong: #3a3a40;
+    --bg-output: #16161a;
+    --line: #242428;
+    --line-strong: #38383f;
     --ink: #f4f4f5;
     --ink-soft: #a1a1aa;
     --ink-faint: #6b6b74;
@@ -688,14 +691,16 @@ h1, h2, h3 { font-weight: 550; }
 /* ── header navigation ───────────────────────────────────────────────── */
 
 .brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
   background: none;
   border: none;
   padding: 0;
-  font-size: 15px;
-  font-weight: 550;
-  letter-spacing: -0.01em;
   color: var(--ink);
 }
+.brand-name { font-size: 15px; font-weight: 550; letter-spacing: -0.015em; }
+.logo { display: block; flex: none; border-radius: 5px; }
 
 .nav { display: flex; gap: 2px; margin-left: 10px; }
 
@@ -956,3 +961,150 @@ textarea.text-input { resize: vertical; line-height: 1.5; }
 /* The home page is one column of fields with no sidebar, so it reads better
    centred than pinned to the left edge of a wide window. */
 .editor { margin-inline: auto; }
+
+/* ═══ design pass ═══════════════════════════════════════════════════════
+   One level of surface. Without any, fields float unanchored on a wide
+   screen; with more than one, the page starts to look like a form builder. */
+
+.surface {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg-soft);
+  overflow: hidden;
+}
+
+/* Sections are separated by the container's own hairlines, so each one needs
+   no border, background or margin of its own. */
+.surface-section {
+  padding: 18px 20px;
+}
+.surface-section + .surface-section {
+  border-top: 1px solid var(--line);
+}
+
+.editor-form { gap: 0; }          /* dividers now carry the rhythm */
+.editor-form .formula-input {
+  border-bottom-color: var(--line-strong);
+  background: transparent;
+}
+
+/* Rendered maths, wherever it appears, gets the same treatment: a tinted
+   strip that says "this is output, not something to type into". */
+.preview-strip {
+  background: var(--bg-output);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-top: 14px;
+  min-height: 0;
+}
+.preview-strip .preview-hint { line-height: 1.5; }
+
+.editor-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+  border-top: 1px solid var(--line);
+  padding: 16px 20px;
+  margin: 0;
+  background: var(--bg);
+}
+.editor-error { margin-right: auto; }
+
+/* ── the answer ──────────────────────────────────────────────────────── */
+
+.result-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--bg-soft);
+  padding: 18px 20px;
+}
+.result-card.is-error { border-color: var(--danger); background: var(--bg); }
+.result-card.is-empty {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg);
+  border-style: dashed;
+}
+/* The mark, heavily faded: enough to fill an empty panel, not enough to
+   compete with anything real. */
+.empty-mark { opacity: 0.16; flex: none; }
+
+.result-headline { margin: 0; }
+.result-value { color: var(--ink); }
+.result .result-exact { margin-top: 8px; }
+
+/* ── page headings ───────────────────────────────────────────────────── */
+
+.page-title { font-size: 22px; letter-spacing: -0.02em; }
+.page-sub { line-height: 1.5; }
+
+.label {
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+
+/* ── cards ───────────────────────────────────────────────────────────── */
+
+.card {
+  background: var(--bg-soft);
+  gap: 11px;
+  transition: border-color 0.12s, transform 0.12s;
+}
+.card:hover { border-color: var(--line-strong); }
+.card .preview-strip { margin-top: 0; padding: 10px 12px; }
+.card-name { font-size: 15.5px; letter-spacing: -0.01em; }
+.card-note { line-height: 1.5; }
+.card-actions {
+  border-top: 1px solid var(--line);
+  padding-top: 11px;
+  margin-top: 3px;
+}
+
+/* ── variable rows ───────────────────────────────────────────────────── */
+
+/* A monospace chip makes the symbol scan as a symbol rather than as a word. */
+.variable-symbol {
+  display: inline-block;
+  background: var(--bg-sunken);
+  border-radius: 5px;
+  padding: 2px 7px;
+  font-size: 13.5px;
+  align-self: flex-start;
+}
+.variable-row.is-target .variable-symbol {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.variable-row { transition: background 0.1s; }
+.variable-row:hover { background: color-mix(in srgb, var(--bg-sunken) 55%, transparent); }
+.variable-id { gap: 4px; }
+
+/* Inside a surface the rows use its dividers, and the first needs none. */
+.surface-section .variable-row:first-child { border-top: none; padding-top: 4px; }
+.surface-section .variable-row:last-child { border-bottom: none; }
+.surface-section .variable-row:hover { background: transparent; }
+
+/* ── empty states ────────────────────────────────────────────────────── */
+
+.page-empty, .saved-empty, .side-empty { line-height: 1.55; }
+
+/* ── sidebar ─────────────────────────────────────────────────────────── */
+
+.sidebar { background: var(--bg-soft); }
+.library-item, .saved-item { transition: background 0.1s, color 0.1s; }
+.side-heading { letter-spacing: 0.01em; }
+
+/* ── header ──────────────────────────────────────────────────────────── */
+
+.nav-link { transition: background 0.1s, color 0.1s; }
+.account-btn { transition: border-color 0.12s, color 0.12s; }
+
+@media (max-width: 899px) {
+  .surface-section, .editor-actions { padding: 15px 16px; }
+  .result-card { padding: 15px 16px; }
+  .editor-error { margin-right: 0; width: 100%; }
+}
