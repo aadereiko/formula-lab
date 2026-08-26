@@ -41,7 +41,7 @@ export function Header({
         </button>
       )}
 
-      <button type="button" className="brand" data-tilt onClick={() => onNavigate("home")}>
+      <button type="button" className="brand" onClick={() => onNavigate("home")}>
         <Logo size={20} />
         <span className="brand-name">Formula Lab</span>
       </button>

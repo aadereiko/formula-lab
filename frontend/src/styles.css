@@ -23,6 +23,8 @@
      contrast than white does, and is what makes the primary action pop. */
   --accent-ink: #0b0b0d;
   --danger: #f2565b;
+  /* The hard shadow behind anything raised. See hover.css. */
+  --shadow-ink: #16307a;
 
   --radius: 9px;
   --pill: 100px;
@@ -50,6 +52,7 @@
     --accent-soft: #e9f0ff;
     --accent-ink: #ffffff;
     --danger: #d92d2d;
+    --shadow-ink: #1c2b5e;
     color-scheme: light;
   }
 }
@@ -85,11 +88,10 @@ h1, h2, h3 { font-weight: 550; }
   justify-content: center;
   gap: 8px;
   min-height: 38px;
-  transition: border-color 0.14s, background 0.14s, color 0.14s, transform 0.1s, filter 0.14s;
+  transition: border-color 0.14s, background 0.14s, color 0.14s, filter 0.14s;
   text-decoration: none;
 }
 .btn:hover:not(:disabled) { border-color: var(--ink); }
-.btn:active:not(:disabled) { transform: scale(0.98); }
 
 /* A disabled action loses its colour rather than fading it: a washed-out
    accent still reads as "the blue button, but dirty", where a neutral chip
@@ -110,10 +112,8 @@ h1, h2, h3 { font-weight: 550; }
 }
 .btn-primary:hover:not(:disabled) {
   filter: brightness(1.1);
-  transform: scale(1.02);
   border-color: transparent;
 }
-.btn-primary:active:not(:disabled) { transform: scale(0.99); }
 
 .btn-small { padding: 6px 13px; min-height: 32px; font-size: 13px; }
 .btn-google { width: 100%; }

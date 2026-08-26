@@ -1,0 +1,152 @@
+/* Hover depth, drawn rather than lit.
+ *
+ * The look is a 2D cartoon: a hard offset shadow with no blur and no gradient,
+ * and the object itself moves out from under it. That combination is what reads
+ * as a sticker lifting off the page, where a soft blurred shadow reads as a
+ * photograph of a lit surface instead.
+ *
+ * No JavaScript and no markup hooks: the selectors below name the interactive
+ * classes the app already has, so a new button is included by using `.btn`
+ * rather than by remembering an attribute.
+ */
+
+/* ── the two variables the whole system is built from ──────────────────── */
+
+:root {
+  /* How far a surface steps out from under its shadow. */
+  --raise: 2px;
+  /* How far the shadow sits behind it once raised. */
+  --raise-shadow: 5px;
+  /* Small controls get proportionally less of both, or they jump. */
+  --raise-sm: 1px;
+  --raise-shadow-sm: 3px;
+  /* Snappy with a little overshoot; a linear ease reads as sliding, not
+     popping, which is the wrong feeling for this. */
+  --raise-ease: cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+/* ── the surfaces ─────────────────────────────────────────────────────── */
+
+/* Everything the pointer can act on, so the app feels made of one material.
+ * Grouped by size rather than by role, because the size is what decides how
+ * far a thing should travel.
+ */
+.btn,
+.library-item,
+.saved-item,
+.history-item,
+.formula-main,
+.brand,
+.card {
+  transition:
+    transform 0.13s var(--raise-ease),
+    box-shadow 0.13s var(--raise-ease),
+    border-color 0.14s,
+    background 0.14s,
+    color 0.14s,
+    filter 0.14s;
+}
+
+.chip,
+.solve-toggle,
+.nav-link,
+.account-btn,
+.icon-btn,
+.saved-delete,
+.remove-btn,
+.variable-symbol,
+.constant-symbol {
+  transition:
+    transform 0.12s var(--raise-ease),
+    box-shadow 0.12s var(--raise-ease),
+    border-color 0.12s,
+    background 0.12s,
+    color 0.12s;
+}
+
+/* ── raised ───────────────────────────────────────────────────────────── */
+
+.btn:hover:not(:disabled),
+.library-item:hover,
+.saved-item:hover,
+.history-item:hover,
+.formula-main:hover,
+.brand:hover,
+.card:hover {
+  transform: translate(calc(var(--raise) * -1), calc(var(--raise) * -1));
+  box-shadow: var(--raise-shadow) var(--raise-shadow) 0 var(--shadow-ink);
+}
+
+.chip:hover:not(:disabled),
+.solve-toggle:hover,
+.nav-link:hover,
+.account-btn:hover,
+.icon-btn:hover,
+.saved-delete:hover,
+.remove-btn:hover {
+  transform: translate(calc(var(--raise-sm) * -1), calc(var(--raise-sm) * -1));
+  box-shadow: var(--raise-shadow-sm) var(--raise-shadow-sm) 0 var(--shadow-ink);
+}
+
+/* Symbol chips are not clickable, so they rise with their row rather than to
+   their own hover -- a chip that lifted under the cursor would imply a button. */
+.variable-row:hover .variable-symbol,
+.constant-row:hover .constant-symbol {
+  transform: translate(calc(var(--raise-sm) * -1), calc(var(--raise-sm) * -1));
+  box-shadow: var(--raise-shadow-sm) var(--raise-shadow-sm) 0 var(--shadow-ink);
+}
+
+/* ── pressed ──────────────────────────────────────────────────────────── */
+
+/* Back down into the shadow, which collapses to nothing: the same motion in
+   reverse, so a click feels like the surface being pushed flat. */
+.btn:active:not(:disabled),
+.library-item:active,
+.saved-item:active,
+.history-item:active,
+.formula-main:active,
+.brand:active,
+.chip:active:not(:disabled),
+.solve-toggle:active,
+.nav-link:active,
+.account-btn:active,
+.icon-btn:active,
+.saved-delete:active,
+.remove-btn:active {
+  transform: translate(0, 0);
+  box-shadow: 0 0 0 var(--shadow-ink);
+}
+
+/* ── exceptions ───────────────────────────────────────────────────────── */
+
+/* A disabled control is not raisable: it has no colour of its own, and lifting
+   it would promise something it cannot do. */
+.btn:disabled { transform: none !important; box-shadow: none !important; }
+
+/* The active row already carries a tint; a shadow on top of that reads as two
+   competing states. */
+.library-item.is-active:hover,
+.saved-list li.is-active .saved-item:hover {
+  box-shadow: var(--raise-shadow-sm) var(--raise-shadow-sm) 0 var(--shadow-ink);
+}
+
+/* Rows inside a scrolling list need to sit above their neighbours while raised,
+   or the shadow lands under the next row instead of on it. */
+.library-item:hover,
+.saved-item:hover,
+.history-item:hover,
+.formula-main:hover,
+.btn:hover:not(:disabled),
+.chip:hover:not(:disabled) {
+  position: relative;
+  z-index: 1;
+}
+
+/* Anyone who has asked for less motion keeps the shadow and loses the travel:
+   the state is still legible, nothing moves. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --raise: 0px;
+    --raise-sm: 0px;
+  }
+}

@@ -1,27 +1,16 @@
 import { useState } from "react";
 import type { Capabilities } from "../types";
-import { TiltToggle } from "./TiltToggle";
 
-interface Props {
-  capabilities: Capabilities | null;
-  tilt: boolean;
-  onTiltChange: (next: boolean) => void;
-}
-
-export function HelpPanel({ capabilities, tilt, onTiltChange }: Props) {
+export function HelpPanel({ capabilities }: { capabilities: Capabilities | null }) {
   const [open, setOpen] = useState(false);
+  if (!capabilities) return null;
 
   return (
-    <section className="block help-block">
-      <div className="help-head">
-        {capabilities && (
-          <button type="button" className="help-toggle" onClick={() => setOpen(!open)}>
-            {open ? "Hide" : "Show"} syntax &amp; functions
-          </button>
-        )}
-        <TiltToggle enabled={tilt} onChange={onTiltChange} />
-      </div>
-      {open && capabilities && (
+    <section className="block">
+      <button type="button" className="help-toggle" onClick={() => setOpen(!open)}>
+        {open ? "Hide" : "Show"} syntax &amp; functions
+      </button>
+      {open && (
         <div className="help-body">
           <ul className="help-syntax">
             {capabilities.syntax.map((line) => (

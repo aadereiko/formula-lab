@@ -3,7 +3,6 @@ import * as api from "./api";
 import { ApiError } from "./api";
 import { useDebouncedValue, usePersistentState } from "./hooks";
 import { useRoute } from "./useRoute";
-import { useTilt, useTiltSetting } from "./useTilt";
 import { useAuth, useOAuthError } from "./useAuth";
 import { useFormulaStore, type FormulaDraft, type StoredFormula } from "./useFormulaStore";
 import {
@@ -47,8 +46,6 @@ export default function App() {
   const auth = useAuth();
   const oauthError = useOAuthError();
   const { route, navigate } = useRoute();
-  const tilt = useTiltSetting();
-  useTilt(tilt.enabled);
   const signedIn = Boolean(auth.user);
   const store = useFormulaStore(signedIn);
 
@@ -499,11 +496,7 @@ export default function App() {
 
             <ResultPanel result={result} error={resultError} busy={busy} />
             <HistoryPanel entries={history} onRestore={restore} onClear={() => setHistory([])} />
-            <HelpPanel
-              capabilities={capabilities}
-              tilt={tilt.enabled}
-              onTiltChange={tilt.setEnabled}
-            />
+            <HelpPanel capabilities={capabilities} />
           </div>
         )}
       </main>

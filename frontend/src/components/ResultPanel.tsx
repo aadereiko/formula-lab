@@ -74,7 +74,7 @@ export function ResultPanel({ result, error, busy }: Props) {
         </button>
       </div>
 
-      <div className="result-card" data-tilt>
+      <div className="result-card">
         <div className="result-headline">
           <span className="result-name">{label}</span>
           <span className="result-equals">=</span>

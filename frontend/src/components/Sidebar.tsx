@@ -97,7 +97,6 @@ export function Sidebar({
                       <button
                         type="button"
                         className={`library-item${formula.id === activeLibraryId ? " is-active" : ""}`}
-                        data-tilt
                         aria-label={`${formula.name}: ${formula.expression}`}
                         aria-current={formula.id === activeLibraryId}
                         onClick={() => onPickLibrary(formula)}

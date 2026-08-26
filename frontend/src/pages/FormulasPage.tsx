@@ -111,12 +111,7 @@ export function FormulasPage({
           <li key={formula.key} className="formula-row">
             {/* The whole row opens the formula; the buttons beside it stop the
                 click from reaching this one. */}
-            <button
-              type="button"
-              className="formula-main"
-              data-tilt
-              onClick={() => onOpen(formula)}
-            >
+            <button type="button" className="formula-main" onClick={() => onOpen(formula)}>
               <span className="formula-line">
                 <span className="formula-name">{formula.name}</span>
                 {formula.serverId === null && (

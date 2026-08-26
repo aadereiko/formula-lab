@@ -1,17 +1,20 @@
 #!/usr/bin/env python3
-"""Rasterise the app icon to PNG.
+"""Generate the app mark: the SVG, the React paths, and the PNGs.
 
-iOS will not use an SVG touch icon and a web manifest wants real bitmaps, so
-the SVG needs rasterising. No converter (rsvg, cairo, PIL) is assumed to be
-installed, so this draws the same shapes directly and writes the PNG with
-nothing but `zlib` and `struct`.
+The mark is an isometric cube built from smaller cubes -- each of its three
+visible faces is divided into four cells, twelve in all, each its own colour.
+At small sizes the cells average into three face shades and the silhouette
+still reads as a cube; at large sizes you can see the blocks.
 
-The mark is an isometric cube: three quadrilateral faces, each a different
-shade. The shading carries the depth, which is why it still reads as solid at
-favicon size where any outline detail would vanish.
+This script is the single source of truth for that geometry. It writes:
 
-Kept as a script rather than committed-only output so the icons can be
-regenerated when the mark changes.
+    public/icon.svg                 the favicon and manifest source
+    src/components/logoPaths.ts     the same paths, for the React component
+    public/*.png                    rasterised, for iOS and the manifest
+
+so the three cannot drift apart. No converter (rsvg, cairo, PIL) is assumed to
+be installed; the PNGs are drawn here with a point-in-polygon test and written
+with nothing but `zlib` and `struct`.
 
     python3 scripts/make-icons.py
 """
@@ -22,48 +25,154 @@ import struct
 import zlib
 from pathlib import Path
 
-PUBLIC = Path(__file__).resolve().parent.parent / "public"
+ROOT = Path(__file__).resolve().parent.parent
+PUBLIC = ROOT / "public"
+COMPONENTS = ROOT / "src" / "components"
 
-# The same geometry as public/icon.svg, in its 64-unit coordinate space. The
-# three faces tile a hexagon exactly, so every sample lands in one of them and
-# no seam can open up between two adjacent faces.
-FACES: list[tuple[list[tuple[float, float]], tuple[int, int, int]]] = [
-    ([(32, 6), (54, 18.7), (32, 31.4), (10, 18.7)], (0x8F, 0xB3, 0xFF)),      # top
-    ([(10, 18.7), (32, 31.4), (32, 58), (10, 45.3)], (0x4D, 0x8D, 0xFF)),     # left
-    ([(54, 18.7), (54, 45.3), (32, 58), (32, 31.4)], (0x24, 0x54, 0xE6)),     # right
+Point = tuple[float, float]
+
+# ── geometry ─────────────────────────────────────────────────────────────
+# The cube as an isometric hexagon: its vertices, plus the centre where the
+# three visible faces meet.
+TOP: Point = (32, 6)
+RIGHT_UPPER: Point = (54, 18.7)
+RIGHT_LOWER: Point = (54, 45.3)
+BOTTOM: Point = (32, 58)
+LEFT_LOWER: Point = (10, 45.3)
+LEFT_UPPER: Point = (10, 18.7)
+CENTRE: Point = (32, 31.4)
+
+
+def mid(a: Point, b: Point) -> Point:
+    return ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2)
+
+
+def quarters(a: Point, b: Point, c: Point, d: Point) -> list[list[Point]]:
+    """Split a parallelogram a-b-c-d into its four quarters.
+
+    Corners must be given in order around the shape. Each quarter is another
+    parallelogram, which is what makes the cells read as smaller cubes in the
+    same isometric projection rather than arbitrary shards.
+    """
+    ab, bc, cd, da = mid(a, b), mid(b, c), mid(c, d), mid(d, a)
+    middle = mid(a, c)
+    return [
+        [a, ab, middle, da],
+        [ab, b, bc, middle],
+        [middle, bc, c, cd],
+        [da, middle, cd, d],
+    ]
+
+
+# Lightest on top, darkest on the right: the shading carries the depth. One
+# cell per face takes a different hue, so the mark reads as coloured blocks
+# rather than a uniformly shaded solid.
+FACES: list[tuple[list[list[Point]], list[str]]] = [
+    (
+        quarters(LEFT_UPPER, TOP, RIGHT_UPPER, CENTRE),
+        ["#9DBEFF", "#B8D0FF", "#7FD8F5", "#8CB0FF"],
+    ),
+    (
+        quarters(LEFT_UPPER, CENTRE, BOTTOM, LEFT_LOWER),
+        ["#5B96FF", "#4D8DFF", "#3F82F7", "#6BA0FF"],
+    ),
+    (
+        quarters(CENTRE, RIGHT_UPPER, RIGHT_LOWER, BOTTOM),
+        ["#2F62EE", "#2454E6", "#7B5BF0", "#1E49D2"],
+    ),
 ]
 
-# The PNGs are opaque: transparency on an iOS home screen renders as black, and
-# a near-black ground matches the app while letting the blues carry.
+CELLS: list[tuple[list[Point], str]] = [
+    (cell, colour)
+    for polygons, colours in FACES
+    for cell, colour in zip(polygons, colours)
+]
+
+# Opaque: transparency on an iOS home screen renders as black.
 BACKGROUND = (0x10, 0x10, 0x14)
+SAMPLES = 3  # per axis, so 9 samples a pixel
 
-SAMPLES = 3  # per axis, so 9 samples a pixel -- enough to hide the stair-steps
+
+def path_data(polygon: list[Point]) -> str:
+    def number(value: float) -> str:
+        return f"{value:g}"
+
+    start, *rest = polygon
+    steps = " ".join(f"{number(x)} {number(y)}" for x, y in rest)
+    return f"M{number(start[0])} {number(start[1])} {steps}Z"
 
 
-def _inside(x: float, y: float, polygon: list[tuple[float, float]]) -> bool:
-    """Ray casting: count edge crossings to the left of the point."""
+# ── writers ──────────────────────────────────────────────────────────────
+
+def write_svg() -> None:
+    # A hairline stroke in each cell's own colour closes the sub-pixel seams
+    # anti-aliasing would otherwise leave between neighbours.
+    body = "\n".join(
+        f'    <path d="{path_data(cell)}" fill="{colour}" stroke="{colour}"/>'
+        for cell, colour in CELLS
+    )
+    (PUBLIC / "icon.svg").write_text(
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" '
+        'role="img" aria-label="Formula Lab">\n'
+        "  <!-- Generated by scripts/make-icons.py; edit the geometry there. -->\n"
+        '  <g stroke-width="0.6" stroke-linejoin="round">\n'
+        f"{body}\n"
+        "  </g>\n"
+        "</svg>\n"
+    )
+    print("icon.svg")
+
+
+def write_paths() -> None:
+    entries = ",\n".join(
+        f'  {{ d: "{path_data(cell)}", fill: "{colour}" }}' for cell, colour in CELLS
+    )
+    (COMPONENTS / "logoPaths.ts").write_text(
+        "// Generated by frontend/scripts/make-icons.py -- do not edit by hand.\n"
+        "// The geometry lives in that script so the SVG, the PNGs and this file\n"
+        "// cannot drift apart.\n"
+        "export interface LogoFace {\n"
+        "  d: string;\n"
+        "  fill: string;\n"
+        "}\n\n"
+        "export const LOGO_FACES: LogoFace[] = [\n"
+        f"{entries},\n"
+        "];\n"
+    )
+    print("logoPaths.ts")
+
+
+# ── rasteriser ───────────────────────────────────────────────────────────
+
+def _inside(x: float, y: float, polygon: list[Point]) -> bool:
+    """Ray casting: count edge crossings to the right of the point."""
     crossings = 0
     count = len(polygon)
     for index in range(count):
         x0, y0 = polygon[index]
         x1, y1 = polygon[(index + 1) % count]
         if (y0 > y) != (y1 > y):
-            # x of the edge at this y; a crossing counts if it is to the right.
             crossing_x = x0 + (y - y0) * (x1 - x0) / (y1 - y0)
             if x < crossing_x:
                 crossings += 1
     return crossings % 2 == 1
 
 
+def _rgb(colour: str) -> tuple[int, int, int]:
+    return (int(colour[1:3], 16), int(colour[3:5], 16), int(colour[5:7], 16))
+
+
+PALETTE = [(cell, _rgb(colour)) for cell, colour in CELLS]
+
+
 def _pixel(u: float, v: float) -> tuple[int, int, int]:
-    for polygon, colour in FACES:
+    for polygon, colour in PALETTE:
         if _inside(u, v, polygon):
             return colour
     return BACKGROUND
 
 
 def render(size: int) -> bytes:
-    """Opaque RGB rows, supersampled."""
     rows = []
     step = 64 / size
     offset = step / (SAMPLES * 2)
@@ -108,6 +217,8 @@ def write_png(path: Path, size: int) -> None:
 
 if __name__ == "__main__":
     PUBLIC.mkdir(exist_ok=True)
+    write_svg()
+    write_paths()
     write_png(PUBLIC / "apple-touch-icon.png", 180)
     write_png(PUBLIC / "icon-192.png", 192)
     write_png(PUBLIC / "icon-512.png", 512)

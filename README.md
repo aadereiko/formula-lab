@@ -377,45 +377,46 @@ its colour and becomes a neutral chip rather than a faded blue — a washed-out
 accent still reads as "the blue button, but dirty", where a grey chip reads as
 unavailable.
 
-## 3D hover
+## Hover
 
-Surfaces lean towards the cursor: library rows, saved formulas, history entries
-and the result card tilt as the pointer crosses them, lift, and cast a shadow.
-Buttons get depth instead of tilt — a tilted label is harder to read, which a
-control you are about to press cannot afford.
+Everything the pointer can act on lifts: buttons, navigation, library rows,
+saved formulas, history entries. Each steps up and to the left and drops a
+**hard offset shadow** — no blur, no gradient. That combination is what reads as
+a sticker peeling off the page; a soft blurred shadow reads instead as a
+photograph of a lit surface. Pressing pushes the surface back down into its
+shadow, which collapses to nothing.
 
-**It can be turned off.** There is a *3D hover* switch at the bottom of the
-workspace, remembered per browser. The effect is also skipped automatically
-where it would be wrong: on a pointer without hover, and for anyone whose system
-asks for reduced motion.
+It is CSS only, and it hooks onto the classes the app already has — `.btn`,
+`.nav-link`, `.library-item` and so on. There is no JavaScript, no cursor
+tracking and no markup attribute to remember: a new button is included by being
+a `.btn`. The whole system lives in `frontend/src/hover.css` and is built from
+four variables — how far a surface travels, how far its shadow sits behind, and
+smaller values of both for small controls.
 
-It is built to be removable, not just switchable. Every rule lives in
-`frontend/src/tilt.css` and is gated on a single `.tilt-on` class that
-`useTilt` puts on `<html>`; no rule outside that file mentions it. To delete the
-feature outright: remove `tilt.css`, its import in `main.tsx`, and the
-`useTilt` call in `App.tsx`. Or revert the one commit that introduced it — it is
-deliberately separate from the commit that changed the icon.
-
-One listener on the document does the work, not one per element. With rows,
-cards and buttons all participating, per-element handlers would mean hundreds
-of subscriptions and a re-bind on every render; instead the handler walks up
-from the event target to the nearest `[data-tilt]` ancestor, so an element opts
-in with an attribute and nothing needs wiring up.
+Two cases are handled rather than ignored. A **disabled** control never lifts,
+because it has no colour of its own and rising would promise something it cannot
+do. And **reduced motion** keeps the shadow but sets the travel to zero, so the
+state stays legible while nothing moves.
 
 ## The icon
 
-`frontend/public/icon.svg` is the source: an isometric cube, three faces each
-lit differently. The **shading** carries the depth rather than any outline, which
-is what keeps it reading as a solid at 16px, where line detail would disappear
-entirely. The faces tile a hexagon exactly, so no seam can open between two of
-them.
+An isometric cube built from twelve smaller coloured cubes — each of its three
+visible faces divided into four cells, with one cell per face taking a different
+hue so it reads as blocks rather than a shaded solid. At favicon size the cells
+average into three face shades and the silhouette still reads as a cube; at
+large sizes you can see the blocks. Checked at 140, 64, 32, 20 and 16, and on
+white.
 
-iOS will not use an SVG touch icon and a web manifest wants real bitmaps, so
-`scripts/make-icons.py` rasterises the same geometry to PNG. It has no
-dependencies — none of rsvg, cairo or PIL turned out to be installed — and
-draws the faces directly with a point-in-polygon test, writing the file with
-`zlib` and `struct`. Those PNGs are opaque: transparency on an iOS home screen
-renders as black. Rerun it after changing the mark:
+The cells tile the hexagon exactly, so no seam can open between neighbours.
+
+`scripts/make-icons.py` is the single source of truth for that geometry. It
+writes three things — `public/icon.svg`, the PNGs iOS and the manifest need, and
+`src/components/logoPaths.ts` for the React component — so the three cannot
+drift apart. It has no dependencies (none of rsvg, cairo or PIL turned out to be
+installed): it draws the cells with a point-in-polygon test and writes the PNG
+with `zlib` and `struct`. Those PNGs are opaque, since transparency on an iOS
+home screen renders as black. Rerun it after changing the geometry or the
+palette:
 
 ```bash
 cd frontend && python3 scripts/make-icons.py
