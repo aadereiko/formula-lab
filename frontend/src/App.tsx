@@ -476,6 +476,10 @@ export default function App() {
                 canSave={Boolean(analysis)}
                 savedName={activeSaved?.name ?? null}
                 description={activeSaved?.note || null}
+                symbols={symbols}
+                functions={analysis?.functions_used ?? []}
+                constants={constantStore.effective}
+                functionHelp={capabilities?.function_help ?? {}}
                 onSave={() => setSaving({ existing: activeSaved })}
               onClear={expression.trim() ? startNewFormula : null}
             />
@@ -532,6 +536,7 @@ export default function App() {
           fallbackHint={library?.fallback_hint ?? "mass (kg)"}
           existing={saving.existing}
           storageNote={signedIn ? null : "Saved in this browser until you sign in."}
+          categories={library?.categories ?? []}
           onSave={performSave}
           onCancel={() => setSaving(null)}
         />

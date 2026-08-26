@@ -21,7 +21,13 @@ from . import (
     routes_formulas,
     runner,
 )
-from .engine import ALLOWED_FUNCTIONS, MAX_EXPONENT, MAX_NODES, MAX_SYMBOLS
+from .engine import (
+    ALLOWED_FUNCTIONS,
+    FUNCTION_HELP,
+    MAX_EXPONENT,
+    MAX_NODES,
+    MAX_SYMBOLS,
+)
 from .models import (
     AnalyzeRequest,
     AnalyzeResponse,
@@ -106,6 +112,11 @@ async def capabilities() -> dict[str, object]:
     """What the parser accepts -- drives the in-app help panel."""
     return {
         "functions": sorted(ALLOWED_FUNCTIONS),
+        # One line each, so the editor can explain a function the moment a
+        # formula uses it rather than making someone open the help panel.
+        "function_help": {
+            name: FUNCTION_HELP[name] for name in sorted(ALLOWED_FUNCTIONS) if name in FUNCTION_HELP
+        },
         "limits": {
             "max_length": MAX_LENGTH,
             "max_nodes": MAX_NODES,

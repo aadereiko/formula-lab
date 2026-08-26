@@ -415,9 +415,23 @@ h1, h2, h3 { font-weight: 550; }
   padding: 11px 12px;
   margin-inline: -12px;
   border-radius: var(--radius);
-  border-top: 1px solid var(--line);
+  position: relative;
 }
-.variable-row:last-child { border-bottom: 1px solid var(--line); }
+
+/* The divider is a separate box, not a border. A border-radius curves the
+   corners of the border box, so a lone `border-top` renders as two short arcs
+   at the ends -- which read as broken rounded fragments once every row has one.
+   A pseudo-element inset by the padding stays a straight line, and the row
+   keeps its rounded hover surface. */
+.variable-row + .variable-row::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 12px;
+  right: 12px;
+  height: 1px;
+  background: var(--line);
+}
 .variable-row.is-target .variable-symbol { color: var(--accent); }
 
 .variable-id { display: flex; flex-direction: column; min-width: 0; }
@@ -1167,8 +1181,7 @@ textarea.text-input { resize: vertical; line-height: 1.5; }
 .variable-id { gap: 4px; }
 
 /* Inside a surface the rows use its dividers, and the first needs none. */
-.surface-section .variable-row:first-child { border-top: none; padding-top: 6px; }
-.surface-section .variable-row:last-child { border-bottom: none; }
+.surface-section .variable-row:first-child { padding-top: 6px; }
 .surface-section .variable-row:hover { background: transparent; }
 
 /* ── empty states ────────────────────────────────────────────────────── */
@@ -1659,4 +1672,164 @@ textarea.text-input { resize: vertical; line-height: 1.5; }
 
 @media (max-width: 899px) {
   .saved-pin { opacity: 1; pointer-events: auto; }
+}
+
+/* ── recognised tokens ───────────────────────────────────────────────── */
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.legend-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 3px 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--pill);
+  font-size: 11.5px;
+  cursor: help;
+  /* The tooltip is positioned against this. */
+  position: relative;
+}
+.legend-chip code { font-size: 11.5px; color: var(--ink); }
+.legend-chip.is-constant { border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); }
+.legend-chip.is-constant code { color: var(--accent); }
+.legend-value { font-family: var(--mono); color: var(--ink-faint); }
+.legend-unit { margin-left: 4px; opacity: 0.75; }
+.legend-chip.is-function code { color: var(--ink-soft); }
+
+/* ── tooltips ────────────────────────────────────────────────────────── */
+
+/* CSS only, from a `data-tip` attribute: no state to manage, and it works for
+   keyboard focus as well as hover. */
+[data-tip] { position: relative; }
+[data-tip]::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(3px);
+  z-index: 40;
+  width: max-content;
+  max-width: 260px;
+  padding: 6px 9px;
+  border-radius: var(--radius);
+  background: var(--ink);
+  color: var(--bg);
+  font-family: var(--ui);
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.4;
+  white-space: normal;
+  text-align: left;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s, transform 0.12s;
+}
+/* `:focus`, not `:focus-visible`: a tap focuses the chip but is not a
+   keyboard interaction, so focus-visible never matches -- which would leave
+   the explanation unreachable on a touch screen, where there is no hover
+   either. */
+[data-tip]:hover::after,
+[data-tip]:focus::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── library disclosure ──────────────────────────────────────────────── */
+
+.side-section-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.side-toggle {
+  background: none;
+  border: none;
+  padding: 0 4px;
+  font-size: 11.5px;
+  color: var(--ink-faint);
+  transition: color 0.12s;
+}
+.side-toggle:hover { color: var(--accent); }
+
+.side-disclosure {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  padding: 6px 8px;
+  margin-bottom: 4px;
+  background: none;
+  border: none;
+  border-radius: var(--radius);
+  font-size: 12.5px;
+  color: var(--ink-soft);
+  text-align: left;
+  transition: background 0.12s, color 0.12s;
+}
+.side-disclosure:hover { background: var(--bg-sunken); color: var(--ink); }
+
+/* A triangle that turns, rather than two icons that swap. */
+.disclosure-mark {
+  flex: none;
+  width: 0;
+  height: 0;
+  border-left: 5px solid currentColor;
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  transition: transform 0.15s ease;
+}
+.disclosure-mark.is-open { transform: rotate(90deg); }
+
+/* ── narrow screens ──────────────────────────────────────────────────── */
+
+@media (max-width: 899px) {
+  /* The nav scrolls rather than wrapping or squeezing: three destinations plus
+     two controls do not fit at 360px, and a wrapped header changes height as
+     you navigate. */
+  .header { gap: 8px; padding: 0 12px; }
+  .nav {
+    margin-left: 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav-link { flex: none; }
+  .header-end { gap: 4px; }
+  .account-btn { padding: 5px 10px; max-width: 40vw; overflow: hidden; }
+
+  .legend { gap: 5px; }
+  .legend-chip { font-size: 11px; padding: 3px 8px; }
+
+  /* A tooltip anchored to a chip near the edge would overflow the viewport, so
+     on narrow screens it spans the row instead of centring on its trigger. */
+  [data-tip]::after {
+    left: 0;
+    transform: translateY(3px);
+    max-width: min(76vw, 260px);
+  }
+  [data-tip]:hover::after,
+  [data-tip]:focus::after { transform: translateY(0); }
+
+  .side-disclosure { padding: 8px; }
+}
+
+@media (max-width: 460px) {
+  /* Both nav labels shorten so all three destinations stay reachable without
+     scrolling on the narrowest phones. */
+  .nav-link { padding: 6px 7px; font-size: 12.5px; }
+  .header { padding: 0 10px; }
+  .dialog { padding: 18px 0 0; }
+  .result-value { font-size: clamp(21px, 8vw, 28px); }
+  .page-title { font-size: 19px; }
+  .variable-row { padding: 10px 10px; margin-inline: -10px; }
+  .variable-row + .variable-row::before { left: 10px; right: 10px; }
 }

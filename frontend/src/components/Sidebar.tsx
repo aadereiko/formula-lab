@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { usePersistentState } from "../hooks";
 import type { LibraryFormula, Library } from "../types";
 import type { StoredFormula } from "../useFormulaStore";
 import { SavedPanel } from "./SavedPanel";
@@ -39,6 +40,10 @@ export function Sidebar({
   onNewFormula,
 }: Props) {
   const [query, setQuery] = useState("");
+  /* The library is reference material, not the work: collapsed until asked for,
+     and removable outright for anyone who never wants it. Both choices stick. */
+  const [libraryOpen, setLibraryOpen] = usePersistentState("formula-lab.library-open", false);
+  const [libraryHidden, setLibraryHidden] = usePersistentState("formula-lab.library-hidden", false);
 
   const groups = useMemo(() => {
     if (!library) return [];
@@ -82,40 +87,69 @@ export function Sidebar({
           </section>
 
           <section className="side-section">
-            <h2 className="side-heading">Library</h2>
-            <input
-              className="search"
-              value={query}
-              placeholder="Search"
-              aria-label="Search the formula library"
-              onChange={(event) => setQuery(event.target.value)}
-            />
+            <div className="side-section-head">
+              <h2 className="side-heading">Library</h2>
+              <button
+                type="button"
+                className="side-toggle"
+                aria-pressed={!libraryHidden}
+                title={libraryHidden ? "Show the built-in library" : "Hide the built-in library"}
+                onClick={() => setLibraryHidden(!libraryHidden)}
+              >
+                {libraryHidden ? "show" : "hide"}
+              </button>
+            </div>
 
-            {groups.map((group) => (
-              <div key={group.category} className="library-group">
-                <h3>{group.category}</h3>
-                <ul>
-                  {group.formulas.map((formula) => (
-                    <li key={formula.id}>
-                      <button
-                        type="button"
-                        className={`library-item${formula.id === activeLibraryId ? " is-active" : ""}`}
-                        aria-label={`${formula.name}: ${formula.expression}`}
-                        aria-current={formula.id === activeLibraryId}
-                        onClick={() => onPickLibrary(formula)}
-                      >
-                        <span className="library-name">{formula.name}</span>
-                        <code className="library-expr">{formula.expression}</code>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-            {library && groups.length === 0 && (
-              <p className="side-empty">No matches for “{query}”.</p>
+            {!libraryHidden && (
+              <>
+                <button
+                  type="button"
+                  className="side-disclosure"
+                  aria-expanded={libraryOpen}
+                  onClick={() => setLibraryOpen(!libraryOpen)}
+                >
+                  <span className={`disclosure-mark${libraryOpen ? " is-open" : ""}`} aria-hidden="true" />
+                  {library ? `${library.formulas.length} built-in formulas` : "Loading…"}
+                </button>
+
+                {libraryOpen && (
+                  <>
+                    <input
+                      className="search"
+                      value={query}
+                      placeholder="Search"
+                      aria-label="Search the formula library"
+                      onChange={(event) => setQuery(event.target.value)}
+                    />
+
+                    {groups.map((group) => (
+                      <div key={group.category} className="library-group">
+                        <h3>{group.category}</h3>
+                        <ul>
+                          {group.formulas.map((formula) => (
+                            <li key={formula.id}>
+                              <button
+                                type="button"
+                                className={`library-item${formula.id === activeLibraryId ? " is-active" : ""}`}
+                                aria-label={`${formula.name}: ${formula.expression}`}
+                                aria-current={formula.id === activeLibraryId}
+                                onClick={() => onPickLibrary(formula)}
+                              >
+                                <span className="library-name">{formula.name}</span>
+                                <code className="library-expr">{formula.expression}</code>
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                    {library && groups.length === 0 && (
+                      <p className="side-empty">No matches for “{query}”.</p>
+                    )}
+                  </>
+                )}
+              </>
             )}
-            {!library && <p className="side-empty">Loading…</p>}
           </section>
         </div>
       </aside>

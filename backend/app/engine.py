@@ -50,6 +50,39 @@ ALLOWED_FUNCTIONS: dict[str, Any] = {
 # won, so the variable could never be solved for. Users who want Euler's number
 # write ``exp(1)``.
 
+#: One line per function, for the hint the editor shows when a formula uses it.
+#: Written for someone who knows the maths but not this parser's conventions --
+#: which is why every angle entry says "radians".
+FUNCTION_HELP: dict[str, str] = {
+    "sin": "sine of an angle in radians",
+    "cos": "cosine of an angle in radians",
+    "tan": "tangent of an angle in radians",
+    "asin": "inverse sine, returns radians",
+    "acos": "inverse cosine, returns radians",
+    "atan": "inverse tangent, returns radians",
+    "atan2": "angle of the point (y, x), in radians",
+    "sinh": "hyperbolic sine",
+    "cosh": "hyperbolic cosine",
+    "tanh": "hyperbolic tangent",
+    "exp": "e raised to this power",
+    "log": "natural logarithm; log(x, b) for base b",
+    "ln": "natural logarithm, same as log",
+    "log10": "logarithm base 10",
+    "sqrt": "square root",
+    "cbrt": "cube root",
+    "Abs": "absolute value, distance from zero",
+    "abs": "absolute value, distance from zero",
+    "sign": "-1, 0 or 1 depending on the sign",
+    "factorial": "n! -- the product of every integer up to n",
+    "min": "the smallest of its arguments",
+    "max": "the largest of its arguments",
+    "Min": "the smallest of its arguments",
+    "Max": "the largest of its arguments",
+    "floor": "rounds down to a whole number",
+    "ceiling": "rounds up to a whole number",
+    "pi": "3.14159..., the ratio of a circle's circumference to its diameter",
+}
+
 #: Constructors SymPy's own transformations emit into the generated source.
 #: ``1/2`` becomes ``Integer(1)/Integer(2)``, and ``evaluate=False`` rewrites
 #: operators into ``Mul``/``Add``/``Pow`` calls -- so these must be in scope or
@@ -205,6 +238,21 @@ def _split_equation(formula: str) -> tuple[str, str | None]:
     return lhs, rhs
 
 
+def _names_used(source: str) -> list[str]:
+    """Which allowed function names the source text actually mentions.
+
+    Read from the text rather than from the parse tree, because the tree loses
+    them: `sqrt(x)` becomes a `Pow`, not a `sqrt` node, and `pi` is a numeric
+    atom rather than a function. Asking the tree therefore reports nothing for
+    `2*pi*sqrt(L/g)` -- precisely the formula whose notation most wants
+    explaining.
+
+    Word boundaries keep `pi` out of `pion`.
+    """
+    found = {name for name in _WORD_PATTERN.findall(source) if name in ALLOWED_FUNCTIONS}
+    return sorted(found)
+
+
 def _sorted_symbols(expr: sympy.Basic) -> list[str]:
     """Variable names for the UI: shortest first, then alphabetical.
 
@@ -255,7 +303,7 @@ def analyze(expression: str) -> dict[str, Any]:
         "is_equation": rhs_text is not None,
         "symbols": symbols,
         "latex": latex,
-        "functions_used": sorted({type(f).__name__ for f in expr.atoms(sympy.Function)}),
+        "functions_used": _names_used(formula),
     }
 
 

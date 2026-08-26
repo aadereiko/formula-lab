@@ -124,6 +124,11 @@ class SavedFormula(Base):
     # working example rather than an empty form.
     values_json: Mapped[str] = mapped_column(Text, default="{}", nullable=False)
     solve_for: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    #: Free text, matched loosely against the built-in library's categories so
+    #: a user's formulas can sit in the same rubrics. Empty means uncategorised.
+    category: Mapped[str] = mapped_column(
+        String(60), nullable=False, default="", server_default=""
+    )
     #: Pinned formulas sort to the top of every list. A server default is what
     #: makes ALTER TABLE ADD COLUMN legal for a NOT NULL column on a table that
     #: already has rows, and `false()` renders correctly per dialect where a

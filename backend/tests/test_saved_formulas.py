@@ -346,3 +346,37 @@ def test_pinning_is_per_account(client):
     sign_up(client, "b@example.com")
     theirs = client.post("/api/formulas", json=KINETIC).json()
     assert theirs["pinned"] is False
+
+
+# -- categories -----------------------------------------------------------
+
+def test_category_defaults_to_empty_and_round_trips(client):
+    sign_up(client, "sam@example.com")
+    bare = client.post("/api/formulas", json={"name": "Bare", "expression": "a = b"}).json()
+    assert bare["category"] == ""
+
+    filed = client.post(
+        "/api/formulas",
+        json={"name": "Filed", "expression": "x = y", "category": "Kinematics"},
+    ).json()
+    assert filed["category"] == "Kinematics"
+    assert client.get("/api/formulas").json()[0]["category"] == "Kinematics"
+
+
+def test_category_is_trimmed(client):
+    sign_up(client, "sam@example.com")
+    created = client.post(
+        "/api/formulas", json={"name": "Spaced", "expression": "a = b", "category": "  Energy  "}
+    ).json()
+    assert created["category"] == "Energy"
+
+
+def test_category_can_be_cleared_on_update(client):
+    sign_up(client, "sam@example.com")
+    created = client.post(
+        "/api/formulas", json={"name": "Filed", "expression": "a = b", "category": "Energy"}
+    ).json()
+    updated = client.put(
+        f"/api/formulas/{created['id']}", json={"name": "Filed", "expression": "a = b"}
+    ).json()
+    assert updated["category"] == ""

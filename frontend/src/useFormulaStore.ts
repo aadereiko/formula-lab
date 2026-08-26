@@ -22,6 +22,8 @@ export interface StoredFormula {
   /** What each symbol means: { m: "mass (kg)" }. */
   variableNotes: Record<string, string>;
   solveFor: string | null;
+  /** Which rubric it is filed under; empty means uncategorised. */
+  category: string;
   /** Pinned formulas sort to the top of every list. */
   pinned: boolean;
   updatedAt: string;
@@ -34,6 +36,7 @@ export interface FormulaDraft {
   values: Record<string, string>;
   variableNotes: Record<string, string>;
   solveFor: string | null;
+  category: string;
   pinned: boolean;
 }
 
@@ -50,6 +53,7 @@ const fromServer = (row: SavedFormula): StoredFormula => ({
   values: row.values,
   variableNotes: row.variable_notes,
   solveFor: row.solve_for,
+  category: row.category,
   pinned: row.pinned,
   updatedAt: row.updated_at,
 });
@@ -61,6 +65,7 @@ const toRequest = (draft: FormulaDraft): SavedFormulaInput => ({
   values: draft.values,
   variable_notes: draft.variableNotes,
   solve_for: draft.solveFor,
+  category: draft.category,
   pinned: draft.pinned,
 });
 
@@ -185,6 +190,7 @@ export function useFormulaStore(signedIn: boolean) {
         values: target.values,
         variableNotes: target.variableNotes,
         solveFor: target.solveFor,
+        category: target.category,
         pinned: !target.pinned,
       }),
     [update],
@@ -232,6 +238,7 @@ export function useFormulaStore(signedIn: boolean) {
         values: item.values,
         variableNotes: item.variableNotes ?? {},
         solveFor: item.solveFor,
+        category: item.category ?? "",
         pinned: item.pinned ?? false,
       };
       try {

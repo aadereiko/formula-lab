@@ -11,6 +11,8 @@ interface Props {
   fallbackHint: string;
   existing: StoredFormula | null;
   storageNote: string | null;
+  /** The built-in library's rubrics, offered as suggestions. */
+  categories: string[];
   onSave: (
     draft: Omit<FormulaDraft, "values" | "solveFor" | "pinned">,
     asNew: boolean,
@@ -35,11 +37,13 @@ export function SaveDialog({
   fallbackHint,
   existing,
   storageNote,
+  categories,
   onSave,
   onCancel,
 }: Props) {
   const [name, setName] = useState(existing?.name ?? "");
   const [note, setNote] = useState(existing?.note ?? "");
+  const [category, setCategory] = useState(existing?.category ?? "");
   const [variableNotes, setVariableNotes] = useState<Record<string, string>>(
     existing?.variableNotes ?? {},
   );
@@ -107,7 +111,16 @@ export function SaveDialog({
     setError(null);
     setBusy(true);
     try {
-      await onSave({ name: trimmed, note: note.trim(), expression, variableNotes: submitted }, asNew);
+      await onSave(
+        {
+          name: trimmed,
+          note: note.trim(),
+          expression,
+          variableNotes: submitted,
+          category: category.trim(),
+        },
+        asNew,
+      );
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Could not save.");
     } finally {
@@ -152,6 +165,28 @@ export function SaveDialog({
               placeholder="Kinetic energy"
               onChange={(event) => setName(event.target.value)}
             />
+          </label>
+
+          <label className="field">
+            <span className="label">
+              Category
+              <span className="auth-hint field-count">groups it in the menu</span>
+            </span>
+            {/* A list, not a select: the built-in rubrics are suggestions, and
+                somebody's own filing is none of our business. */}
+            <input
+              className="text-input"
+              value={category}
+              maxLength={60}
+              list="formula-categories"
+              placeholder="Kinematics, or anything you like"
+              onChange={(event) => setCategory(event.target.value)}
+            />
+            <datalist id="formula-categories">
+              {categories.map((name) => (
+                <option key={name} value={name} />
+              ))}
+            </datalist>
           </label>
 
           <label className="field">

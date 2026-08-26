@@ -50,6 +50,7 @@ def _as_response(formula: SavedFormula) -> SavedFormulaResponse:
         values=_load_map(formula.values_json),
         variable_notes=_load_map(formula.variable_notes),
         solve_for=formula.solve_for,
+        category=formula.category,
         pinned=formula.pinned,
         created_at=formula.created_at,
         updated_at=formula.updated_at,
@@ -171,6 +172,7 @@ def create_formula(
         values_json=_values_json(payload),
         variable_notes=_variable_notes_json(payload, symbols),
         solve_for=payload.solve_for,
+        category=payload.category.strip(),
         pinned=payload.pinned,
     )
     session.add(formula)
@@ -202,6 +204,7 @@ def update_formula(
     formula.values_json = _values_json(payload)
     formula.variable_notes = _variable_notes_json(payload, symbols)
     formula.solve_for = payload.solve_for
+    formula.category = payload.category.strip()
     formula.pinned = payload.pinned
     try:
         session.commit()

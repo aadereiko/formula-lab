@@ -43,6 +43,16 @@ def test_known_functions_are_not_variables():
     assert "sin" in info["functions_used"]
 
 
+def test_functions_are_read_from_the_source_not_the_tree():
+    """`sqrt` becomes a Pow and `pi` a numeric atom, so the tree loses both."""
+    info = analyze("T = 2*pi*sqrt(L/g)")
+    assert set(info["functions_used"]) == {"pi", "sqrt"}
+
+
+def test_a_variable_that_merely_contains_a_function_name_is_not_reported():
+    assert analyze("pion + sinew")["functions_used"] == []
+
+
 # -- evaluate --------------------------------------------------------------
 
 def test_evaluate_kinetic_energy():

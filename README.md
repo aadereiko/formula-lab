@@ -76,13 +76,46 @@ feature, and half-doing it silently would be worse than being explicit.
 `E` and `I` are ordinary variables here (energy and current), not Euler's
 number and the imaginary unit. Write `exp(1)` if you want *e*.
 
+### What the app recognised
+
+Under the rendered formula sits a strip of the pieces the parser recognised: any
+symbol that is a known constant, with its value, and any function that was
+called. Each carries the full explanation as a tooltip — so `T = 2*pi*sqrt(L/g)`
+tells you `g` is standard gravity at 9.80665 m/s² and that trigonometry here
+takes radians, without opening the help panel.
+
+A text field cannot be hovered token by token, which is why the strip sits
+beneath it rather than annotating inside it. The tooltip answers `:focus` as well
+as `:hover`, because a tap focuses but never hovers — on a phone the
+hover-only version would have been unreachable.
+
+The functions are read from the **source text**, not the parse tree. The tree
+loses them: `sqrt(x)` becomes a `Pow` rather than a `sqrt` node, and `pi` is a
+numeric atom. Asking the tree about `2*pi*sqrt(L/g)` reports nothing at all —
+precisely the formula whose notation most wants explaining.
+
 ### Pinning
 
 Any saved formula can be pinned, and pinned ones sort to the top of every list —
-the sidebar and the *My formulas* page alike. The order is applied on **read**
+the sidebar and the *My formulas* page alike. They also get a group of their own
+in the sidebar, above the categories: a pin means "keep this to hand", which
+filing it under a rubric would otherwise bury. The order is applied on **read**
 rather than when a row changes, so it holds for whatever is already in the store
 rather than only for rows touched since the feature existed. The server applies
 the same ordering, so the two stores never disagree.
+
+### Rubrics
+
+Saved formulas take a category, offered as a free-text field with the built-in
+library's rubrics as suggestions — so your own formulas group in the menu the
+same way the built-in ones do. Uncategorised formulas collect under *Other*,
+last, because a heading called "Other" at the top is the least useful thing on
+the screen.
+
+The built-in library is **collapsed by default** in that menu: it is reference
+material, not the work. One click expands it, and a *hide* control removes it
+from the sidebar entirely for anyone who never wants it. Both choices stick per
+browser.
 
 ### Saving your own
 

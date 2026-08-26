@@ -61,6 +61,8 @@ export interface Constant {
 
 export interface Capabilities {
   functions: string[];
+  /** One line per function, shown when a formula uses it. */
+  function_help: Record<string, string>;
   limits: Record<string, number>;
   syntax: string[];
 }
@@ -94,6 +96,7 @@ export interface SavedFormula {
   values: Record<string, string>;
   variable_notes: Record<string, string>;
   solve_for: string | null;
+  category: string;
   pinned: boolean;
   created_at: string;
   updated_at: string;
@@ -106,6 +109,7 @@ export interface SavedFormulaInput {
   values?: Record<string, string>;
   variable_notes?: Record<string, string>;
   solve_for?: string | null;
+  category?: string;
   pinned?: boolean;
 }
 

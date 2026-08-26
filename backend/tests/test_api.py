@@ -230,3 +230,17 @@ def test_hints_cover_every_library_variable(client):
     for formula in body["formulas"]:
         for variable in formula["variables"]:
             assert variable["symbol"] in hints, f"{formula['id']}: {variable['symbol']}"
+
+
+def test_capabilities_explain_every_function(client):
+    """The editor shows these the moment a formula uses a function."""
+    body = client.get("/api/capabilities").json()
+    help_text = body["function_help"]
+
+    # Every allowed function has a line, so none can appear unexplained.
+    assert set(body["functions"]) == set(help_text)
+    assert "radians" in help_text["sin"]
+    assert help_text["sqrt"]
+
+    # The lines are one-liners, not paragraphs.
+    assert all(len(value) < 90 for value in help_text.values())
