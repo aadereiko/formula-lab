@@ -1,67 +1,73 @@
-import type { SavedFormula } from "../types";
+import type { StoredFormula } from "../useFormulaStore";
 
 interface Props {
-  formulas: SavedFormula[];
-  activeId: number | null;
+  formulas: StoredFormula[];
+  activeKey: string | null;
   signedIn: boolean;
   loading: boolean;
   error: string | null;
-  onOpen: (formula: SavedFormula) => void;
-  onDelete: (formula: SavedFormula) => void;
-  onSignInPrompt: () => void;
+  onOpen: (formula: StoredFormula) => void;
+  onDelete: (formula: StoredFormula) => void;
+  onSeeAll: () => void;
 }
+
+const PREVIEW_COUNT = 6;
 
 export function SavedPanel({
   formulas,
-  activeId,
+  activeKey,
   signedIn,
   loading,
   error,
   onOpen,
   onDelete,
-  onSignInPrompt,
+  onSeeAll,
 }: Props) {
-  if (!signedIn) {
+  if (loading) return <div className="saved-empty">Loading…</div>;
+  if (error) return <div className="saved-empty is-error">{error}</div>;
+
+  if (formulas.length === 0) {
     return (
       <div className="saved-empty">
-        <button type="button" className="link" onClick={onSignInPrompt}>
-          Sign in
-        </button>{" "}
-        to save your own formulas.
+        Press <strong>Save</strong> on a formula to keep it
+        {signedIn ? "." : " in this browser."}
       </div>
     );
   }
 
-  if (loading) return <div className="saved-empty">Loading…</div>;
-  if (error) return <div className="saved-empty is-error">{error}</div>;
-  if (formulas.length === 0) {
-    return <div className="saved-empty">Nothing saved yet. Write a formula and press Save.</div>;
-  }
+  const shown = formulas.slice(0, PREVIEW_COUNT);
 
   return (
-    <ul className="saved-list">
-      {formulas.map((formula) => (
-        <li key={formula.id} className={formula.id === activeId ? "is-active" : undefined}>
-          <button
-            type="button"
-            className="saved-item"
-            aria-current={formula.id === activeId}
-            onClick={() => onOpen(formula)}
-          >
-            <span className="saved-name">{formula.name}</span>
-            <code className="saved-expr">{formula.expression}</code>
-          </button>
-          <button
-            type="button"
-            className="saved-delete"
-            aria-label={`Delete ${formula.name}`}
-            title={`Delete ${formula.name}`}
-            onClick={() => onDelete(formula)}
-          >
-            ×
-          </button>
-        </li>
-      ))}
-    </ul>
+    <>
+      <ul className="saved-list">
+        {shown.map((formula) => (
+          <li key={formula.key} className={formula.key === activeKey ? "is-active" : undefined}>
+            <button
+              type="button"
+              className="saved-item"
+              aria-current={formula.key === activeKey}
+              onClick={() => onOpen(formula)}
+            >
+              <span className="saved-name">{formula.name}</span>
+              <code className="saved-expr">{formula.expression}</code>
+            </button>
+            <button
+              type="button"
+              className="saved-delete"
+              aria-label={`Delete ${formula.name}`}
+              title={`Delete ${formula.name}`}
+              onClick={() => onDelete(formula)}
+            >
+              ×
+            </button>
+          </li>
+        ))}
+      </ul>
+      <button type="button" className="link side-link" onClick={onSeeAll}>
+        {formulas.length > PREVIEW_COUNT
+          ? `See all ${formulas.length}`
+          : "Manage formulas"}
+      </button>
+    </>
   );
 }

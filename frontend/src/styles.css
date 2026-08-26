@@ -680,3 +680,209 @@ h1, h2, h3 { font-weight: 550; }
 
 /* A trailing control in a block header sits at the far right. */
 .block-head > .chip:last-child { margin-left: auto; }
+
+/* ── header navigation ───────────────────────────────────────────────── */
+
+.brand {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 15px;
+  font-weight: 550;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.nav { display: flex; gap: 2px; margin-left: 10px; }
+
+.nav-link {
+  background: none;
+  border: none;
+  border-radius: var(--radius);
+  padding: 6px 11px;
+  font-size: 13.5px;
+  color: var(--ink-faint);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+}
+.nav-link:hover { background: var(--bg-sunken); color: var(--ink); }
+.nav-link.is-active { color: var(--ink); background: var(--bg-sunken); }
+
+.nav-count {
+  font-size: 10.5px;
+  font-family: var(--mono);
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: 100px;
+  padding: 1px 6px;
+}
+
+/* ── full-width workspace ────────────────────────────────────────────── */
+
+/* The workspace fills the window; on a wide screen the two panes split
+   inputs from results so the extra room carries content rather than
+   stretching a one-number field across the viewport. */
+.workspace { max-width: none; }
+.workspace.is-full { margin-left: 0; }
+
+.panes { display: grid; gap: 28px; align-items: start; }
+.pane { min-width: 0; display: flex; flex-direction: column; gap: 28px; }
+.pane > .block + .block, .pane > .block + .toolbar, .pane > .toolbar + .block { margin-top: 0; }
+
+@media (min-width: 1080px) {
+  .panes {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 32px clamp(32px, 5vw, 72px);
+  }
+}
+
+/* A value field wider than this is just empty space. */
+.variable-input { max-width: 320px; }
+
+.notice-action {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: space-between;
+}
+.notice-buttons { display: flex; gap: 8px; }
+
+/* ── formulas page ───────────────────────────────────────────────────── */
+
+.page { max-width: 1280px; }
+
+.page-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+.page-title { margin: 0 0 4px; font-size: 21px; letter-spacing: -0.015em; }
+.page-sub { margin: 0; font-size: 13px; color: var(--ink-faint); max-width: 56ch; }
+.page-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.page-search { max-width: 320px; margin-bottom: 20px; }
+
+.page-empty {
+  padding: 40px 0;
+  color: var(--ink-faint);
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+.page-empty p { margin: 0; }
+.page-empty .auth-hint { max-width: 52ch; }
+
+.cards {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+.card {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  background: var(--bg);
+}
+.card:hover { border-color: var(--line-strong); }
+
+.card-head { display: flex; align-items: baseline; gap: 8px; }
+.card-name { margin: 0; font-size: 15px; font-weight: 550; overflow-wrap: anywhere; }
+.card-tag {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ink-faint);
+  border: 1px solid var(--line-strong);
+  border-radius: 3px;
+  padding: 1px 5px;
+  flex: none;
+}
+
+.card-math { font-size: 16px; overflow-x: auto; padding: 2px 0; }
+.card-source { font-size: 11.5px; color: var(--ink-faint); overflow-wrap: anywhere; }
+.card-note { margin: 0; font-size: 13px; color: var(--ink-soft); }
+
+.card-values { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; }
+.card-values > div {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  background: var(--bg-sunken);
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-family: var(--mono);
+  font-size: 11.5px;
+}
+.card-values dt { color: var(--ink-faint); }
+.card-values dd { margin: 0; color: var(--ink-soft); }
+
+.card-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: auto; padding-top: 4px; }
+.btn-danger { border-color: var(--danger); color: var(--danger); }
+.btn-danger:hover:not(:disabled) { border-color: var(--danger); background: var(--bg-sunken); }
+
+/* ── dialog additions ───────────────────────────────────────────────── */
+
+.dialog-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+.dialog-head .dialog-title { margin: 0; }
+.dialog-head .icon-btn { font-size: 20px; line-height: 1; color: var(--ink-faint); }
+.dialog-auth { max-width: 380px; }
+.dialog-storage { margin: -8px 0 14px; }
+
+.auth-reason {
+  margin: 0 0 14px;
+  padding: 8px 11px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-radius: var(--radius);
+  font-size: 12.5px;
+}
+
+.migrate {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px;
+  margin-bottom: 16px;
+}
+.migrate p { margin: 0 0 10px; font-size: 13px; color: var(--ink-soft); }
+
+.side-link { display: inline-block; margin: 8px 0 0 8px; font-size: 12.5px; }
+
+@media (max-width: 899px) {
+  .nav { margin-left: 4px; }
+  .nav-link { padding: 6px 8px; font-size: 13px; }
+  .page-head { flex-direction: column; }
+  .page-actions { width: 100%; }
+  .page-actions .btn { flex: 1; }
+  .cards { grid-template-columns: 1fr; }
+  .variable-input { max-width: none; }
+  .notice-action { flex-direction: column; align-items: stretch; }
+  .notice-buttons .btn { flex: 1; }
+}
+
+@media (max-width: 460px) {
+  /* The brand and both nav links will not fit next to the account button. */
+  .brand { display: none; }
+}
+
+.field-label { display: inline-flex; align-items: baseline; gap: 6px; }

@@ -8,6 +8,7 @@ force from mass and acceleration, or mass from force and acceleration — withou
 you rearranging anything by hand.
 
 - **React + TypeScript** front end, live LaTeX, minimal UI, works on a phone
+- Save your own formulas — **with or without an account**
 - **Python + FastAPI + SymPy** back end that parses, rearranges and evaluates
 - **Accounts** — email/password or Google — so your own formulas are saved
 - 44 built-in formulas across nine areas of physics, and 16 constants offered
@@ -66,10 +67,18 @@ number and the imaginary unit. Write `exp(1)` if you want *e*.
 
 ### Saving your own
 
-Press **Save**, give it a name, and it appears under *Your formulas*. Saved
-formulas keep the values you last used, so reopening one lands on a working
-example rather than an empty form. Editing an open formula offers **Update** or
-**Save as new**.
+Press **Save**, give it a name, and it appears under *Your formulas* and on the
+**My formulas** page. Saved formulas keep the values you last used, so reopening
+one lands on a working example rather than an empty form. Editing an open
+formula offers **Update** or **Save as new**.
+
+**No account needed.** Without one, formulas are kept in this browser's
+`localStorage` (up to 50) — private to that browser, and gone if you clear site
+data. Sign in later and the app offers to move them to your account; that step
+is deliberately a prompt rather than automatic, since uploading silently from
+every device someone signs in on would duplicate the same formulas repeatedly.
+A name already taken on the account gets a `(copy)` suffix instead of
+overwriting, and local copies are only cleared once every upload succeeds.
 
 ## Accounts
 

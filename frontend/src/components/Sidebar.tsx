@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import type { LibraryFormula, Library, SavedFormula } from "../types";
+import type { LibraryFormula, Library } from "../types";
+import type { StoredFormula } from "../useFormulaStore";
 import { SavedPanel } from "./SavedPanel";
 
 interface Props {
@@ -8,14 +9,14 @@ interface Props {
   library: Library | null;
   activeLibraryId: string | null;
   onPickLibrary: (formula: LibraryFormula) => void;
-  saved: SavedFormula[];
-  activeSavedId: number | null;
+  saved: StoredFormula[];
+  activeSavedKey: string | null;
   savedLoading: boolean;
   savedError: string | null;
   signedIn: boolean;
-  onOpenSaved: (formula: SavedFormula) => void;
-  onDeleteSaved: (formula: SavedFormula) => void;
-  onSignInPrompt: () => void;
+  onOpenSaved: (formula: StoredFormula) => void;
+  onDeleteSaved: (formula: StoredFormula) => void;
+  onSeeAll: () => void;
 }
 
 export function Sidebar({
@@ -25,13 +26,13 @@ export function Sidebar({
   activeLibraryId,
   onPickLibrary,
   saved,
-  activeSavedId,
+  activeSavedKey,
   savedLoading,
   savedError,
   signedIn,
   onOpenSaved,
   onDeleteSaved,
-  onSignInPrompt,
+  onSeeAll,
 }: Props) {
   const [query, setQuery] = useState("");
 
@@ -64,13 +65,13 @@ export function Sidebar({
             <h2 className="side-heading">Your formulas</h2>
             <SavedPanel
               formulas={saved}
-              activeId={activeSavedId}
+              activeKey={activeSavedKey}
               signedIn={signedIn}
               loading={savedLoading}
               error={savedError}
               onOpen={onOpenSaved}
               onDelete={onDeleteSaved}
-              onSignInPrompt={onSignInPrompt}
+              onSeeAll={onSeeAll}
             />
           </section>
 

@@ -1,15 +1,17 @@
 import { useEffect, useRef, useState } from "react";
-import type { SavedFormula } from "../types";
+import type { StoredFormula } from "../useFormulaStore";
 
 interface Props {
   expression: string;
-  existing: SavedFormula | null;
+  existing: StoredFormula | null;
+  /** Explains where an unauthenticated save actually goes. */
+  storageNote: string | null;
   onSave: (name: string, note: string, asNew: boolean) => Promise<void>;
   onCancel: () => void;
 }
 
 /** Name and note for a formula being saved, in a focus-trapped dialog. */
-export function SaveDialog({ expression, existing, onSave, onCancel }: Props) {
+export function SaveDialog({ expression, existing, storageNote, onSave, onCancel }: Props) {
   const [name, setName] = useState(existing?.name ?? "");
   const [note, setNote] = useState(existing?.note ?? "");
   const [error, setError] = useState<string | null>(null);
@@ -61,6 +63,7 @@ export function SaveDialog({ expression, existing, onSave, onCancel }: Props) {
       >
         <h2 className="dialog-title">{existing ? "Update formula" : "Save formula"}</h2>
         <code className="dialog-expression">{expression}</code>
+        {storageNote && <p className="auth-hint dialog-storage">{storageNote}</p>}
 
         <form onSubmit={submit}>
           <label>
@@ -74,7 +77,11 @@ export function SaveDialog({ expression, existing, onSave, onCancel }: Props) {
             />
           </label>
           <label>
-            Note <span className="optional">optional</span>
+            {/* The label is a flex column, so the caption needs to be one
+                element or "optional" drops onto its own line. */}
+            <span className="field-label">
+              Note <span className="optional">optional</span>
+            </span>
             <textarea
               value={note}
               maxLength={2000}
