@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { formatExact } from "../format";
 import type { Constant } from "../types";
 import type { ConstantDraft, StoredConstant } from "../useConstantStore";
 import { Tag } from "../components/Tag";
@@ -16,15 +17,6 @@ interface Props {
 }
 
 const EMPTY: ConstantDraft = { symbol: "", value: 0, name: "", unit: "" };
-
-/** Compact enough to read, exact enough to trust: 6.674e-11, not 0.0000000000667. */
-export function formatValue(value: number): string {
-  const magnitude = Math.abs(value);
-  if (magnitude !== 0 && (magnitude < 1e-4 || magnitude >= 1e7)) {
-    return value.toExponential(6).replace(/e([+-])(\d)$/, "e$10$2");
-  }
-  return String(value);
-}
 
 export function ConstantsPage({
   own,
@@ -203,7 +195,7 @@ export function ConstantsPage({
           {own.map((constant) => (
             <li key={constant.key} className="constant-row">
               <code className="constant-symbol">{constant.symbol}</code>
-              <span className="constant-value">{formatValue(constant.value)}</span>
+              <span className="constant-value">{formatExact(constant.value)}</span>
               <span className="constant-unit">{constant.unit}</span>
               <span className="constant-name">{constant.name}</span>
               <span className="constant-actions">
@@ -244,7 +236,7 @@ export function ConstantsPage({
           {visibleBuiltIn.map((constant) => (
             <li key={constant.symbol} className="constant-row">
               <code className="constant-symbol">{constant.symbol}</code>
-              <span className="constant-value">{formatValue(constant.value)}</span>
+              <span className="constant-value">{formatExact(constant.value)}</span>
               <span className="constant-unit">{constant.unit}</span>
               <span className="constant-name">
                 {constant.name}

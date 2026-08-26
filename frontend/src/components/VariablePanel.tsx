@@ -1,3 +1,4 @@
+import { formatExact } from "../format";
 import type { Constant } from "../types";
 import { IconTarget } from "./icons";
 
@@ -14,22 +15,14 @@ interface Props {
 }
 
 /**
- * What the chip is offering. The label is rounded to stay narrow, so the
- * tooltip carries the two things the digits cannot: which constant this is, and
- * the exact figure.
+ * What the chip is offering. The label carries the exact figure now, so the
+ * tooltip's job is the name -- the one thing the digits cannot tell you. The
+ * value is repeated because the chip is the first thing to narrow on a small
+ * screen.
  */
 function chipTip(constant: Constant): string {
-  const exact = [constant.value, constant.unit].filter(Boolean).join(" ");
-  return constant.name ? `${constant.name} · ${exact}` : exact;
-}
-
-/** Formats a constant compactly: 6.674e-11 rather than 0.00000000006674. */
-function formatConstant(value: number): string {
-  const magnitude = Math.abs(value);
-  if (magnitude !== 0 && (magnitude < 1e-4 || magnitude >= 1e6)) {
-    return value.toExponential(6).replace(/e([+-])(\d)$/, "e$10$2");
-  }
-  return String(value);
+  const value = [formatExact(constant.value), constant.unit].filter(Boolean).join(" ");
+  return constant.name ? `${constant.name} · ${value}` : value;
 }
 
 export function VariablePanel({
@@ -106,9 +99,9 @@ export function VariablePanel({
                     className="chip"
                     data-tip={chipTip(constant)}
                     disabled={isTarget}
-                    onClick={() => onValueChange(symbol, String(constant.value))}
+                    onClick={() => onValueChange(symbol, formatExact(constant.value))}
                   >
-                    {formatConstant(constant.value)}
+                    {formatExact(constant.value)}
                     <span className="chip-unit">{constant.unit}</span>
                   </button>
                 )}

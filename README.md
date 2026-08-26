@@ -205,6 +205,24 @@ overwriting, and local copies are only cleared once every upload succeeds.
 
 ## Constants
 
+Values are shown to their **real** precision, never a fixed number of digits.
+That sounds like a detail and is not: the catalogue's constants range from three
+significant figures to seventeen, so any fixed count is wrong in both directions
+at once. The previous `toExponential(6)` printed `G` as `6.674300e-11`,
+inventing two significant figures it does not have, while printing `c` as
+`2.997925e+08` and discarding three it does — and since clicking a chip inserted
+the label, that rounding entered the arithmetic. `c` went in 42 m/s fast, wrong
+in the seventh significant digit of `c²`.
+
+`formatExact` prints the shortest string that reads back as exactly the stored
+number, choosing between plain and exponential on whichever is shorter. Nothing
+is padded, nothing is truncated, and the chip's label, the value it inserts and
+its tooltip are all the same string. One function serves the chips and the
+constants table; they previously had separate copies whose thresholds had
+already drifted apart (`1e6` against `1e7`), so the same constant could read
+differently in two places.
+
+
 Whenever a formula names a known symbol, its value is offered beside that
 variable as a one-click fill: write `T = 2*pi*sqrt(L/g)` and `g` arrives with
 9.80665 m/s² attached.
