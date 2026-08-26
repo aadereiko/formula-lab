@@ -96,6 +96,8 @@ class SavedFormulaRequest(BaseModel):
     category: str = Field(default="", max_length=60)
     #: Pinned formulas sort to the top of every list.
     pinned: bool = False
+    #: Kept out of the sidebar menu, still listed on the formulas page.
+    hidden: bool = False
 
 
 class SavedFormulaResponse(BaseModel):
@@ -108,6 +110,7 @@ class SavedFormulaResponse(BaseModel):
     solve_for: str | None
     category: str
     pinned: bool
+    hidden: bool
     created_at: datetime
     updated_at: datetime
 

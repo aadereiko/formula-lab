@@ -91,6 +91,9 @@ class User(Base):
     constants: Mapped[list["UserConstant"]] = relationship(
         back_populates="owner", cascade="all, delete-orphan", passive_deletes=True
     )
+    pinned_library: Mapped[list["PinnedLibraryFormula"]] = relationship(
+        back_populates="owner", cascade="all, delete-orphan", passive_deletes=True
+    )
 
 
 class SavedFormula(Base):
@@ -136,6 +139,11 @@ class SavedFormula(Base):
     pinned: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False, server_default=false()
     )
+    #: Kept out of the sidebar menu but still listed on the formulas page --
+    #: hidden means "not in my way", not "deleted".
+    hidden: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default=false()
+    )
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=utcnow, onupdate=utcnow
@@ -173,6 +181,29 @@ class UserConstant(Base):
     )
 
     owner: Mapped[User] = relationship(back_populates="constants")
+
+
+class PinnedLibraryFormula(Base):
+    """A built-in formula somebody wants to hand.
+
+    The library itself is read-only, so a pin cannot live on the formula. It
+    lives here instead, as a reference by id -- which also means a pin survives
+    the library's wording changing underneath it.
+    """
+
+    __tablename__ = "pinned_library_formulas"
+    __table_args__ = (
+        UniqueConstraint("user_id", "library_id", name="uq_pinned_library"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True, nullable=False
+    )
+    library_id: Mapped[str] = mapped_column(String(80), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=utcnow)
+
+    owner: Mapped[User] = relationship(back_populates="pinned_library")
 
 
 def ensure_columns() -> None:

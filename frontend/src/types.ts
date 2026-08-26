@@ -98,6 +98,7 @@ export interface SavedFormula {
   solve_for: string | null;
   category: string;
   pinned: boolean;
+  hidden: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -111,6 +112,7 @@ export interface SavedFormulaInput {
   solve_for?: string | null;
   category?: string;
   pinned?: boolean;
+  hidden?: boolean;
 }
 
 export interface UserConstant {

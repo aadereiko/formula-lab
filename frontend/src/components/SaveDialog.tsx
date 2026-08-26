@@ -14,7 +14,7 @@ interface Props {
   /** The built-in library's rubrics, offered as suggestions. */
   categories: string[];
   onSave: (
-    draft: Omit<FormulaDraft, "values" | "solveFor" | "pinned">,
+    draft: Omit<FormulaDraft, "values" | "solveFor" | "pinned" | "hidden">,
     asNew: boolean,
   ) => Promise<void>;
   onCancel: () => void;

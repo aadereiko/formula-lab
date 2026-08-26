@@ -135,3 +135,11 @@ export const createConstant = (input: UserConstantInput) =>
 export const updateConstant = (id: number, input: UserConstantInput) =>
   send<UserConstant>("PUT", `/api/my-constants/${id}`, input);
 export const deleteConstant = (id: number) => send<void>("DELETE", `/api/my-constants/${id}`);
+
+// -- pins on the built-in library ------------------------------------------
+// Idempotent by design: pinning something already pinned succeeds, because the
+// caller's intent is satisfied either way.
+
+export const fetchLibraryPins = () => request<string[]>("/api/pinned-library");
+export const pinLibrary = (id: string) => send<void>("PUT", `/api/pinned-library/${id}`);
+export const unpinLibrary = (id: string) => send<void>("DELETE", `/api/pinned-library/${id}`);

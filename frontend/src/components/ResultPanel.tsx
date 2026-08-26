@@ -69,7 +69,7 @@ export function ResultPanel({ result, error, busy }: Props) {
     <section className={`block result${busy ? " is-busy" : ""}`}>
       <div className="block-head">
         <span className="label">Result</span>
-        <button type="button" className="ghost-btn" onClick={copy}>
+        <button type="button" className="btn btn-small btn-pop" onClick={copy}>
           {copied ? "Copied" : "Copy"}
         </button>
       </div>

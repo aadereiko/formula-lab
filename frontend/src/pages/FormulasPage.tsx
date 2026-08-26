@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Logo } from "../components/Logo";
-import { IconPin } from "../components/icons";
+import { IconEye, IconPin } from "../components/icons";
 import type { StoredFormula } from "../useFormulaStore";
 
 interface Props {
@@ -13,6 +13,7 @@ interface Props {
   onEdit: (formula: StoredFormula) => void;
   onDelete: (formula: StoredFormula) => void;
   onTogglePin: (formula: StoredFormula) => void;
+  onToggleHidden: (formula: StoredFormula) => void;
   onSignIn: () => void;
   onNew: () => void;
 }
@@ -27,6 +28,7 @@ export function FormulasPage({
   onEdit,
   onDelete,
   onTogglePin,
+  onToggleHidden,
   onSignIn,
   onNew,
 }: Props) {
@@ -127,6 +129,11 @@ export function FormulasPage({
                     local
                   </span>
                 )}
+                {formula.hidden && (
+                  <span className="card-tag" title="Not shown in the sidebar menu">
+                    hidden
+                  </span>
+                )}
                 <code className="formula-expr">{formula.expression}</code>
               </span>
               {formula.note && <span className="formula-note">{formula.note}</span>}
@@ -164,6 +171,20 @@ export function FormulasPage({
                     onClick={() => onTogglePin(formula)}
                   >
                     <IconPin filled={formula.pinned} />
+                  </button>
+                  <button
+                    type="button"
+                    className={`btn btn-small btn-icon${formula.hidden ? " is-on" : ""}`}
+                    aria-pressed={formula.hidden}
+                    aria-label={
+                      formula.hidden
+                        ? `Show ${formula.name} in the menu`
+                        : `Hide ${formula.name} from the menu`
+                    }
+                    title={formula.hidden ? "Show in the menu" : "Hide from the menu"}
+                    onClick={() => onToggleHidden(formula)}
+                  >
+                    <IconEye crossed={formula.hidden} />
                   </button>
                   <button
                     type="button"

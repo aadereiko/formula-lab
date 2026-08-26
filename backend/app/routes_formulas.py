@@ -52,6 +52,7 @@ def _as_response(formula: SavedFormula) -> SavedFormulaResponse:
         solve_for=formula.solve_for,
         category=formula.category,
         pinned=formula.pinned,
+        hidden=formula.hidden,
         created_at=formula.created_at,
         updated_at=formula.updated_at,
     )
@@ -174,6 +175,7 @@ def create_formula(
         solve_for=payload.solve_for,
         category=payload.category.strip(),
         pinned=payload.pinned,
+        hidden=payload.hidden,
     )
     session.add(formula)
     try:
@@ -206,6 +208,7 @@ def update_formula(
     formula.solve_for = payload.solve_for
     formula.category = payload.category.strip()
     formula.pinned = payload.pinned
+    formula.hidden = payload.hidden
     try:
         session.commit()
     except IntegrityError:

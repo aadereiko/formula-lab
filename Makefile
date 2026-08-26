@@ -21,6 +21,7 @@ dev:
 test:
 	cd backend && .venv/bin/python -m pytest -q
 	cd frontend && npx tsc --noEmit
+	cd frontend && python3 scripts/check-styles.py
 
 build:
 	cd frontend && npm run build

@@ -26,6 +26,8 @@ export interface StoredFormula {
   category: string;
   /** Pinned formulas sort to the top of every list. */
   pinned: boolean;
+  /** Kept out of the sidebar menu; still listed on the formulas page. */
+  hidden: boolean;
   updatedAt: string;
 }
 
@@ -38,6 +40,7 @@ export interface FormulaDraft {
   solveFor: string | null;
   category: string;
   pinned: boolean;
+  hidden: boolean;
 }
 
 const LOCAL_KEY = "formula-lab.local-formulas";
@@ -55,6 +58,7 @@ const fromServer = (row: SavedFormula): StoredFormula => ({
   solveFor: row.solve_for,
   category: row.category,
   pinned: row.pinned,
+  hidden: row.hidden,
   updatedAt: row.updated_at,
 });
 
@@ -67,6 +71,7 @@ const toRequest = (draft: FormulaDraft): SavedFormulaInput => ({
   solve_for: draft.solveFor,
   category: draft.category,
   pinned: draft.pinned,
+  hidden: draft.hidden,
 });
 
 /** Ids only need to be unique within this browser. */
@@ -192,6 +197,24 @@ export function useFormulaStore(signedIn: boolean) {
         solveFor: target.solveFor,
         category: target.category,
         pinned: !target.pinned,
+        hidden: target.hidden,
+      }),
+    [update],
+  );
+
+  /** Hidden keeps a formula out of the menu without deleting it. */
+  const toggleHidden = useCallback(
+    async (target: StoredFormula): Promise<StoredFormula> =>
+      update(target, {
+        name: target.name,
+        expression: target.expression,
+        note: target.note,
+        values: target.values,
+        variableNotes: target.variableNotes,
+        solveFor: target.solveFor,
+        category: target.category,
+        pinned: target.pinned,
+        hidden: !target.hidden,
       }),
     [update],
   );
@@ -240,6 +263,7 @@ export function useFormulaStore(signedIn: boolean) {
         solveFor: item.solveFor,
         category: item.category ?? "",
         pinned: item.pinned ?? false,
+        hidden: item.hidden ?? false,
       };
       try {
         await api.createSaved(toRequest(draft));
@@ -274,6 +298,7 @@ export function useFormulaStore(signedIn: boolean) {
     update,
     remove,
     togglePin,
+    toggleHidden,
     migrateLocal,
     reload,
   };

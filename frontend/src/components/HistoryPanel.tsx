@@ -14,7 +14,7 @@ export function HistoryPanel({ entries, onRestore, onClear }: Props) {
     <section className="block">
       <div className="block-head">
         <span className="label">Recent</span>
-        <button type="button" className="ghost-btn" onClick={onClear}>
+        <button type="button" className="btn btn-small btn-pop" onClick={onClear}>
           <IconClear size={12} />
           Clear
         </button>

@@ -61,3 +61,23 @@ export function IconTarget({ size = 13 }: { size?: number }) {
     </svg>
   );
 }
+
+export function IconSearch({ size = 14 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} {...base}>
+      <circle cx="10.5" cy="10.5" r="6.5" />
+      <path d="M15.5 15.5L21 21" />
+    </svg>
+  );
+}
+
+/** An eye, struck through when the thing is hidden. */
+export function IconEye({ size = 14, crossed = false }: { size?: number; crossed?: boolean }) {
+  return (
+    <svg width={size} height={size} {...base}>
+      <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z" />
+      <circle cx="12" cy="12" r="2.6" />
+      {crossed && <path d="M4 20L20 4" />}
+    </svg>
+  );
+}

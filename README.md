@@ -104,6 +104,12 @@ rather than when a row changes, so it holds for whatever is already in the store
 rather than only for rows touched since the feature existed. The server applies
 the same ordering, so the two stores never disagree.
 
+A **library formula can be pinned too**. The library ships read-only, so the pin
+cannot live on the formula; it is stored as a reference by id, which also means
+a pin survives the library's wording changing underneath it. Pinned library
+formulas join the same *Pinned* group as your own, and unknown ids are filtered
+on read so a pin can never dangle.
+
 ### Rubrics
 
 Saved formulas take a category, offered as a free-text field with the built-in
@@ -116,6 +122,20 @@ The built-in library is **collapsed by default** in that menu: it is reference
 material, not the work. One click expands it, and a *hide* control removes it
 from the sidebar entirely for anyone who never wants it. Both choices stick per
 browser.
+
+### Keeping the menu short
+
+Three things stop the sidebar growing without bound:
+
+- **Ten rows, then _Show more_.** The limit spans the groups rather than each
+  one, so ten is ten on the screen regardless of how the categories fall.
+- **Hiding a formula** takes it out of the menu and nothing else. It stays on
+  *My formulas*, badged `HIDDEN`, because a formula you cannot find is
+  indistinguishable from one you deleted. This is stored per account on the
+  server, so the choice follows you between browsers.
+- **Search**, at the top, spans your formulas *and* the library in one field —
+  including a collapsed or hidden library, since a search that silently skips
+  half the corpus is worse than no search.
 
 ### Saving your own
 
@@ -383,8 +403,8 @@ else's formula returns **404**, not 403 — a 403 would confirm the id exists.
 make test
 ```
 
-166 backend tests plus a frontend typecheck. Several earn their keep beyond
-ordinary coverage:
+186 backend tests, a frontend typecheck, and a style check. Several earn their
+keep beyond ordinary coverage:
 
 - `test_every_library_formula_parses` runs all 44 shipped formulas through the
   parser. This caught `lambda` being a Python keyword — SymPy cannot wrap it in
@@ -401,6 +421,14 @@ ordinary coverage:
   serve `../../etc/passwd` if handed that path.
 - `test_one_account_cannot_touch_anothers_constants` and
   `test_ambiguous_symbols_are_left_out` do the same jobs for constants.
+- `test_unknown_library_ids_are_refused` — a pin is a foreign key to a
+  file, and nothing else would stop it dangling.
+
+`scripts/check-styles.py` runs in `npm run build` and answers a question the
+type checker structurally cannot: **does every class the components render have
+a rule?** `className="dialog"` is a string, so a stylesheet that lost half its
+selectors still typechecks and still bundles — the app just renders unstyled.
+The check cross-references the two and names the file rendering each orphan.
 
 ## Look
 

@@ -380,3 +380,26 @@ def test_category_can_be_cleared_on_update(client):
         f"/api/formulas/{created['id']}", json={"name": "Filed", "expression": "a = b"}
     ).json()
     assert updated["category"] == ""
+
+
+# -- hiding from the menu -------------------------------------------------
+
+def test_hidden_defaults_to_false_and_round_trips(client):
+    sign_up(client, "sam@example.com")
+    created = client.post("/api/formulas", json=KINETIC).json()
+    assert created["hidden"] is False
+
+    updated = client.put(
+        f"/api/formulas/{created['id']}", json={**KINETIC, "hidden": True}
+    ).json()
+    assert updated["hidden"] is True
+
+
+def test_hidden_formulas_are_still_listed(client):
+    """Hidden means "not in my way", not "deleted": the list still has it."""
+    sign_up(client, "sam@example.com")
+    created = client.post("/api/formulas", json={**KINETIC, "hidden": True}).json()
+
+    listed = client.get("/api/formulas").json()
+    assert [f["name"] for f in listed] == [created["name"]]
+    assert listed[0]["hidden"] is True

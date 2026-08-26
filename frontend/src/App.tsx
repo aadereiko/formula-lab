@@ -6,6 +6,7 @@ import { useRoute } from "./useRoute";
 import { useTheme } from "./useTheme";
 import { useAuth, useOAuthError } from "./useAuth";
 import { useFormulaStore, type FormulaDraft, type StoredFormula } from "./useFormulaStore";
+import { useLibraryPins } from "./useLibraryPins";
 import {
   useConstantStore,
   type ConstantDraft,
@@ -50,6 +51,7 @@ export default function App() {
   const theme = useTheme();
   const signedIn = Boolean(auth.user);
   const store = useFormulaStore(signedIn);
+  const libraryPins = useLibraryPins(signedIn);
 
   const [expression, setExpression] = useState("");
   const [values, setValues] = useState<Record<string, string>>({});
@@ -288,7 +290,7 @@ export default function App() {
 
   // -- saving --------------------------------------------------------------
   const performSave = async (
-    details: Omit<FormulaDraft, "values" | "solveFor" | "pinned">,
+    details: Omit<FormulaDraft, "values" | "solveFor" | "pinned" | "hidden">,
     asNew: boolean,
   ) => {
     const existing = saving?.existing ?? null;
@@ -296,8 +298,9 @@ export default function App() {
       ...details,
       values: relevantValues,
       solveFor,
-      // Saving should not silently unpin something.
+      // Saving should not silently unpin or unhide something.
       pinned: asNew ? false : (existing?.pinned ?? false),
+      hidden: asNew ? false : (existing?.hidden ?? false),
     };
     const updating = existing !== null && !asNew;
     const stored = updating ? await store.update(existing, draft) : await store.save(draft);
@@ -314,6 +317,16 @@ export default function App() {
       const next = await store.togglePin(formula);
       if (activeSaved?.key === next.key) setActiveSaved(next);
       flash(next.pinned ? "Pinned" : "Unpinned");
+    } catch (error) {
+      flash(describeError(error));
+    }
+  };
+
+  const toggleHidden = async (formula: StoredFormula) => {
+    try {
+      const next = await store.toggleHidden(formula);
+      if (activeSaved?.key === next.key) setActiveSaved(next);
+      flash(next.hidden ? "Hidden from the menu" : "Shown in the menu");
     } catch (error) {
       flash(describeError(error));
     }
@@ -399,9 +412,12 @@ export default function App() {
           savedLoading={store.loading}
           savedError={store.error}
           signedIn={signedIn}
+          libraryPinned={libraryPins.pinned}
+          onToggleLibraryPin={libraryPins.toggle}
           onOpenSaved={openSaved}
           onDeleteSaved={deleteSaved}
           onTogglePin={togglePin}
+          onToggleHidden={toggleHidden}
           onSeeAll={() => navigate("formulas")}
           onNewFormula={startNewFormula}
         />
@@ -450,6 +466,7 @@ export default function App() {
             onEdit={editFormula}
             onDelete={deleteSaved}
             onTogglePin={togglePin}
+            onToggleHidden={toggleHidden}
             onSignIn={() => promptSignIn("Sign in to keep your formulas across devices.")}
             onNew={startNewFormula}
           />

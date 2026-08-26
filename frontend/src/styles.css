@@ -307,19 +307,6 @@ h1, h2, h3 { font-weight: 550; }
 .saved-list li .saved-item { flex: 1; min-width: 0; }
 .saved-expr { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-.saved-delete {
-  background: none;
-  border: none;
-  color: var(--ink-faint);
-  font-size: 18px;
-  line-height: 1;
-  padding: 6px 8px;
-  border-radius: var(--radius);
-  opacity: 0;
-}
-.saved-list li:hover .saved-delete, .saved-delete:focus-visible { opacity: 1; }
-.saved-delete:hover { color: var(--danger); background: var(--bg-sunken); }
-
 .scrim { display: none; }
 
 /* ── workspace ───────────────────────────────────────────────────────── */
@@ -502,6 +489,9 @@ h1, h2, h3 { font-weight: 550; }
   color: var(--ink-faint);
 }
 .toolbar label { display: inline-flex; align-items: center; gap: 7px; }
+/* An aside, not an instruction: it explains the select beside it and should
+   recede once you know what it says. */
+.toolbar-hint { font-size: 12.5px; color: var(--ink-faint); }
 .toolbar select {
   background: var(--bg);
   color: var(--ink);
@@ -757,7 +747,8 @@ h1, h2, h3 { font-weight: 550; }
   .variable-row { grid-template-columns: 1fr; gap: 7px; padding: 11px 0; }
   .variable-controls { gap: 8px; }
   .chip, .solve-toggle { min-height: 38px; padding: 8px 11px; }
-  .saved-delete { opacity: 1; }        /* no hover on touch */
+  /* No hover on touch, so the row tools have to stand revealed. */
+  .row-tool { opacity: 1; pointer-events: auto; }
   .saved-badge { max-width: 100%; }
 
   /* Stacked, so the maths takes the full width of the row rather than the
@@ -1318,10 +1309,26 @@ textarea.text-input { resize: vertical; line-height: 1.5; }
   display: flex;
   align-items: center;
   gap: 12px;
-  border-top: 1px solid var(--line);
+  position: relative;
+  border-radius: var(--radius);
   transition: background 0.1s;
 }
-.formula-row:last-child { border-bottom: 1px solid var(--line); }
+
+/* The divider is its own box, not a border. As a `border-top` it sat under the
+   row below -- so a raised row showed the neighbour's line running behind it,
+   and a radius turned that line into two arcs at the ends. */
+.formula-row + .formula-row::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 12px;
+  right: 12px;
+  height: 1px;
+  background: var(--line);
+}
+/* A raised row hides the line beneath it as well as its own. */
+.formula-row:hover::before,
+.formula-row:hover + .formula-row::before { opacity: 0; }
 .formula-row:hover { background: var(--bg-soft); }
 
 .formula-main {
@@ -1329,11 +1336,11 @@ textarea.text-input { resize: vertical; line-height: 1.5; }
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
   background: none;
   border: none;
   text-align: left;
-  padding: 13px 10px 13px 4px;
+  padding: 16px 12px;
   color: inherit;
 }
 
@@ -1357,7 +1364,7 @@ textarea.text-input { resize: vertical; line-height: 1.5; }
 
 /* Revealed on hover so a long list stays quiet, but always present for
    keyboard users and on touch, where there is no hover to rely on. */
-.formula-actions { display: flex; gap: 6px; padding-right: 4px; flex: none; opacity: 0; }
+.formula-actions { display: flex; gap: 6px; padding-right: 12px; flex: none; opacity: 0; }
 .formula-row:hover .formula-actions,
 .formula-actions:focus-within { opacity: 1; }
 
@@ -1469,28 +1476,6 @@ textarea.text-input { resize: vertical; line-height: 1.5; }
 .saved-list li.is-active { background: var(--accent-soft); }
 .saved-list li.is-active .saved-item { background: transparent; }
 
-.saved-delete {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: none;
-  border-radius: 6px;
-  background: none;
-  color: var(--ink-faint);
-  opacity: 0;
-  /* Not clickable while invisible, so a stray click cannot delete something. */
-  pointer-events: none;
-  transition: opacity 0.12s, color 0.12s, background 0.12s;
-}
-.saved-list li:hover .saved-delete,
-.saved-delete:focus-visible {
-  opacity: 1;
-  pointer-events: auto;
-}
-.saved-delete:hover { color: var(--danger); background: var(--bg-sunken); }
 
 .side-link {
   display: inline-flex;
@@ -1582,7 +1567,6 @@ textarea.text-input { resize: vertical; line-height: 1.5; }
 
 @media (max-width: 899px) {
   .stack { gap: 24px; }
-  .saved-delete { opacity: 1; pointer-events: auto; }   /* no hover on touch */
   .constant-actions { opacity: 1; }
   .constant-fields { grid-template-columns: 1fr; }
   .constant-row {
@@ -1615,32 +1599,6 @@ textarea.text-input { resize: vertical; line-height: 1.5; }
   vertical-align: -1px;
 }
 
-.saved-pin {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: none;
-  border-radius: 6px;
-  background: none;
-  color: var(--ink-faint);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.12s, color 0.12s, background 0.12s;
-}
-.saved-list li:hover .saved-pin,
-.saved-pin:focus-visible,
-/* A pinned row keeps its control visible: the state has to be undoable
-   without hunting for where it lives. */
-.saved-pin.is-on {
-  opacity: 1;
-  pointer-events: auto;
-}
-.saved-pin:hover { color: var(--accent); background: var(--bg-sunken); }
-.saved-pin.is-on { color: var(--accent); }
-
 /* An icon-only button keeps the pill shape but drops the label's padding. */
 .btn-icon { padding-inline: 8px; gap: 0; }
 .btn-icon.is-on { color: var(--accent); border-color: var(--accent); }
@@ -1671,7 +1629,6 @@ textarea.text-input { resize: vertical; line-height: 1.5; }
 .ghost-btn svg { flex: none; }
 
 @media (max-width: 899px) {
-  .saved-pin { opacity: 1; pointer-events: auto; }
 }
 
 /* ── recognised tokens ───────────────────────────────────────────────── */
@@ -1833,3 +1790,116 @@ textarea.text-input { resize: vertical; line-height: 1.5; }
   .variable-row { padding: 10px 10px; margin-inline: -10px; }
   .variable-row + .variable-row::before { left: 10px; right: 10px; }
 }
+
+/* ── row tools ───────────────────────────────────────────────────────── */
+
+/* Round, because they hold a single glyph and a pill around one icon reads as a
+   mistake. Revealed on hover, but a pinned row keeps its pin visible: a state
+   you cannot see how to undo is a trap. */
+.row-tools { display: inline-flex; align-items: center; gap: 3px; padding-right: 4px; flex: none; }
+
+.row-tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 50%;
+  background: none;
+  color: var(--ink-faint);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s, color 0.12s, background 0.12s, border-color 0.12s,
+    transform 0.12s var(--raise-ease), box-shadow 0.12s var(--raise-ease);
+}
+.saved-list li:hover .row-tool,
+.row-tool:focus-visible,
+.row-tool.is-on {
+  opacity: 1;
+  pointer-events: auto;
+}
+.row-tool:hover {
+  color: var(--accent);
+  border-color: var(--line-strong);
+  background: var(--bg);
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 var(--shadow-ink);
+}
+.row-tool:active { transform: translate(0, 0); box-shadow: none; }
+.row-tool.is-on { color: var(--accent); }
+.row-tool.is-danger:hover { color: var(--danger); }
+
+/* ── search ──────────────────────────────────────────────────────────── */
+
+.search-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 18px;
+  padding: 0 9px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--pill);
+  color: var(--ink-faint);
+  transition: border-color 0.12s;
+}
+.search-field:focus-within { border-color: var(--accent); color: var(--accent); }
+.search-field svg { flex: none; }
+
+.search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  padding: 6px 0;
+  /* 16px on touch keeps iOS from zooming; the desktop size is set below. */
+  font-size: 16px;
+  color: var(--ink);
+}
+.search-input:focus { outline: none; }
+@media (hover: hover) {
+  .search-input { font-size: 13px; }
+}
+
+.search-clear {
+  flex: none;
+  border: none;
+  background: none;
+  padding: 2px 4px;
+  font-size: 15px;
+  line-height: 1;
+  color: var(--ink-faint);
+}
+.search-clear:hover { color: var(--ink); }
+
+.side-more {
+  display: block;
+  width: 100%;
+  margin: 6px 0 2px;
+  padding: 7px 8px;
+  background: none;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius);
+  font-size: 12px;
+  color: var(--ink-faint);
+  transition: color 0.12s, border-color 0.12s;
+}
+.side-more:hover { color: var(--accent); border-color: var(--accent); }
+
+/* ── the syntax note ─────────────────────────────────────────────────── */
+
+/* A note, not a footer: the reference sits in its own raised box so it reads
+   as something set aside to be consulted. */
+.help-note {
+  margin-top: 12px;
+  padding: 16px 18px;
+  background: var(--bg-soft);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: 4px 4px 0 var(--shadow-ink);
+}
+.help-note .help-syntax { margin: 0 0 14px; }
+.help-note .help-syntax li { margin-bottom: 5px; }
