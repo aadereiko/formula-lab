@@ -277,12 +277,16 @@
 /* ── the loose piece ─────────────────────────────────────────────────── */
 
 .cube3d-chip {
-  --chip: calc(var(--cube) * 0.38);
+  --chip: calc(var(--cube) * 0.34);
   --chip-half: calc(var(--chip) / 2);
-  --pop: calc(var(--cube) * 0.42);
+  --pop: calc(var(--cube) * 0.66);
   position: absolute;
-  top: calc(var(--cube) * -0.06);
-  right: calc(var(--cube) * -0.06);
+  /* At rest it sits at the centre of the cube, where the six faces enclose it
+     completely -- so it is invisible until it travels out, and no opacity trick
+     is needed to hide it. */
+  top: 50%;
+  left: 50%;
+  margin: calc(var(--chip) / -2) 0 0 calc(var(--chip) / -2);
   width: var(--chip);
   height: var(--chip);
   transform-style: preserve-3d;
@@ -300,17 +304,18 @@
   background: #4fbfe4;
 }
 
-/* It lifts away, hangs for a moment, and settles back — timed to happen while
-   the cube itself is still, so the two do not compete. */
+/* Out of the cube, a moment in the air, and back inside -- where the faces
+   hide it again until the next cycle. Timed to happen while the cube itself is
+   still, so the two do not compete. */
 @keyframes cube-detach {
-  0%, 34% { transform: translate3d(0, 0, 0) rotate(0deg); }
-  44% {
-    transform: translate3d(var(--pop), calc(var(--pop) * -0.8), var(--pop)) rotate(14deg);
+  0%, 30% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  40% {
+    transform: translate3d(var(--pop), calc(var(--pop) * -0.85), var(--pop)) rotate(16deg);
   }
-  56% {
-    transform: translate3d(var(--pop), calc(var(--pop) * -0.8), var(--pop)) rotate(-8deg);
+  54% {
+    transform: translate3d(var(--pop), calc(var(--pop) * -0.85), var(--pop)) rotate(-10deg);
   }
-  66%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  64%, 100% { transform: translate3d(0, 0, 0) rotate(0deg); }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -343,3 +348,29 @@
 
 .theme-switch { color: var(--ink-faint); }
 .theme-switch:hover { color: var(--ink); }
+
+/* ── buttons that sit on a shadow ─────────────────────────────────────── */
+
+/* Most controls are flat until touched. The prominent actions are not: they
+   rest on a shadow already, so they read as physical things before the pointer
+   arrives, and hovering deepens what is already there rather than conjuring it.
+   Three steps, one gesture: 3px at rest, 6px raised, none pressed. */
+.btn-pop:not(:disabled),
+.btn-primary:not(:disabled) {
+  box-shadow: 3px 3px 0 var(--shadow-ink);
+}
+
+/* The hover and active rules earlier in this file already carry the raised and
+   pressed states; they win on order, so nothing needs repeating here. */
+
+/* A resting shadow needs the button to sit above whatever hairline is below it. */
+.btn-pop,
+.btn-primary {
+  position: relative;
+  z-index: 0;
+}
+
+/* Icons ride at the same optical weight as the label, and lose a little of the
+   gap a lone word would need. */
+.btn > svg { flex: none; margin-inline-start: -1px; }
+.btn-small { gap: 6px; }

@@ -142,7 +142,7 @@ h1, h2, h3 { font-weight: 550; }
   border-color: transparent;
 }
 
-.btn-small { padding: 6px 13px; min-height: 32px; font-size: 13px; }
+.btn-small { padding: 5px 12px; min-height: 30px; font-size: 12.5px; }
 .btn-google { width: 100%; }
 
 .link {

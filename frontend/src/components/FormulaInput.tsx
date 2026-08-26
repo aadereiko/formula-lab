@@ -1,3 +1,4 @@
+import { IconClear, IconEdit, IconSave } from "./icons";
 import { MathView } from "./MathView";
 
 interface Props {
@@ -35,16 +36,18 @@ export function FormulaInput({
         {savedName && <span className="saved-badge">{savedName}</span>}
         <span className="block-actions">
           {onClear && (
-            <button type="button" className="ghost-btn" onClick={onClear}>
+            <button type="button" className="btn btn-small btn-pop" onClick={onClear}>
+              <IconClear />
               Clear
             </button>
           )}
           <button
             type="button"
-            className="btn btn-primary btn-small"
+            className="btn btn-primary btn-small btn-pop"
             disabled={!canSave}
             onClick={onSave}
           >
+            {savedName ? <IconEdit /> : <IconSave />}
             {savedName ? "Edit details" : "Save"}
           </button>
         </span>

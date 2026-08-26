@@ -412,8 +412,12 @@ it has to be a real cube — spinning a picture of one reads as a spinning
 picture. So the header mark is six CSS faces in a `preserve-3d` box, each face
 divided into four coloured cells, and `rotateY` gives it a genuine turntable
 spin: a full turn under the cursor, and one on its own every fifteen seconds
-after sitting still for most of the cycle. One small cube rides on a corner and
-detaches while the rest is still, hangs for a moment, and settles back.
+after sitting still for most of the cycle.
+
+One small cube comes loose partway through — out of the solid, a moment in the
+air, and back. At rest it sits at the centre of the cube, where the six faces
+enclose it completely, so it is simply invisible until it travels out. No fading
+required.
 
 The flat SVG mark stays for the favicon and for static decoration, where nothing
 needs to rotate. The signed-out control carries the same cube as a wireframe
@@ -422,6 +426,12 @@ outline; signed in, it is filled — an assembled cube for an assembled account.
 Verbs are words, not tokens: `Clear`, `Copy`. The monospace pill is reserved for
 values like `9.80665 m/s²`, and a lowercase monospace `clear` beside a
 sans-serif label read like a stray identifier.
+
+The prominent actions do not wait to be touched: they rest on a 3px shadow
+already, so they read as physical before the pointer arrives, and hovering
+deepens what is there rather than conjuring it — 3px at rest, 6px raised, none
+pressed, one gesture in three steps. Each carries a small icon at the same
+optical weight as its label.
 
 Two cases are handled rather than ignored. A **disabled** control never lifts,
 because it has no colour of its own and rising would promise something it cannot
