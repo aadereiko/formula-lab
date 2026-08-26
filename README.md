@@ -681,6 +681,19 @@ the keyboard pushes it. `env(safe-area-inset-bottom)` clears the home indicator.
 Inputs are 16px throughout, which is not a typographic choice: iOS zooms the
 page when you focus anything smaller.
 
+The viewport meta carries `viewport-fit=cover`, and that is load-bearing rather
+than decorative: without it `env(safe-area-inset-*)` returns **zero** on every
+iPhone, so the sheet padding that clears the home indicator looks correct in the
+stylesheet and does nothing on the device.
+
+**Installing needs saying out loud, differently on each platform.** Chrome fires
+`beforeinstallprompt`, which can be captured and replayed, so Android gets a
+button that installs on tap. Safari fires nothing and exposes no API, so iOS gets
+a sentence pointing at Share → *Add to Home Screen*. Neither is optional: the
+alternative is a browser menu item nobody was looking for. The note appears at
+most once and remembers being dismissed, because a banner that returns is an
+advert.
+
 A variable's controls wrap on a narrow screen. `c` carries a chip reading
 `299792458 m/s`, the chip does not shrink, and input + chip + Solve came to 416px
 inside a 378px viewport — which scrolled the whole document sideways, not just

@@ -17,6 +17,7 @@ import { AccountDialog } from "./components/AccountDialog";
 import { AuthDialog } from "./components/AuthDialog";
 import { FormulaInput } from "./components/FormulaInput";
 import { Header } from "./components/Header";
+import { InstallPrompt } from "./components/InstallPrompt";
 import { HelpPanel } from "./components/HelpPanel";
 import { HistoryPanel } from "./components/HistoryPanel";
 import { PlotPanel } from "./components/PlotPanel";
@@ -449,6 +450,7 @@ export default function App() {
       {/* Only the workspace has a sidebar, so the list page reclaims the space
           it would otherwise occupy. */}
       <main className={`workspace${route === "home" ? "" : " is-full"}`}>
+        <InstallPrompt />
         {offline && <p className="banner">{offline}</p>}
         {computingLocally && (
           <p className="offline-note" role="status">

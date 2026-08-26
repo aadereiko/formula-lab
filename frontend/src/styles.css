@@ -1004,6 +1004,41 @@ h1, h2, h3 { font-weight: 550; }
 
 .card-head { display: flex; align-items: baseline; gap: 8px; }
 .card-name { margin: 0; font-size: 15px; font-weight: 550; overflow-wrap: anywhere; }
+/* ── install ─────────────────────────────────────────────────────────── */
+
+/* An invitation, not a warning: neutral surface, no accent border. It appears
+   at most once and can be dismissed for good, because a banner that returns is
+   an advert. */
+.install-note {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 0 18px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--bg-soft);
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+.install-text { flex: 1; min-width: 0; }
+.install-note strong { color: var(--ink); font-weight: 600; }
+/* The share sheet's own wording, so the sentence matches what iOS shows. */
+.install-note em { font-style: normal; color: var(--ink); }
+.install-note .btn { flex: none; }
+.install-dismiss { flex: none; color: var(--ink-faint); }
+.install-dismiss:hover { color: var(--ink); }
+
+@media (max-width: 560px) {
+  /* Stacked, because the sentence plus a button plus a close control will not
+     sit on one phone-width line without squeezing the button to nothing. */
+  .install-note { flex-wrap: wrap; }
+  .install-text { flex: 1 1 100%; order: 1; }
+  .install-note .btn { order: 2; }
+  .install-dismiss { order: 3; margin-left: auto; }
+}
+
 /* ── offline ─────────────────────────────────────────────────────────── */
 
 /* A state, not an error. It uses the accent rather than the danger colour

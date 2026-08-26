@@ -2,7 +2,11 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- `viewport-fit=cover` is what makes `env(safe-area-inset-*)` return a
+         real number. Without it those insets are 0 on every iPhone, so the
+         bottom-sheet padding that clears the home indicator silently does
+         nothing -- the CSS looks correct and has no effect. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
     <title>Formula Lab</title>
     <meta
@@ -14,6 +18,14 @@
          will not use an SVG touch icon, and for the web manifest. -->
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <!-- Safari 16.4+ reads `display` from the manifest; older iOS needs this to
+         launch without browser chrome, and it costs nothing to keep. -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="Formula Lab" />
+    <!-- `default`, not `black-translucent`: translucent slides the page under
+         the status bar, which needs top inset padding everywhere to avoid the
+         header sitting behind the clock. Not worth the complication. -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <link rel="manifest" href="/manifest.webmanifest" />
 
     <!-- Two values so the browser chrome matches whichever theme is in use. -->
