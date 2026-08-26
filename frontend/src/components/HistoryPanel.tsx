@@ -20,7 +20,12 @@ export function HistoryPanel({ entries, onRestore, onClear }: Props) {
       <ul className="history-list">
         {entries.map((entry) => (
           <li key={entry.id}>
-            <button type="button" className="history-item" onClick={() => onRestore(entry)}>
+            <button
+              type="button"
+              className="history-item"
+              data-tilt
+              onClick={() => onRestore(entry)}
+            >
               <code>{entry.expression}</code>
               <span className="history-result">
                 {entry.resultLabel} = {entry.resultValue}

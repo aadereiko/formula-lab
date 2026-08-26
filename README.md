@@ -377,6 +377,31 @@ its colour and becomes a neutral chip rather than a faded blue — a washed-out
 accent still reads as "the blue button, but dirty", where a grey chip reads as
 unavailable.
 
+## 3D hover
+
+Surfaces lean towards the cursor: library rows, saved formulas, history entries
+and the result card tilt as the pointer crosses them, lift, and cast a shadow.
+Buttons get depth instead of tilt — a tilted label is harder to read, which a
+control you are about to press cannot afford.
+
+**It can be turned off.** There is a *3D hover* switch at the bottom of the
+workspace, remembered per browser. The effect is also skipped automatically
+where it would be wrong: on a pointer without hover, and for anyone whose system
+asks for reduced motion.
+
+It is built to be removable, not just switchable. Every rule lives in
+`frontend/src/tilt.css` and is gated on a single `.tilt-on` class that
+`useTilt` puts on `<html>`; no rule outside that file mentions it. To delete the
+feature outright: remove `tilt.css`, its import in `main.tsx`, and the
+`useTilt` call in `App.tsx`. Or revert the one commit that introduced it — it is
+deliberately separate from the commit that changed the icon.
+
+One listener on the document does the work, not one per element. With rows,
+cards and buttons all participating, per-element handlers would mean hundreds
+of subscriptions and a re-bind on every render; instead the handler walks up
+from the event target to the nearest `[data-tilt]` ancestor, so an element opts
+in with an attribute and nothing needs wiring up.
+
 ## The icon
 
 `frontend/public/icon.svg` is the source: an isometric cube, three faces each

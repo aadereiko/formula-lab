@@ -1,0 +1,122 @@
+/* 3D hover effects — self-contained on purpose.
+
+   Everything here is gated on `.tilt-on`, which useTilt puts on <html>
+   only when the setting is on, the pointer supports hover, and the user has
+   not asked for reduced motion. To remove the effect entirely: delete this
+   file, its import in main.tsx, and the useTilt call in App. Nothing else
+   depends on it, and no rule outside this file mentions .tilt-on.
+*/
+/* ═══ 3D hover ══════════════════════════════════════════════════════════
+   Every rule in this section is gated on `.tilt-on`, which useTilt puts on
+   <html> only when the setting is on, the pointer supports hover, and the user
+   has not asked for reduced motion. Deleting this block, or removing that one
+   class, removes the whole effect — nothing else depends on it. */
+
+.tilt-on [data-tilt] {
+  /* A per-element perspective keeps each surface its own little scene, so a
+     row near the edge of the screen leans the same way as one in the middle.
+     A shared perspective on the parent would skew them differently. */
+  transform: perspective(620px)
+    rotateX(var(--tilt-y, 0deg))
+    rotateY(var(--tilt-x, 0deg));
+  transform-style: preserve-3d;
+  transition: transform 0.22s cubic-bezier(0.2, 0.7, 0.3, 1), box-shadow 0.22s ease;
+}
+
+/* While the cursor is actually over it: snap to the pointer, lift, and cast a
+   shadow. The shorter transition is what makes the lean feel attached to the
+   cursor rather than lagging behind it. */
+.tilt-on [data-tilt].is-tilting {
+  transition: transform 0.06s linear, box-shadow 0.22s ease;
+  z-index: 1;
+}
+
+.tilt-on .library-item.is-tilting,
+.tilt-on .saved-item.is-tilting,
+.tilt-on .history-item.is-tilting,
+.tilt-on .formula-main.is-tilting {
+  box-shadow: 0 8px 20px -8px rgba(0, 0, 0, 0.55);
+}
+
+.tilt-on .result-card.is-tilting {
+  box-shadow: 0 18px 40px -20px rgba(0, 0, 0, 0.7);
+}
+
+/* The mark is a cube, so it gets to behave like one: the lean reads as the
+   solid turning rather than a picture skewing. */
+.tilt-on .brand { transform-origin: 20px 50%; }
+.tilt-on .brand.is-tilting { transform: perspective(300px) rotateX(var(--tilt-y, 0deg)) rotateY(var(--tilt-x, 0deg)) scale(1.02); }
+
+/* Buttons get depth instead of tilt: a pressable surface that rises under the
+   cursor and sinks when clicked. Tilting a button makes its label hard to
+   read, which a control you are about to press cannot afford. */
+.tilt-on .btn:hover:not(:disabled) { transform: translateY(-1.5px); }
+.tilt-on .btn:active:not(:disabled) { transform: translateY(0) scale(0.985); }
+.tilt-on .btn-primary:hover:not(:disabled) {
+  transform: translateY(-1.5px) scale(1.02);
+  box-shadow: 0 10px 22px -12px var(--accent);
+}
+
+/* The symbol chips read as little keycaps. */
+.tilt-on .variable-symbol,
+.tilt-on .constant-symbol {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.tilt-on .variable-row:hover .variable-symbol,
+.tilt-on .constant-row:hover .constant-symbol {
+  transform: translateY(-1px);
+  box-shadow: 0 3px 6px -3px rgba(0, 0, 0, 0.6);
+}
+
+@media (prefers-color-scheme: light) {
+  .tilt-on .library-item.is-tilting,
+  .tilt-on .saved-item.is-tilting,
+  .tilt-on .history-item.is-tilting,
+  .tilt-on .formula-main.is-tilting {
+    box-shadow: 0 8px 20px -10px rgba(15, 15, 25, 0.28);
+  }
+  .tilt-on .result-card.is-tilting {
+    box-shadow: 0 18px 40px -22px rgba(15, 15, 25, 0.32);
+  }
+  .tilt-on .variable-row:hover .variable-symbol,
+  .tilt-on .constant-row:hover .constant-symbol {
+    box-shadow: 0 3px 6px -4px rgba(15, 15, 25, 0.3);
+  }
+}
+
+/* ── the setting ─────────────────────────────────────────────────────── */
+
+.help-block .help-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.setting-row { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.setting-label { font-size: 12.5px; color: var(--ink-faint); }
+.setting-state { font-size: 12px; color: var(--ink-faint); min-width: 1.6em; }
+
+.switch {
+  position: relative;
+  width: 34px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--pill);
+  background: var(--bg-sunken);
+  transition: background 0.16s, border-color 0.16s;
+}
+.switch.is-on { background: var(--accent); border-color: transparent; }
+
+.switch-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--ink-faint);
+  transition: transform 0.16s cubic-bezier(0.2, 0.7, 0.3, 1), background 0.16s;
+}
+.switch.is-on .switch-knob { transform: translateX(14px); background: var(--accent-ink); }

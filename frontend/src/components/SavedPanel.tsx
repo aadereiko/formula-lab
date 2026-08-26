@@ -49,6 +49,7 @@ export function SavedPanel({
             <button
               type="button"
               className="saved-item"
+              data-tilt
               aria-current={formula.key === activeKey}
               onClick={() => onOpen(formula)}
             >
