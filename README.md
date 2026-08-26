@@ -393,10 +393,17 @@ a `.btn`. The whole system lives in `frontend/src/hover.css` and is built from
 four variables — how far a surface travels, how far its shadow sits behind, and
 smaller values of both for small controls.
 
+The mark is the exception: a cube has no rectangular face, so a rectangular
+shadow behind it reads as a mistake. It scales and spins instead — a full turn
+under the cursor, and an occasional idle tumble so the header has a little life
+without anything moving constantly. The signed-out control carries the same cube
+as an outline, which tumbles when hovered and nudges now and then on its own.
+
 Two cases are handled rather than ignored. A **disabled** control never lifts,
 because it has no colour of its own and rising would promise something it cannot
-do. And **reduced motion** keeps the shadow but sets the travel to zero, so the
-state stays legible while nothing moves.
+do. And **reduced motion** stops both idle loops and sets the travel to zero,
+keeping the shadow so the state stays legible while nothing moves. The turns
+that answer a hover stay, since those are a direct response to an action.
 
 ## The icon
 

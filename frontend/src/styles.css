@@ -160,6 +160,9 @@ h1, h2, h3 { font-weight: 550; }
 
 .account-btn {
   margin-left: auto;
+  /* A flex row, because signed out it carries a glyph beside its label. */
+  display: inline-flex;
+  align-items: center;
   background: none;
   border: 1px solid var(--line-strong);
   border-radius: var(--pill);
@@ -376,7 +379,13 @@ h1, h2, h3 { font-weight: 550; }
   grid-template-columns: minmax(110px, 210px) minmax(190px, 1fr);
   gap: 14px;
   align-items: center;
-  padding: 9px 0;
+  /* Inset horizontally: without it a hovered row is a band running edge to
+     edge, and the symbol chip sits flush against the boundary. The negative
+     margin keeps the content aligned with the rest of the block while letting
+     the hover surface extend past it. */
+  padding: 11px 12px;
+  margin-inline: -12px;
+  border-radius: var(--radius);
   border-top: 1px solid var(--line);
 }
 .variable-row:last-child { border-bottom: 1px solid var(--line); }
@@ -1125,11 +1134,11 @@ textarea.text-input { resize: vertical; line-height: 1.5; }
   color: var(--accent);
 }
 .variable-row { transition: background 0.1s; }
-.variable-row:hover { background: color-mix(in srgb, var(--bg-sunken) 55%, transparent); }
+.variable-row:hover { background: var(--bg-soft); }
 .variable-id { gap: 4px; }
 
 /* Inside a surface the rows use its dividers, and the first needs none. */
-.surface-section .variable-row:first-child { border-top: none; padding-top: 4px; }
+.surface-section .variable-row:first-child { border-top: none; padding-top: 6px; }
 .surface-section .variable-row:last-child { border-bottom: none; }
 .surface-section .variable-row:hover { background: transparent; }
 

@@ -1,5 +1,6 @@
 import type { Route } from "../useRoute";
 import type { User } from "../types";
+import { CubeGlyph } from "./CubeGlyph";
 import { Logo } from "./Logo";
 
 interface Props {
@@ -10,7 +11,6 @@ interface Props {
   route: Route;
   savedCount: number;
   onNavigate: (next: Route) => void;
-  onNewFormula: () => void;
   onToggleMenu: () => void;
   onAccount: () => void;
 }
@@ -23,7 +23,6 @@ export function Header({
   route,
   savedCount,
   onNavigate,
-  onNewFormula,
   onToggleMenu,
   onAccount,
 }: Props) {
@@ -75,11 +74,21 @@ export function Header({
       </nav>
 
       <div className="header-end">
-        <button type="button" className="btn btn-small" onClick={onNewFormula}>
-          New
-        </button>
-        <button type="button" className="account-btn" onClick={onAccount}>
-          {checking ? "…" : user ? shortEmail(user.email) : "Sign in"}
+        <button
+          type="button"
+          className={`account-btn${user ? "" : " is-invitation"}`}
+          onClick={onAccount}
+        >
+          {checking ? (
+            "…"
+          ) : user ? (
+            shortEmail(user.email)
+          ) : (
+            <>
+              <CubeGlyph />
+              Sign in
+            </>
+          )}
         </button>
       </div>
     </header>

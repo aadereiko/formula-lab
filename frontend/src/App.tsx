@@ -362,7 +362,6 @@ export default function App() {
         showMenu={route === "home"}
         savedCount={store.formulas.length}
         onNavigate={navigate}
-        onNewFormula={startNewFormula}
         onToggleMenu={() => setMenuOpen((open) => !open)}
         onAccount={() => (auth.user ? setAccountOpen(true) : promptSignIn())}
       />

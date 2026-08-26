@@ -16,10 +16,10 @@
   /* How far a surface steps out from under its shadow. */
   --raise: 2px;
   /* How far the shadow sits behind it once raised. */
-  --raise-shadow: 4px;
+  --raise-shadow: 6px;
   /* Small controls get proportionally less of both, or they jump. */
   --raise-sm: 1px;
-  --raise-shadow-sm: 2px;
+  --raise-shadow-sm: 3px;
   /* Snappy with a little overshoot; a linear ease reads as sliding, not
      popping, which is the wrong feeling for this. */
   --raise-ease: cubic-bezier(0.34, 1.4, 0.64, 1);
@@ -159,5 +159,53 @@
   :root {
     --raise: 0px;
     --raise-sm: 0px;
+  }
+}
+
+/* ── the mark ─────────────────────────────────────────────────────────── */
+
+.logo-wrap { display: inline-flex; flex: none; }
+
+/* An occasional tumble rather than a constant one: the cube sits still for most
+   of the cycle, turns once, and settles. A logo that never stops moving pulls
+   the eye away from the work. */
+@keyframes cube-idle {
+  0%, 72% { transform: rotate(0deg); }
+  86% { transform: rotate(180deg); }
+  100% { transform: rotate(360deg); }
+}
+.logo-wrap { animation: cube-idle 14s cubic-bezier(0.5, 0, 0.4, 1) infinite; }
+
+/* And a full turn under the cursor, which unwinds when it leaves. */
+.brand .logo { transition: transform 0.55s cubic-bezier(0.3, 0, 0.25, 1); }
+.brand:hover .logo { transform: rotate(360deg) scale(1.06); }
+
+/* ── the sign-in invitation ───────────────────────────────────────────── */
+
+/* A quiet nudge: the outline cube leans as if about to roll, and tumbles when
+   the invitation is actually hovered. */
+.account-btn.is-invitation { gap: 7px; }
+.cube-glyph {
+  flex: none;
+  transition: transform 0.5s cubic-bezier(0.3, 0, 0.25, 1), color 0.14s;
+}
+.account-btn.is-invitation:hover .cube-glyph { transform: rotate(360deg); }
+
+@keyframes cube-nudge {
+  0%, 88% { transform: rotate(0deg); }
+  93% { transform: rotate(-14deg); }
+  97% { transform: rotate(9deg); }
+  100% { transform: rotate(0deg); }
+}
+.account-btn.is-invitation .cube-glyph { animation: cube-nudge 7s ease-in-out infinite; }
+.account-btn.is-invitation:hover .cube-glyph { animation: none; }
+.account-btn.is-invitation:hover { color: var(--accent); border-color: var(--accent); }
+
+/* Both idle loops stop for anyone who has asked for less motion; the hover
+   turns stay, since they are a direct response to an action. */
+@media (prefers-reduced-motion: reduce) {
+  .logo-wrap,
+  .account-btn.is-invitation .cube-glyph {
+    animation: none;
   }
 }
