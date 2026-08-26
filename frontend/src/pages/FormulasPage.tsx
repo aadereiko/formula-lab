@@ -82,12 +82,12 @@ export function FormulasPage({
         <div className="page-empty">
           <p>Nothing saved yet.</p>
           <p className="auth-hint">
-            Write a formula on the calculator and press Save.
+            Write a formula on the Home page and press Save.
             {!signedIn &&
               " You do not need an account \u2014 formulas are kept in this browser until you sign in."}
           </p>
           <button type="button" className="btn btn-primary" onClick={onNew}>
-            Go to the calculator
+            Write a formula
           </button>
         </div>
       )}

@@ -32,7 +32,7 @@ export function SavedPanel({
     return (
       <div className="saved-empty">
         <button type="button" className="link" onClick={onNewFormula}>
-          Add a formula
+          Write a formula
         </button>{" "}
         to keep it{signedIn ? "." : " in this browser."}
       </div>

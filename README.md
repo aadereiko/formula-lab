@@ -75,11 +75,13 @@ number and the imaginary unit. Write `exp(1)` if you want *e*.
 
 ### Saving your own
 
-The **Home** page is where a formula gets written. Alongside the expression it
-takes a name, a description, and — generated from whatever the formula
-mentions — **a description for each variable**. Type `F = 1/2 rho C_d A v^2` and
-five description fields appear, one per symbol, with a running "3 of 5
-described" count.
+The **Home** page is where a formula gets written, in two steps. First the
+formula alone: type it, watch it render, and press **Save**. Only then do the
+name, the description and — generated from whatever the formula mentions — **a
+description for each variable** appear. That order matches how the work
+actually goes: there is nothing to describe until there is a formula, and the
+variable fields cannot exist until the expression has been parsed. `Change`
+goes back to the formula.
 
 Each of those fields suggests an example in the right shape: `v` prompts with
 "e.g. velocity (m/s)", `rho` with "e.g. density (kg/m³)". The examples come from
@@ -328,6 +330,22 @@ ordinary coverage:
   linking rule, asserted rather than assumed.
 - `test_static_paths_cannot_escape_the_bundle_directory` — `FileResponse` will
   serve `../../etc/passwd` if handed that path.
+
+## Look
+
+Dark first, in the spirit of Spotify's layered near-blacks, with our blue as the
+only accent. Three levels of background rather than one flat colour — page,
+card, raised — because that layering is what stops a dark interface reading as a
+void. A light variant follows `prefers-color-scheme`.
+
+Type is **Manrope** for the interface and **JetBrains Mono** for formulas,
+values and symbols, so an expression never gets confused with prose.
+
+Primary actions are accent-filled pills with near-black text: on a bright
+accent that carries far more contrast than white would. A disabled action drops
+its colour and becomes a neutral chip rather than a faded blue — a washed-out
+accent still reads as "the blue button, but dirty", where a grey chip reads as
+unavailable.
 
 ## The icon
 

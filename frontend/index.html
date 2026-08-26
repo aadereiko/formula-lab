@@ -19,7 +19,17 @@
     <!-- Two values so the browser chrome matches whichever theme is in use. -->
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0c0c0d" media="(prefers-color-scheme: dark)" />
-    <meta name="color-scheme" content="light dark" />
+    <meta name="color-scheme" content="dark light" />
+
+    <!-- Manrope for the interface, JetBrains Mono for formulas and numbers.
+         preconnect so the font request does not wait on DNS and TLS, and
+         display=swap so text paints in the fallback rather than not at all. -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+    />
   </head>
   <body>
     <div id="root"></div>

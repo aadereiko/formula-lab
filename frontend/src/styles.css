@@ -1,43 +1,56 @@
-/* Formula Lab — minimal, light-first, one accent colour.
-   No card borders or shadows: structure comes from whitespace and hairlines. */
+/* Formula Lab — dark-first, layered near-blacks with a single blue accent.
+   Structure comes from surfaces and hairlines; colour is used only to mark the
+   one action or value that matters on a screen. */
 
 :root {
-  --bg: #ffffff;
-  --bg-soft: #fbfbfc;
-  --bg-sunken: #f4f4f5;
+  /* Three levels of near-black rather than one flat background: page, card,
+     and raised. That layering is what stops a dark UI reading as a void. */
+  --bg: #0f0f11;
+  --bg-soft: #17171a;
+  --bg-sunken: #232327;
   /* Where rendered output sits, so it reads as a result rather than an input. */
-  --bg-output: #f7f8fa;
-  --line: #e9e9ec;
-  --line-strong: #d4d4d8;
-  --ink: #18181b;
-  --ink-soft: #52525b;
-  --ink-faint: #a1a1aa;
-  --accent: #2563eb;
-  --accent-soft: #eff4ff;
-  --danger: #dc2626;
+  --bg-output: #1b1b1f;
+  --line: #2a2a2f;
+  --line-strong: #3f3f47;
 
-  --radius: 6px;
-  --mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
-  --header-h: 52px;
-  --side-w: 260px;
-  color-scheme: light;
+  --ink: #ffffff;
+  --ink-soft: #b3b3b3;
+  --ink-faint: #7a7a82;
+
+  --accent: #4d8dff;
+  --accent-soft: #17233d;
+  /* Text on an accent fill. Near-black on a bright accent carries far more
+     contrast than white does, and is what makes the primary action pop. */
+  --accent-ink: #0b0b0d;
+  --danger: #f2565b;
+
+  --radius: 9px;
+  --pill: 100px;
+  --ui: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", SFMono-Regular, Menlo, monospace;
+  --header-h: 56px;
+  --side-w: 264px;
+  color-scheme: dark;
 }
 
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: light) {
   :root {
-    --bg: #0c0c0d;
-    --bg-soft: #121214;
-    --bg-sunken: #1a1a1d;
-    --bg-output: #16161a;
-    --line: #242428;
-    --line-strong: #38383f;
-    --ink: #f4f4f5;
-    --ink-soft: #a1a1aa;
-    --ink-faint: #6b6b74;
-    --accent: #7ba4ff;
-    --accent-soft: #16233d;
-    --danger: #f87171;
-    color-scheme: dark;
+    --bg: #ffffff;
+    --bg-soft: #f8f8f9;
+    --bg-sunken: #ededf0;
+    --bg-output: #f4f5f7;
+    --line: #e6e6ea;
+    --line-strong: #cfcfd6;
+
+    --ink: #111113;
+    --ink-soft: #55555e;
+    --ink-faint: #8b8b95;
+
+    --accent: #2563eb;
+    --accent-soft: #e9f0ff;
+    --accent-ink: #ffffff;
+    --danger: #d92d2d;
+    color-scheme: light;
   }
 }
 
@@ -49,7 +62,7 @@ body {
   margin: 0;
   background: var(--bg);
   color: var(--ink);
-  font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font: 15px/1.55 var(--ui);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -60,28 +73,49 @@ h1, h2, h3 { font-weight: 550; }
 /* ── buttons ─────────────────────────────────────────────────────────── */
 
 .btn {
-  background: var(--bg);
+  background: transparent;
   border: 1px solid var(--line-strong);
-  border-radius: var(--radius);
-  padding: 8px 14px;
+  border-radius: var(--pill);
+  padding: 9px 18px;
   font-size: 14px;
+  font-weight: 500;
   color: var(--ink);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   min-height: 38px;
-  transition: border-color 0.12s, background 0.12s;
+  transition: border-color 0.14s, background 0.14s, color 0.14s, transform 0.1s, filter 0.14s;
   text-decoration: none;
 }
-.btn:hover:not(:disabled) { border-color: var(--ink-faint); }
-.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn:hover:not(:disabled) { border-color: var(--ink); }
+.btn:active:not(:disabled) { transform: scale(0.98); }
 
-.btn-primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-.btn-primary:hover:not(:disabled) { filter: brightness(1.08); border-color: var(--accent); }
-@media (prefers-color-scheme: dark) { .btn-primary { color: #0c0c0d; } }
+/* A disabled action loses its colour rather than fading it: a washed-out
+   accent still reads as "the blue button, but dirty", where a neutral chip
+   reads as unavailable. */
+.btn:disabled {
+  cursor: not-allowed;
+  background: var(--bg-sunken);
+  border-color: transparent;
+  color: var(--ink-faint);
+  filter: none;
+}
 
-.btn-small { padding: 5px 11px; min-height: 30px; font-size: 13px; }
+.btn-primary {
+  background: var(--accent);
+  border-color: transparent;
+  color: var(--accent-ink);
+  font-weight: 600;
+}
+.btn-primary:hover:not(:disabled) {
+  filter: brightness(1.1);
+  transform: scale(1.02);
+  border-color: transparent;
+}
+.btn-primary:active:not(:disabled) { transform: scale(0.99); }
+
+.btn-small { padding: 6px 13px; min-height: 32px; font-size: 13px; }
 .btn-google { width: 100%; }
 
 .link {
@@ -128,7 +162,7 @@ h1, h2, h3 { font-weight: 550; }
   margin-left: auto;
   background: none;
   border: 1px solid var(--line-strong);
-  border-radius: 100px;
+  border-radius: var(--pill);
   padding: 5px 13px;
   font-size: 13px;
   color: var(--ink-soft);
@@ -384,7 +418,7 @@ h1, h2, h3 { font-weight: 550; }
 .chip, .solve-toggle {
   background: none;
   border: 1px solid var(--line);
-  border-radius: var(--radius);
+  border-radius: var(--pill);
   color: var(--ink-faint);
   font-size: 11.5px;
   padding: 6px 8px;
@@ -761,7 +795,9 @@ h1, h2, h3 { font-weight: 550; }
 
 /* ── formulas page ───────────────────────────────────────────────────── */
 
-.page { max-width: 1280px; }
+/* Narrow enough that the centring actually reads, wide enough for three
+   cards across. */
+.page { max-width: 1120px; }
 
 .page-head {
   display: flex;
@@ -1107,4 +1143,37 @@ textarea.text-input { resize: vertical; line-height: 1.5; }
   .surface-section, .editor-actions { padding: 15px 16px; }
   .result-card { padding: 15px 16px; }
   .editor-error { margin-right: 0; width: 100%; }
+}
+
+/* ── centred pages ───────────────────────────────────────────────────── */
+
+/* Every sidebar-less page centres its column, not just Home. */
+.page { margin-inline: auto; }
+
+/* ── typography with the new families ────────────────────────────────── */
+
+.page-title { font-weight: 700; letter-spacing: -0.025em; }
+.brand-name { font-weight: 700; letter-spacing: -0.02em; }
+.label { font-weight: 600; }
+.nav-link { font-weight: 500; }
+.nav-link.is-active { font-weight: 600; }
+.result-value { font-weight: 500; letter-spacing: -0.03em; }
+.card-name { font-weight: 600; }
+
+/* JetBrains Mono runs a little wide, so formula text can come down a notch. */
+.formula-input { font-size: 16.5px; }
+.library-expr, .saved-expr, .card-source { font-size: 11px; }
+
+/* The formula, once written, becomes a heading for the details step rather
+   than another field to edit. */
+.step-formula .preview-strip { margin-top: 0; }
+.step-formula code { font-size: 14px; color: var(--ink-soft); }
+.block-head .link { margin-left: auto; font-size: 12.5px; }
+
+/* KaTeX centres display-mode maths by default. Step one's strip is a flex row
+   so it lands left; this makes the recap strip and the cards agree with it. */
+.step-formula .preview-strip .katex-display,
+.card-math .katex-display {
+  text-align: left;
+  margin: 0;
 }
